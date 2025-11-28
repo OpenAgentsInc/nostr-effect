@@ -242,6 +242,16 @@ export const isAnyReplaceableKind = (kind: EventKind | number): boolean =>
   isReplaceableKind(kind) || isParameterizedReplaceableKind(kind)
 
 /**
+ * Check if an event kind is ephemeral (NIP-16)
+ * Ephemeral kinds: 20000-29999
+ * These events are not stored, only broadcast to subscribers
+ */
+export const isEphemeralKind = (kind: EventKind | number): boolean => {
+  const k = kind as number
+  return k >= 20000 && k <= 29999
+}
+
+/**
  * Get the d-tag value from an event's tags
  * Used for parameterized replaceable events
  */

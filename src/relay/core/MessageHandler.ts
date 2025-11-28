@@ -21,6 +21,7 @@ import {
   isParameterizedReplaceableKind,
   getDTagValue,
 } from "../../core/Schema.js"
+import { NipRegistry } from "./nip/NipRegistry.js"
 
 // =============================================================================
 // Response Types
@@ -83,95 +84,152 @@ const eoseMessage = (subscriptionId: SubscriptionId): RelayMessage =>
 // Service Implementation
 // =============================================================================
 
-const make = Effect.gen(function* () {
-  const eventStore = yield* EventStore
-  const subscriptionManager = yield* SubscriptionManager
-  const policyPipeline = yield* PolicyPipeline
+/**
+ * Core message handler implementation
+ * @param nipRegistry - Optional NipRegistry for hook-based event handling
+ */
+const make = (nipRegistry?: NipRegistry) =>
+  Effect.gen(function* () {
+    const eventStore = yield* EventStore
+    const subscriptionManager = yield* SubscriptionManager
+    const policyPipeline = yield* PolicyPipeline
 
-  const handleEvent = (
-    connectionId: string,
-    event: NostrEvent
-  ): Effect.Effect<
-    HandleResult,
-    StorageError | CryptoError | InvalidPublicKey | DuplicateEvent
-  > =>
-    Effect.gen(function* () {
-      // Run through policy pipeline
-      const decision = yield* policyPipeline.evaluate(event, connectionId)
+    const handleEvent = (
+      connectionId: string,
+      event: NostrEvent
+    ): Effect.Effect<
+      HandleResult,
+      StorageError | CryptoError | InvalidPublicKey | DuplicateEvent
+    > =>
+      Effect.gen(function* () {
+        // Run through policy pipeline
+        const decision = yield* policyPipeline.evaluate(event, connectionId)
 
-      // Handle policy decision
-      if (decision._tag === "Reject") {
-        return {
-          responses: [okMessage(event.id, false, decision.reason)],
-          broadcasts: [],
+        // Handle policy decision
+        if (decision._tag === "Reject") {
+          return {
+            responses: [okMessage(event.id, false, decision.reason)],
+            broadcasts: [],
+          }
         }
-      }
 
-      if (decision._tag === "Shadow") {
-        // Return OK but don't store or broadcast
+        if (decision._tag === "Shadow") {
+          // Return OK but don't store or broadcast
+          return {
+            responses: [okMessage(event.id, true, "")],
+            broadcasts: [],
+          }
+        }
+
+        // Policy accepted - run pre-store hooks and store
+        let stored = false
+        let duplicateOrOlder = false
+        let eventToStore = event
+
+        if (nipRegistry) {
+          // Use NipRegistry hooks for event treatment
+          const hookResult = yield* nipRegistry.runPreStoreHooks(event)
+
+          if (hookResult.action === "reject") {
+            return {
+              responses: [okMessage(event.id, false, hookResult.reason)],
+              broadcasts: [],
+            }
+          }
+
+          eventToStore = hookResult.event
+
+          if (hookResult.action === "replace" && hookResult.deleteFilter) {
+            // Replaceable event - use the filter from the hook
+            const filter = hookResult.deleteFilter
+            if (filter.dTag !== undefined) {
+              // Parameterized replaceable (NIP-33)
+              const result = yield* eventStore.storeParameterizedReplaceableEvent(
+                eventToStore,
+                filter.dTag
+              )
+              stored = result.stored
+              duplicateOrOlder = !result.stored
+            } else {
+              // Regular replaceable (NIP-16)
+              const result = yield* eventStore.storeReplaceableEvent(eventToStore)
+              stored = result.stored
+              duplicateOrOlder = !result.stored
+            }
+          } else {
+            // Regular store
+            const storeResult = yield* eventStore.storeEvent(eventToStore).pipe(
+              Effect.catchTag("DuplicateEvent", () =>
+                Effect.succeed({ duplicate: true, stored: false })
+              ),
+              Effect.map((result) =>
+                typeof result === "boolean" ? { duplicate: false, stored: result } : result
+              )
+            )
+            stored = storeResult.stored
+            duplicateOrOlder = storeResult.duplicate
+          }
+        } else {
+          // Fallback: use hard-coded logic (for backwards compatibility)
+          if (isReplaceableKind(event.kind)) {
+            // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
+            const result = yield* eventStore.storeReplaceableEvent(event)
+            stored = result.stored
+            duplicateOrOlder = !result.stored
+          } else if (isParameterizedReplaceableKind(event.kind)) {
+            // NIP-33: Parameterized replaceable event (kinds 30000-39999)
+            const dTagValue = getDTagValue(event) ?? ""
+            const result = yield* eventStore.storeParameterizedReplaceableEvent(event, dTagValue)
+            stored = result.stored
+            duplicateOrOlder = !result.stored
+          } else {
+            // Regular event - use standard storage
+            const storeResult = yield* eventStore.storeEvent(event).pipe(
+              Effect.catchTag("DuplicateEvent", () =>
+                Effect.succeed({ duplicate: true, stored: false })
+              ),
+              Effect.map((result) =>
+                typeof result === "boolean" ? { duplicate: false, stored: result } : result
+              )
+            )
+            stored = storeResult.stored
+            duplicateOrOlder = storeResult.duplicate
+          }
+        }
+
+        if (duplicateOrOlder) {
+          return {
+            responses: [okMessage(event.id, true, "duplicate: event already exists")],
+            broadcasts: [],
+          }
+        }
+
+        if (!stored) {
+          return {
+            responses: [okMessage(event.id, true, "")],
+            broadcasts: [],
+          }
+        }
+
+        // Run post-store hooks if registry exists
+        if (nipRegistry) {
+          yield* nipRegistry.runPostStoreHooks(eventToStore)
+        }
+
+        // Find matching subscriptions for broadcast
+        const matchingSubs = yield* subscriptionManager.getMatchingSubscriptions(eventToStore)
+
+        const broadcasts: BroadcastMessage[] = matchingSubs.map((sub: Subscription) => ({
+          connectionId: sub.connectionId,
+          subscriptionId: sub.subscriptionId,
+          event: eventToStore,
+        }))
+
         return {
           responses: [okMessage(event.id, true, "")],
-          broadcasts: [],
+          broadcasts,
         }
-      }
-
-      // Policy accepted - store the event using appropriate method
-      let stored = false
-      let duplicateOrOlder = false
-
-      if (isReplaceableKind(event.kind)) {
-        // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
-        const result = yield* eventStore.storeReplaceableEvent(event)
-        stored = result.stored
-        duplicateOrOlder = !result.stored
-      } else if (isParameterizedReplaceableKind(event.kind)) {
-        // NIP-33: Parameterized replaceable event (kinds 30000-39999)
-        const dTagValue = getDTagValue(event) ?? ""
-        const result = yield* eventStore.storeParameterizedReplaceableEvent(event, dTagValue)
-        stored = result.stored
-        duplicateOrOlder = !result.stored
-      } else {
-        // Regular event - use standard storage
-        const storeResult = yield* eventStore.storeEvent(event).pipe(
-          Effect.catchTag("DuplicateEvent", () =>
-            Effect.succeed({ duplicate: true, stored: false })
-          ),
-          Effect.map((result) =>
-            typeof result === "boolean" ? { duplicate: false, stored: result } : result
-          )
-        )
-        stored = storeResult.stored
-        duplicateOrOlder = storeResult.duplicate
-      }
-
-      if (duplicateOrOlder) {
-        return {
-          responses: [okMessage(event.id, true, "duplicate: event already exists")],
-          broadcasts: [],
-        }
-      }
-
-      if (!stored) {
-        return {
-          responses: [okMessage(event.id, true, "")],
-          broadcasts: [],
-        }
-      }
-
-      // Find matching subscriptions for broadcast
-      const matchingSubs = yield* subscriptionManager.getMatchingSubscriptions(event)
-
-      const broadcasts: BroadcastMessage[] = matchingSubs.map((sub: Subscription) => ({
-        connectionId: sub.connectionId,
-        subscriptionId: sub.subscriptionId,
-        event,
-      }))
-
-      return {
-        responses: [okMessage(event.id, true, "")],
-        broadcasts,
-      }
-    })
+      })
 
   const handleReq = (
     connectionId: string,
@@ -257,7 +315,22 @@ const make = Effect.gen(function* () {
 })
 
 // =============================================================================
-// Service Layer
+// Service Layers
 // =============================================================================
 
-export const MessageHandlerLive = Layer.effect(MessageHandler, make)
+/**
+ * Default MessageHandler without NipRegistry (backwards compatible)
+ */
+export const MessageHandlerLive = Layer.effect(MessageHandler, make())
+
+/**
+ * MessageHandler that uses NipRegistry for event treatment hooks
+ * This is the recommended layer for full NIP support
+ */
+export const MessageHandlerWithRegistry = Layer.effect(
+  MessageHandler,
+  Effect.gen(function* () {
+    const registry = yield* NipRegistry
+    return yield* make(registry)
+  })
+)
