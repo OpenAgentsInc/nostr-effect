@@ -181,3 +181,39 @@ src/client/
 - FilterMatcher (currently in relay/) should be extracted to shared code for client-side filtering
 - Each phase builds on the previous - don't skip ahead
 - Client and relay can be worked on in parallel within the same phase
+
+## Test Parity Policy
+
+**All NIP implementations MUST maintain test parity with nostr-tools.**
+
+### Reference
+
+- nostr-tools repo: `~/code/nostr-tools`
+- Test vectors: Copy any `.vectors.json` files to corresponding `src/` directories
+
+### Requirements for Each NIP
+
+1. **Review nostr-tools tests** before implementing or after completing a NIP
+2. **Port all test cases** from nostr-tools, adapted for Effect patterns
+3. **Use official test vectors** when available (e.g., `nip44.vectors.json`)
+4. **Include cross-implementation tests** (e.g., decode values from go-nostr, habla.news)
+5. **Test error cases** and invalid inputs thoroughly
+
+### Test Checklist for NIPs
+
+| NIP | nostr-tools Test File | Our Test File | Status |
+|-----|----------------------|---------------|--------|
+| NIP-01 Filters | `filter.test.ts` | `src/relay/FilterMatcher.test.ts` | ⬜ Pending |
+| NIP-19 | `nip19.test.ts` | `src/core/Nip19.test.ts` | ⬜ Needs parity |
+| NIP-44 | `nip44.test.ts` + vectors | `src/services/Nip44Service.test.ts` | ⬜ Needs parity |
+| NIP-04 | `nip04.test.ts` | - | ⬜ Not planned |
+| NIP-05 | `nip05.test.ts` | `src/client/Nip05Service.test.ts` | ⬜ Not started |
+
+### Adding a New NIP
+
+1. Check if nostr-tools has tests: `ls ~/code/nostr-tools/nip*.test.ts`
+2. Copy any test vector files
+3. Port all test cases before marking the NIP complete
+4. Update this checklist
+
+See issue #36 for the initial test parity work.
