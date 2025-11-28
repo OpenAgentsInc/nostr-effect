@@ -19,6 +19,7 @@ import { SqliteEventStoreLive, MemoryEventStoreLive } from "./EventStore.js"
 import { SubscriptionManagerLive } from "./SubscriptionManager.js"
 import { MessageHandlerLive } from "./MessageHandler.js"
 import { RelayServer, RelayServerLive, type RelayConfig, type RelayHandle } from "./RelayServer.js"
+import { PolicyPipelineLive } from "./policy/index.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { CryptoServiceLive } from "../services/CryptoService.js"
 
@@ -46,6 +47,9 @@ export {
   type ConnectionData,
 } from "./RelayServer.js"
 
+// Policy module
+export * from "./policy/index.js"
+
 // =============================================================================
 // Full Relay Layer
 // =============================================================================
@@ -56,6 +60,7 @@ export {
 export const makeRelayLayer = (dbPath: string) =>
   RelayServerLive.pipe(
     Layer.provide(MessageHandlerLive),
+    Layer.provide(PolicyPipelineLive),
     Layer.provide(SubscriptionManagerLive),
     Layer.provide(SqliteEventStoreLive(dbPath)),
     Layer.provide(EventServiceLive),
@@ -67,6 +72,7 @@ export const makeRelayLayer = (dbPath: string) =>
  */
 export const MemoryRelayLayer = RelayServerLive.pipe(
   Layer.provide(MessageHandlerLive),
+  Layer.provide(PolicyPipelineLive),
   Layer.provide(SubscriptionManagerLive),
   Layer.provide(MemoryEventStoreLive),
   Layer.provide(EventServiceLive),

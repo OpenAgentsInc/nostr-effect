@@ -8,7 +8,7 @@ import { Context, Effect, Layer } from "effect"
 import { Schema } from "@effect/schema"
 import { EventStore } from "./EventStore.js"
 import { SubscriptionManager, type Subscription } from "./SubscriptionManager.js"
-import { EventService } from "../services/EventService.js"
+import { PolicyPipeline } from "./policy/index.js"
 import { MessageParseError, DuplicateEvent, StorageError } from "../core/Errors.js"
 import type { CryptoError, InvalidPublicKey } from "../core/Errors.js"
 import {
@@ -83,26 +83,36 @@ const eoseMessage = (subscriptionId: SubscriptionId): RelayMessage =>
 const make = Effect.gen(function* () {
   const eventStore = yield* EventStore
   const subscriptionManager = yield* SubscriptionManager
-  const eventService = yield* EventService
+  const policyPipeline = yield* PolicyPipeline
 
   const handleEvent = (
+    connectionId: string,
     event: NostrEvent
   ): Effect.Effect<
     HandleResult,
     StorageError | CryptoError | InvalidPublicKey | DuplicateEvent
   > =>
     Effect.gen(function* () {
-      // Validate event signature and ID
-      const isValid = yield* eventService.verifyEvent(event)
+      // Run through policy pipeline
+      const decision = yield* policyPipeline.evaluate(event, connectionId)
 
-      if (!isValid) {
+      // Handle policy decision
+      if (decision._tag === "Reject") {
         return {
-          responses: [okMessage(event.id, false, "invalid: event verification failed")],
+          responses: [okMessage(event.id, false, decision.reason)],
           broadcasts: [],
         }
       }
 
-      // Store the event
+      if (decision._tag === "Shadow") {
+        // Return OK but don't store or broadcast
+        return {
+          responses: [okMessage(event.id, true, "")],
+          broadcasts: [],
+        }
+      }
+
+      // Policy accepted - store the event
       const storeResult = yield* eventStore.storeEvent(event).pipe(
         Effect.catchTag("DuplicateEvent", () =>
           Effect.succeed({ duplicate: true, stored: false })
@@ -170,7 +180,7 @@ const make = Effect.gen(function* () {
 
     switch (type) {
       case "EVENT":
-        return handleEvent(message[1])
+        return handleEvent(connectionId, message[1])
 
       case "REQ":
         // REQ message is ["REQ", subscriptionId, ...filters]
