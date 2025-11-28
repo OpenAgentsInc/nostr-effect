@@ -32,7 +32,7 @@ src/
 - **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits, ConnectionManager, NIP-42 Authentication (AuthService)
 - **Relay Backends**: Bun (SQLite), Cloudflare Durable Objects (DO SQLite)
-- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
+- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28)
 
 ### Open Issues
 
@@ -209,6 +209,7 @@ src/client/
 | NIP-44 | `nip44.test.ts` + vectors | `src/services/Nip44Service.test.ts` | ✅ Done |
 | NIP-04 | `nip04.test.ts` | - | ⬜ Not planned |
 | NIP-05 | `nip05.test.ts` | `src/client/Nip05Service.test.ts` | ⬜ Not started |
+| NIP-28 | `nip28.test.ts` | `src/client/ChatService.test.ts` | ✅ Done |
 
 ### Adding a New NIP
 

@@ -175,6 +175,43 @@ After completing each issue:
 3. Move any completed issues from "Open Issues" to "Completed"
 4. Commit the BUILDOUT.md update to main
 
+## NIP Module System
+
+The relay uses a pluggable NIP module system for adding protocol support. Key files:
+
+- `src/relay/core/nip/NipModule.ts` - Interface definition for NIP modules
+- `src/relay/core/nip/NipRegistry.ts` - Service for managing/combining modules
+- `src/relay/core/nip/modules/` - Built-in module implementations
+
+### Creating a NIP Module
+
+```typescript
+import { createModule } from "../NipModule.js"
+
+export const MyNipModule = createModule({
+  id: "nip-XX",           // Unique identifier
+  nips: [XX],             // NIP numbers implemented
+  description: "...",     // Human-readable description
+  kinds: [N, M, ...],     // Event kinds handled (empty = all kinds)
+  policies: [],           // Validation policies (see Policy.ts)
+  preStoreHook: (event) => Effect.succeed({ action: "store", event }),  // Optional
+  postStoreHook: (event) => Effect.void,  // Optional
+  limitations: {},        // NIP-11 relay limitations
+})
+```
+
+### Key Concepts
+
+- **policies**: Validation rules that Accept/Reject/Shadow events
+- **preStoreHook**: Called before storage, can modify/reject/replace events
+- **postStoreHook**: Called after storage for side effects
+- **limitations**: Contributes to NIP-11 relay info document
+
+### Reference PRs
+
+- Issue #5 / PR #41 - Original NIP module system implementation
+- See existing modules (Nip01Module, Nip16Module, Nip28Module, Nip42Module) for patterns
+
 ## Nostr NIPs Reference
 
 **Local NIPs Repository:** The NIPs specification repo is cloned locally at `~/code/nips`. When implementing a NIP, read the spec from there instead of fetching from GitHub:
