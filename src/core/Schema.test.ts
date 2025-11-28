@@ -6,6 +6,7 @@ import {
   EventKind,
   Tag,
   Filter,
+  UnixTimestamp,
 } from "./Schema"
 
 describe("Schema", () => {
@@ -78,6 +79,36 @@ describe("Schema", () => {
       const result = Schema.decodeUnknownSync(Filter)(filter)
       expect(Array.isArray(result.kinds)).toBe(true)
       expect(result.kinds).toHaveLength(2)
+    })
+
+    test("accepts filter with tag queries", () => {
+      const eventId = "a".repeat(64)
+      const pubkey = "b".repeat(64)
+      const filter = {
+        "#e": [eventId],
+        "#p": [pubkey],
+        "#t": ["nostr", "bitcoin"],
+      }
+      const result = Schema.decodeUnknownSync(Filter)(filter)
+      expect(result["#e"]).toHaveLength(1)
+      expect(result["#p"]).toHaveLength(1)
+      expect(result["#t"]).toHaveLength(2)
+    })
+
+    test("accepts complex filter", () => {
+      const decodeTimestamp = Schema.decodeSync(UnixTimestamp)
+      const filter = {
+        kinds: [1],
+        authors: ["c".repeat(64)],
+        since: 1700000000,
+        limit: 100,
+        "#t": ["nostr"],
+      }
+      const result = Schema.decodeUnknownSync(Filter)(filter)
+      expect(result.kinds).toHaveLength(1)
+      expect(result.authors).toHaveLength(1)
+      expect(result.since).toBe(decodeTimestamp(1700000000))
+      expect(result.limit).toBe(100)
     })
   })
 })

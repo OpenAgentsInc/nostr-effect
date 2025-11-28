@@ -116,7 +116,12 @@ export const Filter = Schema.Struct({
   since: Schema.optional(UnixTimestamp),
   until: Schema.optional(UnixTimestamp),
   limit: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
-  // Generic tag filters (#e, #p, etc.)
+  // Tag filters (#e, #p, #a, #d, #t, etc.)
+  "#e": Schema.optional(Schema.Array(EventId)),
+  "#p": Schema.optional(Schema.Array(PublicKey)),
+  "#a": Schema.optional(Schema.Array(Schema.String)),
+  "#d": Schema.optional(Schema.Array(Schema.String)),
+  "#t": Schema.optional(Schema.Array(Schema.String)),
 }).pipe(Schema.brand("Filter"))
 export type Filter = typeof Filter.Type
 
