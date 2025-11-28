@@ -57,9 +57,11 @@ src/
 | #19 | NIP-44 versioned encryption |
 | ~~#20~~ | ~~NIP-02 follow list management~~ ✅ |
 | ~~#21~~ | ~~NIP-65 relay list metadata~~ ✅ |
-| #22 | NIP-04 legacy DM encryption |
+| ~~#22~~ | ~~NIP-04 legacy DM encryption~~ (not planned) |
 | #23 | RelayPool multi-relay connections |
 | #24 | NIP-46 remote signing |
+| #31 | NIP-89 application handlers |
+| #32 | NIP-90 DVM support |
 
 ## Build Order
 
@@ -83,27 +85,34 @@ src/
 | 2.4 | #10: NIP-22 | - | Timestamp bounds (policy exists) |
 | 2.5 | - | #18: NIP-05 | Independent (HTTP only) |
 
-### Phase 3: Encryption & Auth
+### Phase 3: DVM & Discovery
+**Goal**: Data Vending Machine and application discovery
+
+| Order | Relay | Client | Notes |
+|-------|-------|--------|-------|
+| 3.1 | Done (NIP-33) | #31: NIP-89 Handlers | App discovery via kind 31989/31990 |
+| 3.2 | Done | #32: NIP-90 DVM | Job requests/results (kinds 5000-7000) |
+
+### Phase 4: Encryption & Auth
 **Goal**: Secure messaging and authentication
 
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
-| 3.1 | - | #17: NIP-44 | Modern encryption for DMs |
-| 3.2 | - | #20: NIP-04 | Legacy DM support |
-| 3.3 | #6: ConnectionManager | - | Per-connection state |
-| 3.4 | #12: NIP-42 Auth | - | Requires ConnectionManager |
+| 4.1 | - | #19: NIP-44 | Modern encryption for DMs |
+| 4.2 | #6: ConnectionManager | - | Per-connection state |
+| 4.3 | #12: NIP-42 Auth | - | Requires ConnectionManager |
 
-### Phase 4: Advanced
+### Phase 5: Advanced
 **Goal**: Production-ready features
 
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
-| 4.1 | #7: NIP-09 Deletion | - | Soft delete |
-| 4.2 | #11: NIP-40 Expiration | - | Event TTL |
-| 4.3 | #13: Rate Limiting | - | Security |
-| 4.4 | #5: NIP Module System | - | Pluggable NIPs |
-| 4.5 | - | #21: RelayPool | Multi-relay |
-| 4.6 | - | #22: NIP-46 | Remote signing |
+| 5.1 | #7: NIP-09 Deletion | - | Soft delete |
+| 5.2 | #11: NIP-40 Expiration | - | Event TTL |
+| 5.3 | #13: Rate Limiting | - | Security |
+| 5.4 | #5: NIP Module System | - | Pluggable NIPs |
+| 5.5 | - | #23: RelayPool | Multi-relay |
+| 5.6 | - | #24: NIP-46 | Remote signing |
 
 ## Parallel Development Strategy
 
@@ -136,13 +145,16 @@ Phase 2: Core NIPs
   ├─ Relay: NIP-11 (relay info)
   └─ Client: NIP-05 (DNS verification)
 
-Phase 3: Encryption & Auth
+Phase 3: DVM & Discovery
+  ├─ Client: NIP-89 (app handlers, uses NIP-33)
+  └─ Client: NIP-90 (DVM jobs, uses NIP-89 for discovery)
+
+Phase 4: Encryption & Auth
   ├─ Client: NIP-44 (modern encryption)
-  ├─ Client: NIP-04 (legacy compat)
   ├─ Relay: ConnectionManager
   └─ Relay: NIP-42 (auth)
 
-Phase 4: Advanced
+Phase 5: Advanced
   ├─ Relay: NIP-09, NIP-40, Rate Limiting, Module System
   └─ Client: RelayPool, NIP-46
 ```
@@ -155,9 +167,10 @@ src/client/
 ├── RelayPool.ts           # Multi-relay orchestration
 ├── Nip05Service.ts        # DNS identifier resolution
 ├── Nip44Encryption.ts     # Versioned encryption (NIP-44)
-├── Nip04Encryption.ts     # Legacy DM encryption (NIP-04)
 ├── FollowListService.ts   # Follow list management (NIP-02)
 ├── RelayListService.ts    # Relay preferences (NIP-65)
+├── HandlerService.ts      # App handler discovery (NIP-89)
+├── DVMService.ts          # Data Vending Machine (NIP-90)
 └── RemoteSignerService.ts # Nostr Connect (NIP-46)
 ```
 
