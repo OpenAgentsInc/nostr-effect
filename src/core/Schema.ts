@@ -136,11 +136,10 @@ export const ClientEventMessage = Schema.Tuple(
 )
 export type ClientEventMessage = typeof ClientEventMessage.Type
 
-/** REQ message: subscribe with filters */
+/** REQ message: subscribe with filters (variadic: ["REQ", subId, filter, filter, ...]) */
 export const ClientReqMessage = Schema.Tuple(
-  Schema.Literal("REQ"),
-  SubscriptionId,
-  Schema.Array(Filter).pipe(Schema.minItems(1))
+  [Schema.Literal("REQ"), SubscriptionId],
+  Filter
 )
 export type ClientReqMessage = typeof ClientReqMessage.Type
 

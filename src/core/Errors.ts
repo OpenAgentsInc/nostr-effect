@@ -134,3 +134,30 @@ export class SubscriptionClosed extends Schema.TaggedError<SubscriptionClosed>()
     reason: Schema.String,
   }
 ) {}
+
+// =============================================================================
+// Storage Errors (Relay)
+// =============================================================================
+
+export class StorageError extends Schema.TaggedError<StorageError>()(
+  "StorageError",
+  {
+    message: Schema.String,
+    operation: Schema.Literal("insert", "query", "delete", "init"),
+  }
+) {}
+
+export class DuplicateEvent extends Schema.TaggedError<DuplicateEvent>()(
+  "DuplicateEvent",
+  {
+    eventId: Schema.String,
+  }
+) {}
+
+export class MessageParseError extends Schema.TaggedError<MessageParseError>()(
+  "MessageParseError",
+  {
+    message: Schema.String,
+    raw: Schema.String,
+  }
+) {}
