@@ -1,27 +1,8 @@
 # nostr-effect
 
-Nostr relay & client library in Effect (wip)
+Nostr relay & client library built with [Effect](https://effect.website/). Work in progress.
 
-## Quick Start
-
-```typescript
-// Start a relay
-import { startRelay } from "nostr-effect"
-const relay = await startRelay({ port: 8080, dbPath: "./relay.db" })
-
-// Create events
-import { Effect } from "effect"
-import { CryptoService, CryptoServiceLive, EventService, EventServiceLive } from "nostr-effect"
-
-const event = await Effect.runPromise(
-  Effect.gen(function* () {
-    const crypto = yield* CryptoService
-    const events = yield* EventService
-    const privateKey = yield* crypto.generatePrivateKey()
-    return yield* events.createEvent({ kind: 1, content: "Hello!" }, privateKey)
-  }).pipe(Effect.provide(EventServiceLive), Effect.provide(CryptoServiceLive))
-)
-```
+Building both sides of the protocol in tandem - using each to test the other.
 
 ## Status
 
