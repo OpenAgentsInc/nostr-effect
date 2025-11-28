@@ -14,6 +14,9 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    // Use bun types only
+    "types": ["bun"],
+
     // Best practices
     "strict": true,
     "skipLibCheck": true,
@@ -33,5 +36,7 @@
         "name": "@effect/language-service"
       }
     ]
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

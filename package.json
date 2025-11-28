@@ -9,7 +9,8 @@
   "scripts": {
     "prepare": "effect-language-service patch",
     "test": "bun test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --incremental",
+    "build:check": "bun build src/index.ts --outdir /dev/null --target node 2>&1 | head -100",
     "build": "bun build src/index.ts --outdir dist --target node"
   },
   "keywords": [
