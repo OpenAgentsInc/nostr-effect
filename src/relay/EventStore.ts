@@ -8,6 +8,7 @@ import { Context, Effect, Layer } from "effect"
 import { Database } from "bun:sqlite"
 import { StorageError, DuplicateEvent } from "../core/Errors.js"
 import type { NostrEvent, Filter, EventId } from "../core/Schema.js"
+import { matchesFilter } from "./FilterMatcher.js"
 
 // =============================================================================
 // Service Interface
@@ -101,56 +102,6 @@ const rowToEvent = (row: {
     sig: row.sig,
   }) as NostrEvent
 
-/**
- * Check if an event matches a single filter
- */
-const matchesFilter = (event: NostrEvent, filter: Filter): boolean => {
-  // ids - prefix match
-  if (filter.ids && filter.ids.length > 0) {
-    if (!filter.ids.some((id) => event.id.startsWith(id))) return false
-  }
-
-  // authors - prefix match
-  if (filter.authors && filter.authors.length > 0) {
-    if (!filter.authors.some((author) => event.pubkey.startsWith(author))) return false
-  }
-
-  // kinds - exact match
-  if (filter.kinds && filter.kinds.length > 0) {
-    if (!filter.kinds.includes(event.kind)) return false
-  }
-
-  // since - created_at >= since
-  if (filter.since !== undefined) {
-    if (event.created_at < filter.since) return false
-  }
-
-  // until - created_at <= until
-  if (filter.until !== undefined) {
-    if (event.created_at > filter.until) return false
-  }
-
-  // Tag filters (#e, #p, #a, #d, #t)
-  const tagFilters: Array<[string, readonly string[] | undefined]> = [
-    ["e", filter["#e"] as readonly string[] | undefined],
-    ["p", filter["#p"] as readonly string[] | undefined],
-    ["a", filter["#a"] as readonly string[] | undefined],
-    ["d", filter["#d"] as readonly string[] | undefined],
-    ["t", filter["#t"] as readonly string[] | undefined],
-  ]
-
-  for (const [tagName, tagValues] of tagFilters) {
-    if (tagValues && tagValues.length > 0) {
-      const eventTagValues = event.tags
-        .filter((tag) => tag[0] === tagName)
-        .map((tag) => tag[1])
-      if (!tagValues.some((v) => eventTagValues.includes(v))) return false
-    }
-  }
-
-  return true
-}
-
 const makeSqliteStore = (db: Database): EventStore => ({
   _tag: "EventStore",
 
@@ -225,7 +176,7 @@ const makeSqliteStore = (db: Database): EventStore => ({
       try: () => {
         const stmt = db.prepare("SELECT 1 FROM events WHERE id = ?")
         const row = stmt.get(id)
-        return row !== null
+        return row != null
       },
       catch: (error) =>
         new StorageError({

@@ -53,22 +53,19 @@ export interface RelayHandle {
 export const RelayServer = Context.GenericTag<RelayServer>("RelayServer")
 
 // =============================================================================
-// Connection ID Generation
-// =============================================================================
-
-let connectionCounter = 0
-const generateConnectionId = (): string => {
-  connectionCounter++
-  return `conn_${Date.now()}_${connectionCounter}`
-}
-
-// =============================================================================
 // Service Implementation
 // =============================================================================
 
 const make = Effect.gen(function* () {
   const messageHandler = yield* MessageHandler
   const subscriptionManager = yield* SubscriptionManager
+
+  // Connection ID generation (encapsulated, not global)
+  let connectionCounter = 0
+  const generateConnectionId = (): string => {
+    connectionCounter++
+    return `conn_${Date.now()}_${connectionCounter}`
+  }
 
   // Track active WebSocket connections for broadcasting
   const connections = new Map<string, { ws: unknown; send: (msg: string) => void }>()

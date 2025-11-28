@@ -38,10 +38,10 @@ export const Signature = Schema.String.pipe(
 )
 export type Signature = typeof Signature.Type
 
-/** Unix timestamp in seconds */
+/** Unix timestamp in seconds (can be 0) */
 export const UnixTimestamp = Schema.Number.pipe(
   Schema.int(),
-  Schema.positive(),
+  Schema.greaterThanOrEqualTo(0),
   Schema.brand("UnixTimestamp")
 )
 export type UnixTimestamp = typeof UnixTimestamp.Type

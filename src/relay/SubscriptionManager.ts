@@ -6,6 +6,7 @@
  */
 import { Context, Effect, Layer, Ref } from "effect"
 import type { NostrEvent, Filter, SubscriptionId } from "../core/Schema.js"
+import { matchesFilters } from "./FilterMatcher.js"
 
 // =============================================================================
 // Types
@@ -65,65 +66,11 @@ export interface SubscriptionManager {
 
 export const SubscriptionManager = Context.GenericTag<SubscriptionManager>("SubscriptionManager")
 
-// =============================================================================
-// Filter Matching
-// =============================================================================
-
 /**
- * Check if an event matches a single filter (AND logic within filter)
+ * Check if an event matches a subscription's filters
  */
-const matchesFilter = (event: NostrEvent, filter: Filter): boolean => {
-  // ids - prefix match
-  if (filter.ids && filter.ids.length > 0) {
-    if (!filter.ids.some((id) => event.id.startsWith(id))) return false
-  }
-
-  // authors - prefix match
-  if (filter.authors && filter.authors.length > 0) {
-    if (!filter.authors.some((author) => event.pubkey.startsWith(author))) return false
-  }
-
-  // kinds - exact match
-  if (filter.kinds && filter.kinds.length > 0) {
-    if (!filter.kinds.includes(event.kind)) return false
-  }
-
-  // since - created_at >= since
-  if (filter.since !== undefined) {
-    if (event.created_at < filter.since) return false
-  }
-
-  // until - created_at <= until
-  if (filter.until !== undefined) {
-    if (event.created_at > filter.until) return false
-  }
-
-  // Tag filters (#e, #p, #a, #d, #t)
-  const tagFilters: Array<[string, readonly string[] | undefined]> = [
-    ["e", filter["#e"] as readonly string[] | undefined],
-    ["p", filter["#p"] as readonly string[] | undefined],
-    ["a", filter["#a"] as readonly string[] | undefined],
-    ["d", filter["#d"] as readonly string[] | undefined],
-    ["t", filter["#t"] as readonly string[] | undefined],
-  ]
-
-  for (const [tagName, tagValues] of tagFilters) {
-    if (tagValues && tagValues.length > 0) {
-      const eventTagValues = event.tags.filter((tag) => tag[0] === tagName).map((tag) => tag[1])
-      if (!tagValues.some((v) => eventTagValues.includes(v))) return false
-    }
-  }
-
-  return true
-}
-
-/**
- * Check if an event matches any filter in the subscription (OR logic between filters)
- */
-const matchesSubscription = (event: NostrEvent, subscription: Subscription): boolean => {
-  if (subscription.filters.length === 0) return false
-  return subscription.filters.some((filter) => matchesFilter(event, filter))
-}
+const matchesSubscription = (event: NostrEvent, subscription: Subscription): boolean =>
+  matchesFilters(event, subscription.filters)
 
 // =============================================================================
 // In-Memory Implementation
