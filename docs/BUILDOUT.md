@@ -31,6 +31,7 @@ src/
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline
+- **Client**: RelayService (WebSocket connection management)
 
 ### Open Issues
 
@@ -50,7 +51,7 @@ src/
 **Client (#14-24)**
 | Issue | Description |
 |-------|-------------|
-| #14 | RelayService (WebSocket management) |
+| ~~#14~~ | ~~RelayService (WebSocket management)~~ ✅ |
 | ~~#17~~ | ~~NIP-19 bech32 encoding (Core)~~ ✅ |
 | #18 | NIP-05 identifier verification |
 | #19 | NIP-44 versioned encryption |
@@ -68,7 +69,7 @@ src/
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
 | 1.1 | Done | ✅ #17: NIP-19 bech32 | User-facing key display |
-| 1.2 | Done | #14: RelayService | WebSocket + reconnection |
+| 1.2 | Done | ✅ #14: RelayService | WebSocket + reconnection |
 | 1.3 | - | E2E test | Validates client-relay integration |
 
 ### Phase 2: Core NIPs
