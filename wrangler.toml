@@ -2,7 +2,7 @@
 # Deploy with: bunx wrangler deploy
 
 name = "nostr-relay"
-main = "dist/cloudflare/worker.js"
+main = "src/relay/backends/cloudflare/worker.ts"
 compatibility_date = "2024-11-01"
 
 # Durable Objects configuration
