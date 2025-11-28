@@ -7,9 +7,11 @@
   "module": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "prepare": "effect-language-service patch",
+    "prepare": "effect-language-service patch && bun run setup:hooks",
+    "setup:hooks": "mkdir -p .git/hooks && cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push",
     "test": "bun test",
     "typecheck": "tsc --noEmit --incremental",
+    "verify": "bun run typecheck && bun test",
     "build:check": "bun build src/index.ts --outdir /dev/null --target node 2>&1 | head -100",
     "build": "bun build src/index.ts --outdir dist --target node"
   },
