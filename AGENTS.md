@@ -10,6 +10,7 @@ Default to using Bun instead of Node.js.
 - Use `bun test` instead of `jest` or `vitest`
 - Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
 - Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
+- **Always use exact versions** when adding packages: `bun add package@1.2.3` (no `^` or `~` ranges)
 - Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
 - Bun automatically loads .env, so don't use dotenv.
 

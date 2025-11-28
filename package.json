@@ -1,11 +1,33 @@
 {
   "name": "nostr-effect",
-  "module": "index.ts",
+  "version": "0.0.1",
+  "description": "A type-safe, composable Nostr library built with Effect",
   "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "check": "tsc --noEmit",
+    "build": "bun build src/index.ts --outdir dist --target node"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "keywords": [
+    "nostr",
+    "effect",
+    "typescript",
+    "protocol"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "1.1.14",
+    "typescript": "5.7.2"
+  },
+  "dependencies": {
+    "@effect/platform": "0.93.5",
+    "@effect/schema": "0.75.5",
+    "@noble/curves": "1.8.1",
+    "@noble/hashes": "1.7.1",
+    "@scure/base": "1.2.4",
+    "effect": "3.19.8"
   }
 }
