@@ -191,6 +191,28 @@ describe("Built-in Modules", () => {
       expect(custom.limitations?.max_content_length).toBe(1000)
       expect(custom.limitations?.max_event_tags).toBe(100)
     })
+
+    it("should support timestamp limits", () => {
+      const custom = createNip01Module({
+        maxFutureSeconds: 60,
+        maxPastSeconds: 3600,
+      })
+
+      // Should add timestamp policies (signature + content + tags + 2 timestamp = 5)
+      expect(custom.policies.length).toBe(5)
+      // Should report limits in NIP-11
+      expect(custom.limitations?.created_at_upper_limit).toBe(60)
+      expect(custom.limitations?.created_at_lower_limit).toBe(3600)
+    })
+
+    it("should not include timestamp limits when not configured", () => {
+      const custom = createNip01Module({})
+
+      // Only signature, content, tags
+      expect(custom.policies.length).toBe(3)
+      expect(custom.limitations?.created_at_upper_limit).toBeUndefined()
+      expect(custom.limitations?.created_at_lower_limit).toBeUndefined()
+    })
   })
 
   describe("Nip11Module", () => {
