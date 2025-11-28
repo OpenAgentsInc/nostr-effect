@@ -13,5 +13,8 @@ export * from "./core/Nip19.js"
 export * from "./services/CryptoService.js"
 export * from "./services/EventService.js"
 
+// Client
+export * from "./client/index.js"
+
 // Relay
 export * from "./relay/index.js"
