@@ -171,6 +171,30 @@ After completing each issue:
 3. Move any completed issues from "Open Issues" to "Completed"
 4. Commit the BUILDOUT.md update to main
 
+## Nostr NIPs Reference
+
+**Local NIPs Repository:** The NIPs specification repo is cloned locally at `~/code/nips`. When implementing a NIP, read the spec from there instead of fetching from GitHub:
+
+```bash
+# Example: Read NIP-65 spec
+cat ~/code/nips/65.md
+```
+
+Common NIPs for this project:
+- `01.md` - Basic protocol flow (events, filters, subscriptions)
+- `02.md` - Follow list (kind 3)
+- `04.md` - Encrypted DMs (legacy)
+- `05.md` - DNS identifiers
+- `09.md` - Event deletion
+- `11.md` - Relay information
+- `16.md` - Event treatment (replaceable events)
+- `19.md` - bech32 encoding
+- `33.md` - Parameterized replaceable events
+- `42.md` - Authentication
+- `44.md` - Versioned encryption
+- `46.md` - Nostr Connect (remote signing)
+- `65.md` - Relay list metadata (kind 10002)
+
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
 
