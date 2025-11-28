@@ -28,7 +28,7 @@ src/
 ## Current State
 
 ### Completed
-- **Core**: Schema.ts (NIP-01 types), Errors.ts
+- **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline
 
@@ -47,18 +47,18 @@ src/
 | #12 | NIP-42 Authentication |
 | #13 | Rate Limiting |
 
-**Client (#14-22)**
+**Client (#14-24)**
 | Issue | Description |
 |-------|-------------|
 | #14 | RelayService (WebSocket management) |
-| #15 | NIP-19 bech32 encoding (Core) |
-| #16 | NIP-05 identifier verification |
-| #17 | NIP-44 versioned encryption |
-| #18 | NIP-02 follow list management |
-| #19 | NIP-65 relay list metadata |
-| #20 | NIP-04 legacy DM encryption |
-| #21 | RelayPool multi-relay connections |
-| #22 | NIP-46 remote signing |
+| ~~#17~~ | ~~NIP-19 bech32 encoding (Core)~~ ✅ |
+| #18 | NIP-05 identifier verification |
+| #19 | NIP-44 versioned encryption |
+| #20 | NIP-02 follow list management |
+| #21 | NIP-65 relay list metadata |
+| #22 | NIP-04 legacy DM encryption |
+| #23 | RelayPool multi-relay connections |
+| #24 | NIP-46 remote signing |
 
 ## Build Order
 
@@ -67,7 +67,7 @@ src/
 
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
-| 1.1 | Done | #15: NIP-19 bech32 | User-facing key display |
+| 1.1 | Done | ✅ #17: NIP-19 bech32 | User-facing key display |
 | 1.2 | Done | #14: RelayService | WebSocket + reconnection |
 | 1.3 | - | E2E test | Validates client-relay integration |
 
