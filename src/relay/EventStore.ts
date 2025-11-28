@@ -14,6 +14,16 @@ import { matchesFilter } from "./FilterMatcher.js"
 // Service Interface
 // =============================================================================
 
+/** Result of storing a replaceable event */
+export interface ReplaceableStoreResult {
+  /** Whether the event was stored (new or replaced older) */
+  readonly stored: boolean
+  /** The ID of the event that was replaced, if any */
+  readonly replacedId?: EventId
+  /** If not stored, the reason why */
+  readonly reason?: "older" | "duplicate"
+}
+
 export interface EventStore {
   readonly _tag: "EventStore"
 
@@ -21,6 +31,21 @@ export interface EventStore {
    * Store an event. Returns true if new, false if duplicate.
    */
   storeEvent(event: NostrEvent): Effect.Effect<boolean, StorageError | DuplicateEvent>
+
+  /**
+   * Store a replaceable event (NIP-16).
+   * Replaces existing event with same pubkey+kind if newer.
+   */
+  storeReplaceableEvent(event: NostrEvent): Effect.Effect<ReplaceableStoreResult, StorageError>
+
+  /**
+   * Store a parameterized replaceable event (NIP-33).
+   * Replaces existing event with same pubkey+kind+d-tag if newer.
+   */
+  storeParameterizedReplaceableEvent(
+    event: NostrEvent,
+    dTagValue: string
+  ): Effect.Effect<ReplaceableStoreResult, StorageError>
 
   /**
    * Query events matching filters (OR logic between filters, AND within filter)
@@ -62,18 +87,20 @@ const initSchema = (db: Database): void => {
       kind INTEGER NOT NULL,
       tags TEXT NOT NULL,
       content TEXT NOT NULL,
-      sig TEXT NOT NULL
+      sig TEXT NOT NULL,
+      d_tag TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_pubkey ON events(pubkey);
     CREATE INDEX IF NOT EXISTS idx_kind ON events(kind);
     CREATE INDEX IF NOT EXISTS idx_created_at ON events(created_at);
     CREATE INDEX IF NOT EXISTS idx_pubkey_kind ON events(pubkey, kind);
+    CREATE INDEX IF NOT EXISTS idx_pubkey_kind_dtag ON events(pubkey, kind, d_tag);
   `)
   // Enable WAL mode for better concurrent performance
   db.exec("PRAGMA journal_mode=WAL")
 }
 
-const eventToRow = (event: NostrEvent) => ({
+const eventToRow = (event: NostrEvent, dTagValue?: string) => ({
   $id: event.id,
   $pubkey: event.pubkey,
   $created_at: event.created_at,
@@ -81,6 +108,7 @@ const eventToRow = (event: NostrEvent) => ({
   $tags: JSON.stringify(event.tags),
   $content: event.content,
   $sig: event.sig,
+  $d_tag: dTagValue ?? null,
 })
 
 const rowToEvent = (row: {
@@ -109,8 +137,8 @@ const makeSqliteStore = (db: Database): EventStore => ({
     Effect.try({
       try: () => {
         const stmt = db.prepare(`
-          INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig)
-          VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig)
+          INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig, d_tag)
+          VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig, $d_tag)
         `)
         stmt.run(eventToRow(event))
         return true
@@ -126,6 +154,116 @@ const makeSqliteStore = (db: Database): EventStore => ({
           operation: "insert",
         })
       },
+    }),
+
+  storeReplaceableEvent: (event) =>
+    Effect.try({
+      try: (): ReplaceableStoreResult => {
+        // Check for existing event with same pubkey+kind
+        const existingStmt = db.prepare(
+          "SELECT id, created_at FROM events WHERE pubkey = ? AND kind = ?"
+        )
+        const existing = existingStmt.get(event.pubkey, event.kind) as
+          | { id: string; created_at: number }
+          | null
+
+        if (existing) {
+          // Same event ID = duplicate
+          if (existing.id === event.id) {
+            return { stored: false, reason: "duplicate" }
+          }
+
+          // Per NIP-16: Keep newer event, or if same timestamp, keep lower ID
+          const shouldReplace =
+            event.created_at > existing.created_at ||
+            (event.created_at === existing.created_at && event.id < existing.id)
+
+          if (!shouldReplace) {
+            return { stored: false, reason: "older" }
+          }
+
+          // New event wins - replace
+          const deleteStmt = db.prepare("DELETE FROM events WHERE id = ?")
+          deleteStmt.run(existing.id)
+
+          const insertStmt = db.prepare(`
+            INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig, d_tag)
+            VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig, $d_tag)
+          `)
+          insertStmt.run(eventToRow(event))
+
+          return { stored: true, replacedId: existing.id as EventId }
+        }
+
+        // No existing event - insert new
+        const insertStmt = db.prepare(`
+          INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig, d_tag)
+          VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig, $d_tag)
+        `)
+        insertStmt.run(eventToRow(event))
+
+        return { stored: true }
+      },
+      catch: (error) =>
+        new StorageError({
+          message: `Failed to store replaceable event: ${(error as Error).message}`,
+          operation: "upsert",
+        }),
+    }),
+
+  storeParameterizedReplaceableEvent: (event, dTagValue) =>
+    Effect.try({
+      try: (): ReplaceableStoreResult => {
+        // Check for existing event with same pubkey+kind+d_tag
+        const existingStmt = db.prepare(
+          "SELECT id, created_at FROM events WHERE pubkey = ? AND kind = ? AND d_tag = ?"
+        )
+        const existing = existingStmt.get(event.pubkey, event.kind, dTagValue) as
+          | { id: string; created_at: number }
+          | null
+
+        if (existing) {
+          // Same event ID = duplicate
+          if (existing.id === event.id) {
+            return { stored: false, reason: "duplicate" }
+          }
+
+          // Per NIP-33: Keep newer event, or if same timestamp, keep lower ID
+          const shouldReplace =
+            event.created_at > existing.created_at ||
+            (event.created_at === existing.created_at && event.id < existing.id)
+
+          if (!shouldReplace) {
+            return { stored: false, reason: "older" }
+          }
+
+          // New event wins - replace
+          const deleteStmt = db.prepare("DELETE FROM events WHERE id = ?")
+          deleteStmt.run(existing.id)
+
+          const insertStmt = db.prepare(`
+            INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig, d_tag)
+            VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig, $d_tag)
+          `)
+          insertStmt.run(eventToRow(event, dTagValue))
+
+          return { stored: true, replacedId: existing.id as EventId }
+        }
+
+        // No existing event - insert new
+        const insertStmt = db.prepare(`
+          INSERT INTO events (id, pubkey, created_at, kind, tags, content, sig, d_tag)
+          VALUES ($id, $pubkey, $created_at, $kind, $tags, $content, $sig, $d_tag)
+        `)
+        insertStmt.run(eventToRow(event, dTagValue))
+
+        return { stored: true }
+      },
+      catch: (error) =>
+        new StorageError({
+          message: `Failed to store parameterized replaceable event: ${(error as Error).message}`,
+          operation: "upsert",
+        }),
     }),
 
   queryEvents: (filters) =>
