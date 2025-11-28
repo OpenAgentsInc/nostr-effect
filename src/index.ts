@@ -10,3 +10,4 @@ export * from "./core/Errors.js"
 
 // Services
 export * from "./services/CryptoService.js"
+export * from "./services/EventService.js"
