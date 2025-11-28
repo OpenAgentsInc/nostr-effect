@@ -10,11 +10,12 @@ This document provides a comprehensive technical overview of nostr-effect's arch
 4. [Services Layer](#services-layer)
 5. [Client Library](#client-library)
 6. [Relay Implementation](#relay-implementation)
-7. [Effect Patterns](#effect-patterns)
-8. [Dependencies](#dependencies)
-9. [Bun Runtime APIs](#bun-runtime-apis)
-10. [Build & Configuration](#build--configuration)
-11. [Deployment Targets](#deployment-targets)
+7. [Backend Abstraction](#backend-abstraction)
+8. [Effect Patterns](#effect-patterns)
+9. [Dependencies](#dependencies)
+10. [Bun Runtime APIs](#bun-runtime-apis)
+11. [Build & Configuration](#build--configuration)
+12. [Deployment Targets](#deployment-targets)
 
 ---
 
@@ -863,6 +864,175 @@ interface RelayLimitation {
 
 ---
 
+## Backend Abstraction
+
+The relay is designed with pluggable backends to support multiple deployment targets. This section describes the abstraction layers and planned platform implementations.
+
+### Architecture Layers
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Application Layer                        │
+│  MessageHandler, SubscriptionManager, PolicyPipeline,        │
+│  FilterMatcher, RelayInfo                                    │
+│  (Pure TypeScript/Effect - fully portable)                   │
+├─────────────────────────────────────────────────────────────┤
+│                     Service Interfaces                       │
+│  EventStore, CryptoService, EventService                     │
+│  (Effect Context tags - implementation swappable)            │
+├─────────────────────────────────────────────────────────────┤
+│                     Backend Layer                            │
+│  Storage Backend │ Server Backend │ State Backend            │
+│  (Platform-specific implementations)                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Backend Types
+
+#### 1. Storage Backend (EventStore)
+
+Implements the `EventStore` interface for event persistence.
+
+| Backend | Package/API | Status | Notes |
+|---------|-------------|--------|-------|
+| **BunSqlite** | `bun:sqlite` | ✅ Current | WAL mode, native performance |
+| **DoSqlite** | DO `storage.sql` | 🚧 Planned | Durable Object built-in SQLite |
+| **Memory** | `Map<EventId, NostrEvent>` | ✅ Current | Testing only |
+| **NodeSqlite** | `better-sqlite3` | 📋 Future | Node.js support |
+| **PostgreSQL** | `pg` / `Bun.sql` | 📋 Future | Production scale |
+
+All SQL-based backends share the same schema and query patterns. The `EventStore` interface abstracts the underlying database.
+
+**Note:** Cloudflare deployment uses Durable Object SQLite (`ctx.storage.sql`), NOT D1. DO SQLite is colocated with the DO instance for lower latency and provides both storage and state coordination in one primitive.
+
+#### 2. Server Backend
+
+Handles HTTP requests and WebSocket connections.
+
+| Backend | APIs | Status | Notes |
+|---------|------|--------|-------|
+| **BunServer** | `Bun.serve()` | ✅ Current | Native WebSocket, single binary |
+| **CloudflareWorker** | `fetch()` + WebSocket | 🚧 Planned | Edge deployment |
+| **NodeServer** | `http` + `ws` | 📋 Future | Traditional Node.js |
+
+#### 3. State Backend
+
+Manages per-connection state (subscriptions, rate limits).
+
+| Backend | Persistence | Status | Notes |
+|---------|-------------|--------|-------|
+| **InMemory** | Process lifetime | ✅ Current | Bun, Node, single CF Worker |
+| **DurableObject** | DO storage | 📋 Future | Full CF relay with broadcast |
+| **Redis** | External | 📋 Future | Distributed Node clusters |
+
+### Cloudflare Workers Strategy
+
+Cloudflare deployment uses **Durable Objects with built-in SQLite** (`storage.sql`) for both storage and state coordination. This provides:
+
+- Full relay functionality (subscriptions, broadcast)
+- Colocated compute + storage (low latency)
+- Single-writer consistency
+- WebSocket connection management
+
+See **[CLOUDFLARE.md](CLOUDFLARE.md)** for detailed implementation guide.
+
+### Proposed Directory Structure
+
+```
+src/relay/
+├── core/                    # Platform-agnostic (portable)
+│   ├── MessageHandler.ts
+│   ├── SubscriptionManager.ts
+│   ├── PolicyPipeline.ts
+│   ├── FilterMatcher.ts
+│   ├── RelayInfo.ts
+│   └── index.ts
+│
+├── storage/                 # EventStore implementations
+│   ├── EventStore.ts        # Interface definition
+│   ├── MemoryEventStore.ts
+│   └── SqlQueries.ts        # Shared SQL query builders
+│
+├── backends/
+│   ├── bun/
+│   │   ├── BunSqliteStore.ts   # bun:sqlite EventStore
+│   │   ├── BunServer.ts        # Bun.serve() wrapper
+│   │   └── index.ts
+│   │
+│   ├── cloudflare/
+│   │   ├── DoSqliteStore.ts    # DO storage.sql EventStore
+│   │   ├── NostrRelayDO.ts     # Durable Object class
+│   │   ├── worker.ts           # Worker routing entrypoint
+│   │   └── wrangler.toml       # Deployment config
+│   │
+│   └── node/  (future)
+│       ├── NodeSqliteStore.ts
+│       └── NodeServer.ts
+│
+├── index.ts                 # Default exports (Bun)
+└── main.ts                  # Bun CLI entrypoint
+```
+
+### Implementation Plan
+
+#### Phase 1: Refactor for Portability
+
+1. Extract platform-agnostic code to `relay/core/`
+2. Move `SqliteEventStore` logic to `relay/storage/`
+3. Create `relay/backends/bun/` with current Bun implementations
+4. Ensure all imports use the new structure
+
+#### Phase 2: Cloudflare Durable Object Backend
+
+1. Implement `DoSqliteStore` using DO `storage.sql` API
+2. Create `NostrRelayDO` Durable Object class
+3. Create `worker.ts` routing entrypoint
+4. Add `wrangler.toml` with `new_sqlite_classes` migration
+5. Test with Wrangler local dev
+
+#### Phase 3: Production Hardening
+
+1. Add connection-scoped rate limiting
+2. Implement graceful WebSocket close handling
+3. Add metrics/logging for Cloudflare Analytics
+4. Document deployment process
+5. Consider sharding strategy for high-traffic relays
+
+### Backend Selection
+
+The backend is selected at build/deploy time, not runtime:
+
+```typescript
+// Bun entrypoint
+const RelayLayers = RelayCoreLive.pipe(
+  Layer.provide(BunSqliteStoreLive(dbPath)),
+  Layer.provide(BunServerLive)
+)
+
+// Cloudflare entrypoint (see CLOUDFLARE.md)
+const RelayLayers = RelayCoreLive.pipe(
+  Layer.provide(DoSqliteStoreLive(state.storage.sql))
+)
+```
+
+### Portable Components
+
+These modules work unchanged across all platforms:
+
+| Component | Dependencies | Notes |
+|-----------|--------------|-------|
+| `MessageHandler` | Effect, Schema | Pure message routing |
+| `SubscriptionManager` | Effect.Ref | In-memory state |
+| `PolicyPipeline` | Effect, EventService | Validation logic |
+| `FilterMatcher` | None | Pure functions |
+| `RelayInfo` | None | NIP-11 metadata |
+| `CryptoService` | @noble/* | Pure crypto |
+| `EventService` | CryptoService | Event creation/verification |
+| `Nip44Service` | @noble/* | Encryption |
+| `Nip19` | @scure/base | Bech32 encoding |
+
+---
+
 ## Effect Patterns
 
 ### Layer Composition
@@ -1085,14 +1255,25 @@ Prevents pushing code that doesn't compile or pass tests.
 
 ## Deployment Targets
 
-### Bun Runtime (Current)
+See [Backend Abstraction](#backend-abstraction) for the architectural approach to multi-platform support.
+
+### Bun Runtime (Current Default)
 
 **Status:** ✅ Fully supported
+
+**Backend:** `backends/bun/`
 
 **Requirements:**
 - Bun 1.0+ runtime
 - File system access (for SQLite)
 - Network access (WebSocket)
+
+**Components:**
+| Component | Implementation |
+|-----------|----------------|
+| Storage | `BunSqliteStore` → `bun:sqlite` |
+| Server | `BunServer` → `Bun.serve()` |
+| State | In-memory `SubscriptionManager` |
 
 **Deployment:**
 ```dockerfile
@@ -1103,68 +1284,62 @@ RUN bun install
 CMD ["bun", "run", "src/relay/main.ts"]
 ```
 
-### Cloudflare Workers
+**Characteristics:**
+- Single binary, no external dependencies
+- Native SQLite with WAL mode
+- Low memory footprint (~50MB idle)
+- Sub-millisecond WebSocket latency
 
-**Status:** ⚠️ Partial support
+### Cloudflare Workers + Durable Objects (Planned)
 
-**Compatible Components:**
-- ✅ Core types and schemas
-- ✅ CryptoService (pure @noble libraries)
-- ✅ Nip44Service (pure crypto)
-- ✅ Nip19 encoding/decoding
-- ✅ Client services (with fetch-based WebSocket)
+**Status:** 🚧 In development
 
-**Incompatible Components:**
-- ❌ `bun:sqlite` → Use Cloudflare D1
-- ❌ `Bun.serve()` → Use Workers fetch handler
-- ❌ Long-lived WebSocket → Use Durable Objects
+**Backend:** `backends/cloudflare/`
 
-**Migration Path:**
+Uses Durable Objects with built-in SQLite for storage and WebSocket state management. Full relay functionality with broadcast support.
 
-1. **Extract client library** - Already portable
-2. **Abstract EventStore** - Interface allows D1 implementation
-3. **Rewrite RelayServer** - Use Durable Objects for WebSocket state
+See **[CLOUDFLARE.md](CLOUDFLARE.md)** for complete deployment guide.
 
-**Example D1 EventStore:**
-```typescript
-const D1EventStoreLive = (db: D1Database): Layer<EventStore> =>
-  Layer.succeed(EventStore, {
-    storeEvent: (event) => Effect.tryPromise(() =>
-      db.prepare("INSERT INTO events ...").bind(...).run()
-    ),
-    queryEvents: (filters) => Effect.tryPromise(() =>
-      db.prepare("SELECT * FROM events WHERE ...").all()
-    ),
-    // ...
-  })
-```
+### Node.js (Future)
 
-### Node.js
+**Status:** 📋 Planned
 
-**Status:** ⚠️ Requires adaptation
+**Backend:** `backends/node/`
 
-**Incompatible:**
-- `bun:sqlite` → Use better-sqlite3 or sql.js
-- `Bun.serve()` → Use Express/Fastify + ws
+**Components:**
+| Component | Implementation |
+|-----------|----------------|
+| Storage | `NodeSqliteStore` → `better-sqlite3` |
+| Server | `http` + `ws` library |
+| State | In-memory `SubscriptionManager` |
 
-**Migration Path:**
-```typescript
-// Alternative SQLite
-import Database from "better-sqlite3"
+**Use Cases:**
+- Existing Node.js infrastructure
+- Docker/Kubernetes deployments
+- Platforms without Bun support
 
-// Alternative server
-import express from "express"
-import { WebSocketServer } from "ws"
-```
+### Deno (Future)
 
-### Deno
-
-**Status:** ⚠️ Requires adaptation
+**Status:** 📋 Planned
 
 **Considerations:**
-- No bun:sqlite → Use Deno KV or sqlite module
-- Different WebSocket API
-- Different module resolution
+- Use Deno's SQLite module or Deno KV
+- Native WebSocket support
+- Different module resolution (URL imports)
+
+### Portable Client Library
+
+The client library (`src/client/`) works on all JavaScript runtimes:
+
+| Runtime | WebSocket | Tested |
+|---------|-----------|--------|
+| Bun | Built-in | ✅ |
+| Node.js | `ws` or native (v22+) | 📋 |
+| Deno | Built-in | 📋 |
+| Browser | Built-in | 📋 |
+| Cloudflare Workers | Built-in | 📋 |
+
+**No platform-specific code required** - the client uses standard WebSocket APIs.
 
 ---
 

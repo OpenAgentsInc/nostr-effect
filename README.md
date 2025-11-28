@@ -6,8 +6,9 @@ Building both sides of the protocol in tandem - using each to test the other.
 
 ## Documentation
 
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Comprehensive technical overview, runtime dependencies, deployment targets
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Technical overview, Effect patterns, backend abstraction
 - **[BUILDOUT.md](docs/BUILDOUT.md)** - Development roadmap and parallel build plan
+- **[CLOUDFLARE.md](docs/CLOUDFLARE.md)** - Cloudflare Workers + Durable Objects deployment guide
 
 ## Status
 
