@@ -38,10 +38,10 @@ export const Signature = Schema.String.pipe(
 )
 export type Signature = typeof Signature.Type
 
-/** Unix timestamp in seconds */
+/** Unix timestamp in seconds (can be 0) */
 export const UnixTimestamp = Schema.Number.pipe(
   Schema.int(),
-  Schema.positive(),
+  Schema.greaterThanOrEqualTo(0),
   Schema.brand("UnixTimestamp")
 )
 export type UnixTimestamp = typeof UnixTimestamp.Type
@@ -136,11 +136,10 @@ export const ClientEventMessage = Schema.Tuple(
 )
 export type ClientEventMessage = typeof ClientEventMessage.Type
 
-/** REQ message: subscribe with filters */
+/** REQ message: subscribe with filters (variadic: ["REQ", subId, filter, filter, ...]) */
 export const ClientReqMessage = Schema.Tuple(
-  Schema.Literal("REQ"),
-  SubscriptionId,
-  Schema.Array(Filter).pipe(Schema.minItems(1))
+  [Schema.Literal("REQ"), SubscriptionId],
+  Filter
 )
 export type ClientReqMessage = typeof ClientReqMessage.Type
 
