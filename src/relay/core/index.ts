@@ -9,6 +9,7 @@
 export {
   MessageHandler,
   MessageHandlerLive,
+  MessageHandlerWithRegistry,
   type HandleResult,
   type BroadcastMessage,
 } from "./MessageHandler.js"
@@ -35,3 +36,6 @@ export {
 
 // Policy module
 export * from "./policy/index.js"
+
+// NIP module system
+export * from "./nip/index.js"

@@ -29,22 +29,25 @@ src/
 
 ### Completed
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
-- **Services**: CryptoService, EventService
-- **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info
+- **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
+- **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System
+- **Relay Backends**: Bun (SQLite), Cloudflare Durable Objects (DO SQLite)
 - **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
-- **Services**: Nip44Service (NIP-44 versioned encryption)
+
+### In Progress
+- None
 
 ### Open Issues
 
 **Relay (#5-13)**
 | Issue | Description |
 |-------|-------------|
-| #5 | NIP Module system |
+| ~~#5~~ | ~~NIP Module system~~ ✅ |
 | #6 | ConnectionManager |
 | #7 | NIP-09 Deletion |
 | ~~#8~~ | ~~NIP-11 Relay Info~~ ✅ |
 | ~~#9~~ | ~~NIP-16/33 Replaceable Events~~ ✅ |
-| #10 | NIP-22 Timestamp Limits |
+| #10 | Timestamp Limits (NIP-11 limitation) |
 | #11 | NIP-40 Expiration |
 | #12 | NIP-42 Authentication |
 | #13 | Rate Limiting |
@@ -83,7 +86,7 @@ src/
 | 2.1 | ✅ #9: Replaceable | ✅ #20: NIP-02 Follow Lists | Client needs relay for kind 3 |
 | 2.2 | ✅ #9: Replaceable | ✅ #21: NIP-65 Relay Lists | Client needs relay for kind 10002 |
 | 2.3 | ✅ #8: NIP-11 Info | - | Client reads relay capabilities |
-| 2.4 | #10: NIP-22 | - | Timestamp bounds (policy exists) |
+| 2.4 | #10: Timestamp Limits | - | created_at bounds (NIP-11 limitation) |
 | 2.5 | - | #18: NIP-05 | Independent (HTTP only) |
 
 ### Phase 3: DVM & Discovery
@@ -111,7 +114,7 @@ src/
 | 5.1 | #7: NIP-09 Deletion | - | Soft delete |
 | 5.2 | #11: NIP-40 Expiration | - | Event TTL |
 | 5.3 | #13: Rate Limiting | - | Security |
-| 5.4 | #5: NIP Module System | - | Pluggable NIPs |
+| 5.4 | ✅ #5: NIP Module System | - | Pluggable NIPs |
 | 5.5 | - | #23: RelayPool | Multi-relay |
 | 5.6 | - | #24: NIP-46 | Remote signing |
 

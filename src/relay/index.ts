@@ -28,9 +28,14 @@ import {
 } from "./backends/bun/index.js"
 import {
   MessageHandlerLive,
+  MessageHandlerWithRegistry,
   SubscriptionManagerLive,
   PolicyPipelineLive,
+  PolicyPipelineFromRegistry,
 } from "./core/index.js"
+import { NipRegistryLive } from "./core/nip/NipRegistry.js"
+import { DefaultModules } from "./core/nip/modules/index.js"
+import type { NipModule } from "./core/nip/NipModule.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { CryptoServiceLive } from "../services/CryptoService.js"
 
@@ -71,6 +76,9 @@ export {
 // Policy module
 export * from "./core/policy/index.js"
 
+// NIP module system
+export * from "./core/nip/index.js"
+
 // =============================================================================
 // Re-exports - Bun Backend (default)
 // =============================================================================
@@ -92,6 +100,7 @@ export {
 
 /**
  * Create full relay layer stack with SQLite storage
+ * @deprecated Use makeRelayLayerWithNips for full NIP module support
  */
 export const makeRelayLayer = (dbPath: string) =>
   RelayServerLive.pipe(
@@ -105,6 +114,7 @@ export const makeRelayLayer = (dbPath: string) =>
 
 /**
  * Full relay layer with in-memory storage (for testing)
+ * @deprecated Use MemoryRelayLayerWithNips for full NIP module support
  */
 export const MemoryRelayLayer = RelayServerLive.pipe(
   Layer.provide(MessageHandlerLive),
@@ -116,11 +126,60 @@ export const MemoryRelayLayer = RelayServerLive.pipe(
 )
 
 // =============================================================================
+// NIP-enabled Relay Layers (recommended)
+// =============================================================================
+
+/**
+ * Create relay layer with NIP module system
+ * Uses NipRegistry for policies and event treatment hooks
+ *
+ * @param dbPath - Path to SQLite database
+ * @param modules - NIP modules to load (defaults to DefaultModules)
+ */
+export const makeRelayLayerWithNips = (
+  dbPath: string,
+  modules: readonly NipModule[] = DefaultModules
+) =>
+  RelayServerLive.pipe(
+    Layer.provide(MessageHandlerWithRegistry),
+    Layer.provide(PolicyPipelineFromRegistry),
+    Layer.provide(SubscriptionManagerLive),
+    Layer.provide(NipRegistryLive(modules)),
+    Layer.provide(BunSqliteStoreLive(dbPath)),
+    Layer.provide(EventServiceLive),
+    Layer.provide(CryptoServiceLive)
+  )
+
+/**
+ * In-memory relay layer with NIP module system (for testing)
+ *
+ * @param modules - NIP modules to load (defaults to DefaultModules)
+ */
+export const makeMemoryRelayLayerWithNips = (
+  modules: readonly NipModule[] = DefaultModules
+) =>
+  RelayServerLive.pipe(
+    Layer.provide(MessageHandlerWithRegistry),
+    Layer.provide(PolicyPipelineFromRegistry),
+    Layer.provide(SubscriptionManagerLive),
+    Layer.provide(NipRegistryLive(modules)),
+    Layer.provide(MemoryEventStoreLive),
+    Layer.provide(EventServiceLive),
+    Layer.provide(CryptoServiceLive)
+  )
+
+/**
+ * Default in-memory relay layer with NIP module system
+ */
+export const MemoryRelayLayerWithNips = makeMemoryRelayLayerWithNips(DefaultModules)
+
+// =============================================================================
 // Convenience Functions
 // =============================================================================
 
 /**
  * Start a relay server with default configuration
+ * Uses NIP module system for full NIP support
  *
  * @example
  * ```ts
@@ -129,10 +188,11 @@ export const MemoryRelayLayer = RelayServerLive.pipe(
  * ```
  */
 export const startRelay = async (
-  config: RelayConfig & { dbPath?: string }
+  config: RelayConfig & { dbPath?: string; modules?: readonly NipModule[] }
 ): Promise<RelayHandle> => {
   const dbPath = config.dbPath ?? ":memory:"
-  const layer = makeRelayLayer(dbPath)
+  const modules = config.modules ?? DefaultModules
+  const layer = makeRelayLayerWithNips(dbPath, modules)
 
   const program = Effect.gen(function* () {
     const server = yield* RelayServer
@@ -144,14 +204,19 @@ export const startRelay = async (
 }
 
 /**
- * Start a relay server for testing (in-memory storage)
+ * Start a relay server for testing (in-memory storage with NIP module system)
  */
-export const startTestRelay = async (port: number): Promise<RelayHandle> => {
+export const startTestRelay = async (
+  port: number,
+  modules: readonly NipModule[] = DefaultModules
+): Promise<RelayHandle> => {
+  const layer = makeMemoryRelayLayerWithNips(modules)
+
   const program = Effect.gen(function* () {
     const server = yield* RelayServer
     return yield* server.start({ port })
   })
 
-  const runnable = Effect.provide(program, MemoryRelayLayer)
+  const runnable = Effect.provide(program, layer)
   return Effect.runPromise(runnable)
 }

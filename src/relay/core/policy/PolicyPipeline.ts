@@ -2,6 +2,7 @@
  * PolicyPipeline
  *
  * Service for running events through a configurable policy chain.
+ * Can use NipRegistry for policies or fall back to defaults.
  */
 import { Context, Effect, Layer } from "effect"
 import type { NostrEvent } from "../../../core/Schema.js"
@@ -9,6 +10,7 @@ import type { CryptoError, InvalidPublicKey } from "../../../core/Errors.js"
 import { EventService } from "../../../services/EventService.js"
 import { type Policy, type PolicyContext, type PolicyDecision, all, Accept } from "./Policy.js"
 import { verifySignature, maxContentLength, maxTags } from "./BuiltInPolicies.js"
+import { NipRegistry } from "../nip/NipRegistry.js"
 
 // =============================================================================
 // Service Interface
@@ -93,6 +95,32 @@ export const PolicyPipelineLive = Layer.effect(PolicyPipeline, make())
 export const PolicyPipelineCustom = (
   policy: Policy<CryptoError | InvalidPublicKey, EventService>
 ) => Layer.effect(PolicyPipeline, make(policy))
+
+/**
+ * PolicyPipeline that uses policies from NipRegistry
+ * Falls back to Accept if no policies are registered
+ */
+export const PolicyPipelineFromRegistry = Layer.effect(
+  PolicyPipeline,
+  Effect.gen(function* () {
+    const registry = yield* NipRegistry
+    const eventService = yield* EventService
+    const policy = registry.getPolicy()
+
+    return {
+      _tag: "PolicyPipeline" as const,
+
+      evaluate: (
+        event: NostrEvent,
+        connectionId: string,
+        remoteAddress?: string
+      ): Effect.Effect<PolicyDecision, CryptoError | InvalidPublicKey> => {
+        const ctx: PolicyContext = { event, connectionId, remoteAddress }
+        return policy(ctx).pipe(Effect.provideService(EventService, eventService))
+      },
+    }
+  })
+)
 
 /**
  * No-op pipeline that accepts everything (for testing)

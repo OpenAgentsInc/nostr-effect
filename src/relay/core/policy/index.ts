@@ -41,5 +41,6 @@ export {
   PolicyPipeline,
   PolicyPipelineLive,
   PolicyPipelineCustom,
+  PolicyPipelineFromRegistry,
   PolicyPipelinePermissive,
 } from "./PolicyPipeline.js"

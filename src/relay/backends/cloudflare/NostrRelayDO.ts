@@ -6,16 +6,18 @@
  */
 /// <reference types="@cloudflare/workers-types" />
 
-import { Effect, Layer, Runtime, pipe } from "effect"
+import { Effect, Layer, Runtime } from "effect"
 import { DoSqliteStoreLive, initDoSchema, type SqlStorage } from "./DoSqliteStore.js"
-import { MessageHandler, MessageHandlerLive } from "../../core/MessageHandler.js"
+import { MessageHandler, MessageHandlerWithRegistry } from "../../core/MessageHandler.js"
 import { SubscriptionManager, SubscriptionManagerLive } from "../../core/SubscriptionManager.js"
-import { PolicyPipelineLive } from "../../core/policy/PolicyPipeline.js"
-import { mergeRelayInfo, type RelayInfo } from "../../core/RelayInfo.js"
+import { PolicyPipelineFromRegistry } from "../../core/policy/PolicyPipeline.js"
+import { NipRegistryLive, NipRegistry } from "../../core/nip/NipRegistry.js"
+import { DefaultModules, createNip11Module } from "../../core/nip/modules/index.js"
 import { EventServiceLive } from "../../../services/EventService.js"
 import { CryptoServiceLive } from "../../../services/CryptoService.js"
 import type { RelayMessage } from "../../../core/Schema.js"
 import type { BroadcastMessage } from "../../core/MessageHandler.js"
+import type { RelayInfo } from "../../core/RelayInfo.js"
 
 // =============================================================================
 // Types
@@ -36,7 +38,8 @@ export interface Env {
 
 export class NostrRelayDO implements DurableObject {
   private readonly sql: SqlStorage
-  private readonly relayInfo: RelayInfo
+  private relayInfo: RelayInfo | null = null
+  private readonly nipRegistryLayer: Layer.Layer<NipRegistry>
   private readonly layers: Layer.Layer<MessageHandler | SubscriptionManager>
   private runtime: Runtime.Runtime<MessageHandler | SubscriptionManager> | null = null
 
@@ -53,19 +56,26 @@ export class NostrRelayDO implements DurableObject {
     // Initialize schema on first construction
     initDoSchema(this.sql)
 
-    // Build relay info from environment
-    this.relayInfo = mergeRelayInfo({
+    // Create custom NIP-11 module with environment config
+    const nip11Config: { name: string; description: string; pubkey?: string; contact?: string } = {
       name: env.RELAY_NAME ?? "nostr-effect relay (Cloudflare)",
       description: env.RELAY_DESCRIPTION ?? "A Nostr relay running on Cloudflare Durable Objects",
-      pubkey: env.RELAY_PUBKEY,
-      contact: env.RELAY_CONTACT,
-    })
+    }
+    if (env.RELAY_PUBKEY) nip11Config.pubkey = env.RELAY_PUBKEY
+    if (env.RELAY_CONTACT) nip11Config.contact = env.RELAY_CONTACT
+    const customNip11 = createNip11Module(nip11Config)
 
-    // Build Effect layer stack
-    this.layers = pipe(
-      MessageHandlerLive,
+    // Build modules list - replace default Nip11 with custom one
+    const modules = DefaultModules.filter((m) => m.id !== "nip-11").concat([customNip11])
+
+    // Keep NipRegistry layer reference for relay info lookup
+    this.nipRegistryLayer = NipRegistryLive(modules)
+
+    // Build Effect layer stack with NIP module system
+    this.layers = MessageHandlerWithRegistry.pipe(
       Layer.provideMerge(SubscriptionManagerLive),
-      Layer.provide(PolicyPipelineLive),
+      Layer.provide(PolicyPipelineFromRegistry),
+      Layer.provide(this.nipRegistryLayer),
       Layer.provide(DoSqliteStoreLive(this.sql)),
       Layer.provide(EventServiceLive),
       Layer.provide(CryptoServiceLive)
@@ -82,6 +92,21 @@ export class NostrRelayDO implements DurableObject {
       )
     }
     return this.runtime
+  }
+
+  /**
+   * Get relay info from NipRegistry (cached)
+   */
+  private getRelayInfo(): RelayInfo {
+    if (!this.relayInfo) {
+      this.relayInfo = Effect.runSync(
+        Effect.gen(function* () {
+          const registry = yield* NipRegistry
+          return registry.getRelayInfo() as RelayInfo
+        }).pipe(Effect.provide(this.nipRegistryLayer))
+      )
+    }
+    return this.relayInfo
   }
 
   /**
@@ -131,8 +156,9 @@ export class NostrRelayDO implements DurableObject {
       !request.headers.get("upgrade")
     ) {
       const accept = request.headers.get("accept") ?? ""
+      const relayInfo = this.getRelayInfo()
       if (accept.includes("application/nostr+json")) {
-        return new Response(JSON.stringify(this.relayInfo), {
+        return new Response(JSON.stringify(relayInfo), {
           headers: {
             "Content-Type": "application/nostr+json",
             ...this.corsHeaders(),
@@ -140,7 +166,7 @@ export class NostrRelayDO implements DurableObject {
         })
       }
       // Return simple text for browsers
-      return new Response(`${this.relayInfo.name}\n\nConnect via WebSocket for Nostr relay`, {
+      return new Response(`${relayInfo.name ?? "nostr-effect relay"}\n\nConnect via WebSocket for Nostr relay`, {
         headers: { "Content-Type": "text/plain" },
       })
     }
