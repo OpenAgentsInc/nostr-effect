@@ -37,7 +37,16 @@ export class CryptoError extends Schema.TaggedError<CryptoError>()(
   "CryptoError",
   {
     message: Schema.String,
-    operation: Schema.Literal("sign", "verify", "hash", "generateKey"),
+    operation: Schema.Literal(
+      "sign",
+      "verify",
+      "hash",
+      "generateKey",
+      "encrypt",
+      "decrypt",
+      "getConversationKey",
+      "encryptWithNonce"
+    ),
   }
 ) {}
 
