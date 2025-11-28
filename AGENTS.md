@@ -10,6 +10,7 @@ Default to using Bun instead of Node.js.
 - Use `bun test` instead of `jest` or `vitest`
 - Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
 - Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
+- **Always use exact versions** when adding packages: `bun add package@1.2.3` (no `^` or `~` ranges)
 - Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
 - Bun automatically loads .env, so don't use dotenv.
 
@@ -109,3 +110,15 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+
+<!-- effect-solutions:start -->
+## Effect Solutions Usage
+
+The Effect Solutions CLI provides curated best practices and patterns for Effect TypeScript. Before working on Effect code, check if there's a relevant topic that covers your use case.
+
+- `effect-solutions list` - List all available topics
+- `effect-solutions show <slug...>` - Read one or more topics
+- `effect-solutions search <term>` - Search topics by keyword
+
+**Local Effect Source:** The Effect repository is cloned to `~/.local/share/effect-solutions/effect` for reference. Use this to explore APIs, find usage examples, and understand implementation details when the documentation isn't enough.
+<!-- effect-solutions:end -->
