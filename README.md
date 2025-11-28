@@ -25,7 +25,8 @@ Building both sides of the protocol in tandem - using each to test the other.
 - [x] EventService (create, verify)
 - [x] RelayService (WebSocket connection management)
 - [x] FollowListService (NIP-02 follow lists)
+- [x] RelayListService (NIP-65 relay list metadata)
 - [ ] RelayPool (multi-relay)
 
 ### Future
-NIP-05, NIP-44, NIP-65, NIP-46, DVMs
+NIP-05, NIP-44, NIP-46, DVMs
