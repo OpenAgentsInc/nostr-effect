@@ -31,7 +31,7 @@ src/
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events
-- **Client**: RelayService (WebSocket connection management)
+- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02)
 
 ### Open Issues
 
@@ -55,7 +55,7 @@ src/
 | ~~#17~~ | ~~NIP-19 bech32 encoding (Core)~~ ✅ |
 | #18 | NIP-05 identifier verification |
 | #19 | NIP-44 versioned encryption |
-| #20 | NIP-02 follow list management |
+| ~~#20~~ | ~~NIP-02 follow list management~~ ✅ |
 | #21 | NIP-65 relay list metadata |
 | #22 | NIP-04 legacy DM encryption |
 | #23 | RelayPool multi-relay connections |
@@ -77,7 +77,7 @@ src/
 
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
-| 2.1 | ✅ #9: Replaceable | #20: NIP-02 Follow Lists | Client needs relay for kind 3 |
+| 2.1 | ✅ #9: Replaceable | ✅ #20: NIP-02 Follow Lists | Client needs relay for kind 3 |
 | 2.2 | ✅ #9: Replaceable | #21: NIP-65 Relay Lists | Client needs relay for kind 10002 |
 | 2.3 | #8: NIP-11 Info | - | Client reads relay capabilities |
 | 2.4 | #10: NIP-22 | - | Timestamp bounds (policy exists) |
