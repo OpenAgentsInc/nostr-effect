@@ -35,7 +35,7 @@ src/
 - **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
 
 ### In Progress
-- None
+- **Relay**: #6 ConnectionManager (per-connection state)
 
 ### Open Issues
 

@@ -21,6 +21,14 @@ export {
   type Subscription,
 } from "./SubscriptionManager.js"
 
+// Connection management
+export {
+  ConnectionManager,
+  ConnectionManagerLive,
+  type ConnectionContext,
+  type ConnectionOptions,
+} from "./ConnectionManager.js"
+
 // Filter matching
 export { matchesFilter, matchesFilters } from "./FilterMatcher.js"
 
