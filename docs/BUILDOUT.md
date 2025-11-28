@@ -32,6 +32,7 @@ src/
 - **Services**: CryptoService, EventService
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info
 - **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
+- **Services**: Nip44Service (NIP-44 versioned encryption)
 
 ### Open Issues
 
@@ -54,7 +55,7 @@ src/
 | ~~#14~~ | ~~RelayService (WebSocket management)~~ ✅ |
 | ~~#17~~ | ~~NIP-19 bech32 encoding (Core)~~ ✅ |
 | #18 | NIP-05 identifier verification |
-| #19 | NIP-44 versioned encryption |
+| ~~#19~~ | ~~NIP-44 versioned encryption~~ ✅ |
 | ~~#20~~ | ~~NIP-02 follow list management~~ ✅ |
 | ~~#21~~ | ~~NIP-65 relay list metadata~~ ✅ |
 | ~~#22~~ | ~~NIP-04 legacy DM encryption~~ (not planned) |
@@ -98,7 +99,7 @@ src/
 
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
-| 4.1 | - | #19: NIP-44 | Modern encryption for DMs |
+| 4.1 | - | ✅ #19: NIP-44 | Modern encryption for DMs |
 | 4.2 | #6: ConnectionManager | - | Per-connection state |
 | 4.3 | #12: NIP-42 Auth | - | Requires ConnectionManager |
 
