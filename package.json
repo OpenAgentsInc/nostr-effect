@@ -30,6 +30,7 @@
   "dependencies": {
     "@effect/platform": "0.93.5",
     "@effect/schema": "0.75.5",
+    "@noble/ciphers": "1.2.1",
     "@noble/curves": "1.8.1",
     "@noble/hashes": "1.7.1",
     "@scure/base": "1.2.4",
