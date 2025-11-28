@@ -31,7 +31,7 @@ src/
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info
-- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89)
+- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
 
 ### Open Issues
 
@@ -61,7 +61,7 @@ src/
 | #23 | RelayPool multi-relay connections |
 | #24 | NIP-46 remote signing |
 | ~~#31~~ | ~~NIP-89 application handlers~~ ✅ |
-| #32 | NIP-90 DVM support |
+| ~~#32~~ | ~~NIP-90 DVM support~~ ✅ |
 
 ## Build Order
 
@@ -91,7 +91,7 @@ src/
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
 | 3.1 | Done (NIP-33) | ✅ #31: NIP-89 Handlers | App discovery via kind 31989/31990 |
-| 3.2 | Done | #32: NIP-90 DVM | Job requests/results (kinds 5000-7000) |
+| 3.2 | Done | ✅ #32: NIP-90 DVM | Job requests/results (kinds 5000-7000) |
 
 ### Phase 4: Encryption & Auth
 **Goal**: Secure messaging and authentication
