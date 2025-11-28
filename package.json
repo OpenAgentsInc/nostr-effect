@@ -7,8 +7,9 @@
   "module": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
+    "prepare": "effect-language-service patch",
     "test": "bun test",
-    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "build": "bun build src/index.ts --outdir dist --target node"
   },
   "keywords": [
@@ -19,6 +20,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@effect/language-service": "0.57.0",
     "@types/bun": "1.1.14",
     "typescript": "5.7.2"
   },
