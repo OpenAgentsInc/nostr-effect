@@ -4,10 +4,10 @@
  * WebSocket server using Bun.serve for NIP-01 relay protocol.
  * Wires together EventStore, SubscriptionManager, and MessageHandler.
  */
-import { Context, Effect, Layer, Runtime, Scope, FiberRef } from "effect"
+import { Context, Effect, Layer, Runtime } from "effect"
 import { MessageHandler, type BroadcastMessage } from "./MessageHandler.js"
 import { SubscriptionManager } from "./SubscriptionManager.js"
-import type { RelayMessage, SubscriptionId, NostrEvent } from "../core/Schema.js"
+import type { RelayMessage } from "../core/Schema.js"
 
 // =============================================================================
 // Types
@@ -184,7 +184,7 @@ const make = Effect.gen(function* () {
             connections.delete(data.connectionId)
           },
 
-          drain(ws) {
+          drain(_ws) {
             // Handle backpressure - optional
           },
         },

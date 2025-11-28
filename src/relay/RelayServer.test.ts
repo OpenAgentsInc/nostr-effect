@@ -13,7 +13,7 @@ const connectToRelay = (port: number): Promise<WebSocket> => {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://localhost:${port}`)
     ws.onopen = () => resolve(ws)
-    ws.onerror = (e) => reject(new Error("WebSocket error"))
+    ws.onerror = () => reject(new Error("WebSocket error"))
   })
 }
 
@@ -27,25 +27,6 @@ const waitForMessage = (ws: WebSocket, timeout = 2000): Promise<RelayMessage> =>
     ws.onmessage = (event) => {
       clearTimeout(timer)
       resolve(JSON.parse(event.data as string))
-    }
-  })
-}
-
-const waitForMessages = (
-  ws: WebSocket,
-  count: number,
-  timeout = 5000
-): Promise<RelayMessage[]> => {
-  return new Promise((resolve, reject) => {
-    const messages: RelayMessage[] = []
-    const timer = setTimeout(() => reject(new Error("Timeout")), timeout)
-
-    ws.onmessage = (event) => {
-      messages.push(JSON.parse(event.data as string))
-      if (messages.length >= count) {
-        clearTimeout(timer)
-        resolve(messages)
-      }
     }
   })
 }
@@ -85,7 +66,7 @@ describe("RelayServer", () => {
   })
 
   afterAll(async () => {
-    await relay.stop()
+    await Effect.runPromise(relay.stop())
   })
 
   describe("WebSocket connection", () => {
@@ -199,7 +180,7 @@ describe("RelayServer", () => {
       expect(eventMsgs.some((m) => (m[2] as NostrEvent).id === event.id)).toBe(true)
 
       expect(eoseMsg).toBeDefined()
-      expect(eoseMsg![1]).toBe("sub2")
+      expect(eoseMsg![1] as string).toBe("sub2")
 
       ws.close()
     })
@@ -280,7 +261,7 @@ describe("RelayServer", () => {
       expect(response.status).toBe(200)
       expect(response.headers.get("content-type")).toBe("application/nostr+json")
 
-      const info = await response.json()
+      const info = (await response.json()) as { supported_nips: number[]; software: string }
       expect(info.supported_nips).toContain(1)
       expect(info.software).toBe("nostr-effect")
     })

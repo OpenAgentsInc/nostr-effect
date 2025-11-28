@@ -111,6 +111,14 @@ bun --hot ./index.ts
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
 
+## Pull Request Policy
+
+**NEVER open a PR until:**
+1. `bunx tsc --noEmit` passes with no errors
+2. `bun test` passes with no failures
+
+Always verify both before pushing and creating PRs.
+
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
 

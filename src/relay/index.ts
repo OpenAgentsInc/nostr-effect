@@ -15,12 +15,12 @@
  * ```
  */
 import { Effect, Layer } from "effect"
-import { EventStore, SqliteEventStoreLive, MemoryEventStoreLive } from "./EventStore.js"
-import { SubscriptionManager, SubscriptionManagerLive } from "./SubscriptionManager.js"
-import { MessageHandler, MessageHandlerLive } from "./MessageHandler.js"
+import { SqliteEventStoreLive, MemoryEventStoreLive } from "./EventStore.js"
+import { SubscriptionManagerLive } from "./SubscriptionManager.js"
+import { MessageHandlerLive } from "./MessageHandler.js"
 import { RelayServer, RelayServerLive, type RelayConfig, type RelayHandle } from "./RelayServer.js"
-import { EventService, EventServiceLive } from "../services/EventService.js"
-import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
+import { EventServiceLive } from "../services/EventService.js"
+import { CryptoServiceLive } from "../services/CryptoService.js"
 
 // =============================================================================
 // Re-exports
