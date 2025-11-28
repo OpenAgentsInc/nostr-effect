@@ -203,9 +203,9 @@ src/client/
 
 | NIP | nostr-tools Test File | Our Test File | Status |
 |-----|----------------------|---------------|--------|
-| NIP-01 Filters | `filter.test.ts` | `src/relay/FilterMatcher.test.ts` | ⬜ Pending |
-| NIP-19 | `nip19.test.ts` | `src/core/Nip19.test.ts` | ⬜ Needs parity |
-| NIP-44 | `nip44.test.ts` + vectors | `src/services/Nip44Service.test.ts` | ⬜ Needs parity |
+| NIP-01 Filters | `filter.test.ts` | `src/relay/FilterMatcher.test.ts` | ✅ Done |
+| NIP-19 | `nip19.test.ts` | `src/core/Nip19.test.ts` | ✅ Done |
+| NIP-44 | `nip44.test.ts` + vectors | `src/services/Nip44Service.test.ts` | ✅ Done |
 | NIP-04 | `nip04.test.ts` | - | ⬜ Not planned |
 | NIP-05 | `nip05.test.ts` | `src/client/Nip05Service.test.ts` | ⬜ Not started |
 

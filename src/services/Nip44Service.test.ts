@@ -238,8 +238,9 @@ describe("Nip44Service", () => {
         const convKey = yield* nip44.getConversationKey(privateKey1, publicKey2)
 
         // Test various sizes - if padding is correct, decrypt should work
-        for (const [inputLen, _expectedPaddedLen] of v2vec.valid.calc_padded_len) {
-          if (inputLen > 0 && inputLen <= 65535) {
+        for (const entry of v2vec.valid.calc_padded_len) {
+          const inputLen = entry[0]
+          if (inputLen !== undefined && inputLen > 0 && inputLen <= 65535) {
             const plaintext = "x".repeat(inputLen)
             const encrypted = yield* nip44.encrypt(plaintext, convKey)
             const decrypted = yield* nip44.decrypt(encrypted, convKey)

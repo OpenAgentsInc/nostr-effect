@@ -25,7 +25,6 @@ import {
 } from "./Nip19.js"
 import type { PublicKey, PrivateKey, EventId, EventKind } from "./Schema.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
-import { Layer } from "effect"
 
 // Test vectors from NIP-19 spec
 const TEST_PUBKEY = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d" as PublicKey
@@ -510,8 +509,8 @@ describe("NIP-19 bech32 encoding", () => {
       )
       expect(result.type).toBe("naddr")
       if (result.type === "naddr") {
-        expect(result.data.pubkey).toBe("7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194")
-        expect(result.data.kind).toBe(30023)
+        expect(result.data.pubkey as string).toBe("7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194")
+        expect(result.data.kind as number).toBe(30023)
         expect(result.data.identifier).toBe("references")
       }
     })
