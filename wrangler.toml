@@ -1,0 +1,35 @@
+# Cloudflare Workers configuration for nostr-effect relay
+# Deploy with: bunx wrangler deploy
+
+name = "nostr-relay"
+main = "src/relay/backends/cloudflare/worker.ts"
+compatibility_date = "2024-11-01"
+
+# Durable Objects configuration
+[durable_objects]
+bindings = [
+  { name = "NOSTR_RELAY", class_name = "NostrRelayDO" }
+]
+
+# Enable SQLite for the Durable Object
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NostrRelayDO"]
+
+# Environment variables for relay configuration (optional)
+# Override these in wrangler.toml or via `wrangler secret put`
+[vars]
+RELAY_NAME = "nostr-effect relay"
+RELAY_DESCRIPTION = "A Nostr relay running on Cloudflare Durable Objects"
+# RELAY_PUBKEY = "your-hex-pubkey"
+# RELAY_CONTACT = "admin@example.com"
+
+# Development configuration
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Production routes (uncomment and configure for custom domain)
+# [[routes]]
+# pattern = "relay.example.com/*"
+# custom_domain = true
