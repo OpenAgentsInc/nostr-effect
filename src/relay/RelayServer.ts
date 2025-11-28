@@ -8,6 +8,7 @@ import { Context, Effect, Layer, Runtime } from "effect"
 import { MessageHandler, type BroadcastMessage } from "./MessageHandler.js"
 import { SubscriptionManager } from "./SubscriptionManager.js"
 import type { RelayMessage } from "../core/Schema.js"
+import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "./RelayInfo.js"
 
 // =============================================================================
 // Types
@@ -17,6 +18,8 @@ export interface RelayConfig {
   readonly port: number
   readonly host?: string
   readonly dbPath?: string
+  /** NIP-11 relay info configuration */
+  readonly relayInfo?: Partial<RelayInfo>
 }
 
 export interface ConnectionData {
@@ -93,6 +96,18 @@ const make = Effect.gen(function* () {
       const runtime = yield* Effect.runtime<never>()
       const runSync = Runtime.runSync(runtime)
 
+      // Build relay info from config
+      const relayInfo = config.relayInfo
+        ? mergeRelayInfo(config.relayInfo)
+        : defaultRelayInfo
+
+      // CORS headers for NIP-11 compliance
+      const corsHeaders = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Accept, Content-Type",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      }
+
       // Start Bun WebSocket server
       const server = Bun.serve({
         port: config.port,
@@ -102,25 +117,24 @@ const make = Effect.gen(function* () {
           // Upgrade HTTP to WebSocket
           const url = new URL(req.url)
 
+          // CORS preflight
+          if (req.method === "OPTIONS") {
+            return new Response(null, {
+              status: 204,
+              headers: corsHeaders,
+            })
+          }
+
           // NIP-11: Return relay info for HTTP GET /
           if (req.method === "GET" && url.pathname === "/" && !req.headers.get("upgrade")) {
             const accept = req.headers.get("accept") ?? ""
             if (accept.includes("application/nostr+json")) {
-              return new Response(
-                JSON.stringify({
-                  name: "nostr-effect relay",
-                  description: "Effect-based Nostr relay",
-                  supported_nips: [1],
-                  software: "nostr-effect",
-                  version: "0.0.1",
-                }),
-                {
-                  headers: {
-                    "Content-Type": "application/nostr+json",
-                    "Access-Control-Allow-Origin": "*",
-                  },
-                }
-              )
+              return new Response(JSON.stringify(relayInfo), {
+                headers: {
+                  "Content-Type": "application/nostr+json",
+                  ...corsHeaders,
+                },
+              })
             }
           }
 

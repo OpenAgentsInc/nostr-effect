@@ -47,6 +47,16 @@ export {
   type ConnectionData,
 } from "./RelayServer.js"
 
+// NIP-11 Relay Info
+export {
+  RelayInfo,
+  RelayLimitation,
+  RelayFees,
+  defaultRelayInfo,
+  mergeRelayInfo,
+  type RetentionSpec,
+} from "./RelayInfo.js"
+
 // Policy module
 export * from "./policy/index.js"
 
