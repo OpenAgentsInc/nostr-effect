@@ -1,14 +1,14 @@
 /**
- * RelayServer
+ * BunServer
  *
  * WebSocket server using Bun.serve for NIP-01 relay protocol.
  * Wires together EventStore, SubscriptionManager, and MessageHandler.
  */
 import { Context, Effect, Layer, Runtime } from "effect"
-import { MessageHandler, type BroadcastMessage } from "./MessageHandler.js"
-import { SubscriptionManager } from "./SubscriptionManager.js"
-import type { RelayMessage } from "../core/Schema.js"
-import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "./RelayInfo.js"
+import { MessageHandler, type BroadcastMessage } from "../../core/MessageHandler.js"
+import { SubscriptionManager } from "../../core/SubscriptionManager.js"
+import type { RelayMessage } from "../../../core/Schema.js"
+import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "../../core/RelayInfo.js"
 
 // =============================================================================
 // Types

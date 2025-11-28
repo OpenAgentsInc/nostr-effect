@@ -4,7 +4,7 @@
  * Shared filter matching logic for NIP-01.
  * Used by both EventStore and SubscriptionManager.
  */
-import type { NostrEvent, Filter } from "../core/Schema.js"
+import type { NostrEvent, Filter } from "../../core/Schema.js"
 
 /**
  * Check if an event matches a single filter (AND logic within filter)

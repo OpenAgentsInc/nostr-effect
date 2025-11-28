@@ -4,7 +4,7 @@
  * Test cases ported from nostr-tools filter.test.ts for cross-implementation parity
  */
 import { describe, test, expect } from "bun:test"
-import { matchesFilter, matchesFilters } from "./FilterMatcher.js"
+import { matchesFilter, matchesFilters } from "./core/FilterMatcher.js"
 import {
   type NostrEvent,
   type Filter,

@@ -5,7 +5,7 @@
  * Policies can accept, reject, or shadow (silently drop) events.
  */
 import { Effect } from "effect"
-import type { NostrEvent } from "../../core/Schema.js"
+import type { NostrEvent } from "../../../core/Schema.js"
 
 // =============================================================================
 // Types

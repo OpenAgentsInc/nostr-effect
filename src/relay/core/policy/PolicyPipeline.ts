@@ -4,9 +4,9 @@
  * Service for running events through a configurable policy chain.
  */
 import { Context, Effect, Layer } from "effect"
-import type { NostrEvent } from "../../core/Schema.js"
-import type { CryptoError, InvalidPublicKey } from "../../core/Errors.js"
-import { EventService } from "../../services/EventService.js"
+import type { NostrEvent } from "../../../core/Schema.js"
+import type { CryptoError, InvalidPublicKey } from "../../../core/Errors.js"
+import { EventService } from "../../../services/EventService.js"
 import { type Policy, type PolicyContext, type PolicyDecision, all, Accept } from "./Policy.js"
 import { verifySignature, maxContentLength, maxTags } from "./BuiltInPolicies.js"
 

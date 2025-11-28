@@ -28,9 +28,9 @@ import {
   verifySignature,
 } from "./BuiltInPolicies"
 import { PolicyPipeline, PolicyPipelineLive, PolicyPipelinePermissive } from "./PolicyPipeline"
-import { EventService, EventServiceLive } from "../../services/EventService"
-import { CryptoService, CryptoServiceLive } from "../../services/CryptoService"
-import { EventKind, Tag, type NostrEvent, type UnixTimestamp } from "../../core/Schema"
+import { EventService, EventServiceLive } from "../../../services/EventService"
+import { CryptoService, CryptoServiceLive } from "../../../services/CryptoService"
+import { EventKind, Tag, type NostrEvent, type UnixTimestamp } from "../../../core/Schema"
 
 // Test fixtures
 const decodeKind = Schema.decodeSync(EventKind)

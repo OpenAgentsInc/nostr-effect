@@ -1,81 +1,17 @@
 /**
- * EventStore
+ * Bun SQLite EventStore
  *
- * Event storage interface with SQLite implementation.
- * Designed for pluggability - other backends can implement the interface.
+ * EventStore implementation using Bun's native SQLite.
  */
-import { Context, Effect, Layer } from "effect"
+import { Effect, Layer } from "effect"
 import { Database } from "bun:sqlite"
-import { StorageError, DuplicateEvent } from "../core/Errors.js"
-import type { NostrEvent, Filter, EventId } from "../core/Schema.js"
-import { matchesFilter } from "./FilterMatcher.js"
+import { StorageError, DuplicateEvent } from "../../../core/Errors.js"
+import type { NostrEvent, EventId } from "../../../core/Schema.js"
+import { EventStore, type ReplaceableStoreResult } from "../../storage/EventStore.js"
+import { matchesFilter } from "../../core/FilterMatcher.js"
 
 // =============================================================================
-// Service Interface
-// =============================================================================
-
-/** Result of storing a replaceable event */
-export interface ReplaceableStoreResult {
-  /** Whether the event was stored (new or replaced older) */
-  readonly stored: boolean
-  /** The ID of the event that was replaced, if any */
-  readonly replacedId?: EventId
-  /** If not stored, the reason why */
-  readonly reason?: "older" | "duplicate"
-}
-
-export interface EventStore {
-  readonly _tag: "EventStore"
-
-  /**
-   * Store an event. Returns true if new, false if duplicate.
-   */
-  storeEvent(event: NostrEvent): Effect.Effect<boolean, StorageError | DuplicateEvent>
-
-  /**
-   * Store a replaceable event (NIP-16).
-   * Replaces existing event with same pubkey+kind if newer.
-   */
-  storeReplaceableEvent(event: NostrEvent): Effect.Effect<ReplaceableStoreResult, StorageError>
-
-  /**
-   * Store a parameterized replaceable event (NIP-33).
-   * Replaces existing event with same pubkey+kind+d-tag if newer.
-   */
-  storeParameterizedReplaceableEvent(
-    event: NostrEvent,
-    dTagValue: string
-  ): Effect.Effect<ReplaceableStoreResult, StorageError>
-
-  /**
-   * Query events matching filters (OR logic between filters, AND within filter)
-   */
-  queryEvents(filters: readonly Filter[]): Effect.Effect<readonly NostrEvent[], StorageError>
-
-  /**
-   * Check if event exists by ID
-   */
-  hasEvent(id: EventId): Effect.Effect<boolean, StorageError>
-
-  /**
-   * Delete event by ID (for testing/admin)
-   */
-  deleteEvent(id: EventId): Effect.Effect<boolean, StorageError>
-
-  /**
-   * Get event count
-   */
-  count(): Effect.Effect<number, StorageError>
-}
-
-// =============================================================================
-// Service Tag
-// =============================================================================
-
-export const EventStore = Context.GenericTag<EventStore>("EventStore")
-
-// =============================================================================
-// SQLite Implementation
+// Schema Initialization
 // =============================================================================
 
 const initSchema = (db: Database): void => {
@@ -99,6 +35,10 @@ const initSchema = (db: Database): void => {
   // Enable WAL mode for better concurrent performance
   db.exec("PRAGMA journal_mode=WAL")
 }
+
+// =============================================================================
+// Row Conversion Helpers
+// =============================================================================
 
 const eventToRow = (event: NostrEvent, dTagValue?: string) => ({
   $id: event.id,
@@ -129,6 +69,10 @@ const rowToEvent = (row: {
     content: row.content,
     sig: row.sig,
   }) as NostrEvent
+
+// =============================================================================
+// Store Implementation
+// =============================================================================
 
 const makeSqliteStore = (db: Database): EventStore => ({
   _tag: "EventStore",
@@ -360,7 +304,7 @@ const makeSqliteStore = (db: Database): EventStore => ({
  * SQLite EventStore layer - creates database at given path
  * Note: Database is not automatically closed - call db.close() when done
  */
-export const SqliteEventStoreLive = (dbPath: string) =>
+export const BunSqliteStoreLive = (dbPath: string) =>
   Layer.effect(
     EventStore,
     Effect.try({
@@ -380,4 +324,7 @@ export const SqliteEventStoreLive = (dbPath: string) =>
 /**
  * In-memory SQLite for testing
  */
-export const MemoryEventStoreLive = SqliteEventStoreLive(":memory:")
+export const MemoryEventStoreLive = BunSqliteStoreLive(":memory:")
+
+// Legacy aliases for backwards compatibility
+export const SqliteEventStoreLive = BunSqliteStoreLive

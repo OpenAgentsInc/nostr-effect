@@ -4,8 +4,8 @@
  * Common policies for relay event validation.
  */
 import { Effect } from "effect"
-import { EventService } from "../../services/EventService.js"
-import type { CryptoError, InvalidPublicKey } from "../../core/Errors.js"
+import { EventService } from "../../../services/EventService.js"
+import type { CryptoError, InvalidPublicKey } from "../../../core/Errors.js"
 import { type Policy, type PolicyContext, Accept, Reject } from "./Policy.js"
 
 // =============================================================================
