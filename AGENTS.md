@@ -24,6 +24,10 @@ Default to using Bun instead of Node.js.
 - Prefer `Bun.file` over `node:fs`'s readFile/writeFile
 - Bun.$`ls` instead of execa.
 
+## Code Style
+
+- **Never use inline/dynamic imports** - All imports must be at the top of the file. Do not use `import()` expressions or inline type imports like `options.value as import("./module").Type`. Import the type at the top of the file instead.
+
 ## Testing
 
 Use `bun test` to run tests.

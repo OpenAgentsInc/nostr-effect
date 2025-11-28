@@ -30,12 +30,9 @@ src/
 ### Completed
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
-- **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits
+- **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits, ConnectionManager, NIP-42 Authentication (AuthService)
 - **Relay Backends**: Bun (SQLite), Cloudflare Durable Objects (DO SQLite)
 - **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90)
-
-### In Progress
-- **Relay**: #6 ConnectionManager (per-connection state)
 
 ### Open Issues
 
@@ -43,13 +40,13 @@ src/
 | Issue | Description |
 |-------|-------------|
 | ~~#5~~ | ~~NIP Module system~~ ✅ |
-| #6 | ConnectionManager |
+| ~~#6~~ | ~~ConnectionManager~~ ✅ |
 | #7 | NIP-09 Deletion |
 | ~~#8~~ | ~~NIP-11 Relay Info~~ ✅ |
 | ~~#9~~ | ~~NIP-16/33 Replaceable Events~~ ✅ |
 | ~~#10~~ | ~~Timestamp Limits (NIP-11 limitation)~~ ✅ |
 | #11 | NIP-40 Expiration |
-| #12 | NIP-42 Authentication |
+| ~~#12~~ | ~~NIP-42 Authentication~~ ✅ |
 | #13 | Rate Limiting |
 
 **Client (#14-24)**
@@ -103,8 +100,8 @@ src/
 | Order | Relay | Client | Notes |
 |-------|-------|--------|-------|
 | 4.1 | - | ✅ #19: NIP-44 | Modern encryption for DMs |
-| 4.2 | #6: ConnectionManager | - | Per-connection state |
-| 4.3 | #12: NIP-42 Auth | - | Requires ConnectionManager |
+| 4.2 | ✅ #6: ConnectionManager | - | Per-connection state |
+| 4.3 | ✅ #12: NIP-42 Auth | - | Requires ConnectionManager |
 
 ### Phase 5: Advanced
 **Goal**: Production-ready features
@@ -208,6 +205,7 @@ src/client/
 |-----|----------------------|---------------|--------|
 | NIP-01 Filters | `filter.test.ts` | `src/relay/FilterMatcher.test.ts` | ✅ Done |
 | NIP-19 | `nip19.test.ts` | `src/core/Nip19.test.ts` | ✅ Done |
+| NIP-42 | `nip42.test.ts` | `src/relay/core/nip/modules/Nip42Module.test.ts` | ✅ Done |
 | NIP-44 | `nip44.test.ts` + vectors | `src/services/Nip44Service.test.ts` | ✅ Done |
 | NIP-04 | `nip04.test.ts` | - | ⬜ Not planned |
 | NIP-05 | `nip05.test.ts` | `src/client/Nip05Service.test.ts` | ⬜ Not started |

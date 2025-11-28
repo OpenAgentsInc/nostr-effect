@@ -4,7 +4,7 @@
  * Routes NIP-01 client messages to appropriate handlers.
  * Returns relay messages for the client and broadcasts.
  */
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Option } from "effect"
 import { Schema } from "@effect/schema"
 import { EventStore } from "../storage/EventStore.js"
 import { SubscriptionManager, type Subscription } from "./SubscriptionManager.js"
@@ -22,6 +22,7 @@ import {
   getDTagValue,
 } from "../../core/Schema.js"
 import { NipRegistry } from "./nip/NipRegistry.js"
+import { AuthService } from "./AuthService.js"
 
 // =============================================================================
 // Response Types
@@ -87,8 +88,9 @@ const eoseMessage = (subscriptionId: SubscriptionId): RelayMessage =>
 /**
  * Core message handler implementation
  * @param nipRegistry - Optional NipRegistry for hook-based event handling
+ * @param authService - Optional AuthService for NIP-42 authentication
  */
-const make = (nipRegistry?: NipRegistry) =>
+const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
   Effect.gen(function* () {
     const eventStore = yield* EventStore
     const subscriptionManager = yield* SubscriptionManager
@@ -262,6 +264,26 @@ const make = (nipRegistry?: NipRegistry) =>
       return { responses: [], broadcasts: [] }
     })
 
+  const handleAuth = (
+    connectionId: string,
+    authEvent: NostrEvent
+  ): Effect.Effect<HandleResult, CryptoError | InvalidPublicKey> =>
+    Effect.gen(function* () {
+      if (!authService) {
+        // AUTH not enabled, return error
+        return {
+          responses: [okMessage(authEvent.id, false, "error: AUTH not supported")],
+          broadcasts: [],
+        }
+      }
+
+      const result = yield* authService.handleAuth(connectionId, authEvent)
+      return {
+        responses: [okMessage(authEvent.id, result.success, result.message)],
+        broadcasts: [],
+      }
+    })
+
   const handleMessage: MessageHandler["handleMessage"] = (connectionId, message) => {
     const [type] = message
 
@@ -277,6 +299,9 @@ const make = (nipRegistry?: NipRegistry) =>
 
       case "CLOSE":
         return handleClose(connectionId, message[1])
+
+      case "AUTH":
+        return handleAuth(connectionId, message[1])
     }
   }
 
@@ -332,5 +357,18 @@ export const MessageHandlerWithRegistry = Layer.effect(
   Effect.gen(function* () {
     const registry = yield* NipRegistry
     return yield* make(registry)
+  })
+)
+
+/**
+ * MessageHandler with NipRegistry and AuthService for NIP-42 authentication
+ * Use this layer when you want full NIP support including authentication
+ */
+export const MessageHandlerWithAuth = Layer.effect(
+  MessageHandler,
+  Effect.gen(function* () {
+    const registry = yield* NipRegistry
+    const auth = yield* Effect.serviceOption(AuthService)
+    return yield* make(registry, Option.getOrUndefined(auth))
   })
 )

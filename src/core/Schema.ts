@@ -150,11 +150,19 @@ export const ClientCloseMessage = Schema.Tuple(
 )
 export type ClientCloseMessage = typeof ClientCloseMessage.Type
 
+/** AUTH message: client authentication (NIP-42) */
+export const ClientAuthMessage = Schema.Tuple(
+  Schema.Literal("AUTH"),
+  NostrEvent // kind 22242 signed event
+)
+export type ClientAuthMessage = typeof ClientAuthMessage.Type
+
 /** All client message types */
 export const ClientMessage = Schema.Union(
   ClientEventMessage,
   ClientReqMessage,
-  ClientCloseMessage
+  ClientCloseMessage,
+  ClientAuthMessage
 )
 export type ClientMessage = typeof ClientMessage.Type
 
@@ -201,15 +209,30 @@ export const RelayNoticeMessage = Schema.Tuple(
 )
 export type RelayNoticeMessage = typeof RelayNoticeMessage.Type
 
+/** AUTH message: authentication challenge (NIP-42) */
+export const RelayAuthMessage = Schema.Tuple(
+  Schema.Literal("AUTH"),
+  Schema.String // challenge string
+)
+export type RelayAuthMessage = typeof RelayAuthMessage.Type
+
 /** All relay message types */
 export const RelayMessage = Schema.Union(
   RelayEventMessage,
   RelayOkMessage,
   RelayEoseMessage,
   RelayClosedMessage,
-  RelayNoticeMessage
+  RelayNoticeMessage,
+  RelayAuthMessage
 )
 export type RelayMessage = typeof RelayMessage.Type
+
+// =============================================================================
+// NIP-42 Auth Event Kind
+// =============================================================================
+
+/** Auth event kind (NIP-42) */
+export const AUTH_EVENT_KIND = 22242 as EventKind
 
 // =============================================================================
 // Event Kind Classification (NIP-16/33)

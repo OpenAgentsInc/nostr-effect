@@ -10,6 +10,7 @@ export {
   MessageHandler,
   MessageHandlerLive,
   MessageHandlerWithRegistry,
+  MessageHandlerWithAuth,
   type HandleResult,
   type BroadcastMessage,
 } from "./MessageHandler.js"
@@ -28,6 +29,13 @@ export {
   type ConnectionContext,
   type ConnectionOptions,
 } from "./ConnectionManager.js"
+
+// Authentication (NIP-42)
+export {
+  AuthService,
+  makeAuthServiceLayer,
+  type AuthResult,
+} from "./AuthService.js"
 
 // Filter matching
 export { matchesFilter, matchesFilters } from "./FilterMatcher.js"
