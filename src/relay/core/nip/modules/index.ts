@@ -9,6 +9,7 @@ export { Nip01Module, createNip01Module, type Nip01Config } from "./Nip01Module.
 export { Nip11Module, createNip11Module, type Nip11Config } from "./Nip11Module.js"
 export { Nip16Module } from "./Nip16Module.js"
 export { Nip28Module } from "./Nip28Module.js"
+export { Nip57Module } from "./Nip57Module.js"
 export {
   createNip42Module,
   verifyAuthEvent,
