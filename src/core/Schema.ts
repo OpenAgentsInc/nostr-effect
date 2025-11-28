@@ -210,3 +210,42 @@ export const RelayMessage = Schema.Union(
   RelayNoticeMessage
 )
 export type RelayMessage = typeof RelayMessage.Type
+
+// =============================================================================
+// Event Kind Classification (NIP-16/33)
+// =============================================================================
+
+/**
+ * Check if an event kind is replaceable (NIP-16)
+ * Replaceable kinds: 0, 3, 10000-19999
+ * Only one event per pubkey+kind is kept (latest by created_at)
+ */
+export const isReplaceableKind = (kind: EventKind | number): boolean => {
+  const k = kind as number
+  return k === 0 || k === 3 || (k >= 10000 && k <= 19999)
+}
+
+/**
+ * Check if an event kind is parameterized replaceable (NIP-33)
+ * Parameterized replaceable kinds: 30000-39999
+ * Only one event per pubkey+kind+d-tag is kept (latest by created_at)
+ */
+export const isParameterizedReplaceableKind = (kind: EventKind | number): boolean => {
+  const k = kind as number
+  return k >= 30000 && k <= 39999
+}
+
+/**
+ * Check if an event kind is any type of replaceable
+ */
+export const isAnyReplaceableKind = (kind: EventKind | number): boolean =>
+  isReplaceableKind(kind) || isParameterizedReplaceableKind(kind)
+
+/**
+ * Get the d-tag value from an event's tags
+ * Used for parameterized replaceable events
+ */
+export const getDTagValue = (event: NostrEvent): string | undefined => {
+  const dTag = event.tags.find((tag) => tag[0] === "d")
+  return dTag?.[1]
+}

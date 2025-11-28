@@ -17,6 +17,9 @@ import {
   type RelayMessage,
   type SubscriptionId,
   type EventId,
+  isReplaceableKind,
+  isParameterizedReplaceableKind,
+  getDTagValue,
 } from "../core/Schema.js"
 
 // =============================================================================
@@ -112,19 +115,45 @@ const make = Effect.gen(function* () {
         }
       }
 
-      // Policy accepted - store the event
-      const storeResult = yield* eventStore.storeEvent(event).pipe(
-        Effect.catchTag("DuplicateEvent", () =>
-          Effect.succeed({ duplicate: true, stored: false })
-        ),
-        Effect.map((result) =>
-          typeof result === "boolean" ? { duplicate: false, stored: result } : result
-        )
-      )
+      // Policy accepted - store the event using appropriate method
+      let stored = false
+      let duplicateOrOlder = false
 
-      if (storeResult.duplicate) {
+      if (isReplaceableKind(event.kind)) {
+        // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
+        const result = yield* eventStore.storeReplaceableEvent(event)
+        stored = result.stored
+        duplicateOrOlder = !result.stored
+      } else if (isParameterizedReplaceableKind(event.kind)) {
+        // NIP-33: Parameterized replaceable event (kinds 30000-39999)
+        const dTagValue = getDTagValue(event) ?? ""
+        const result = yield* eventStore.storeParameterizedReplaceableEvent(event, dTagValue)
+        stored = result.stored
+        duplicateOrOlder = !result.stored
+      } else {
+        // Regular event - use standard storage
+        const storeResult = yield* eventStore.storeEvent(event).pipe(
+          Effect.catchTag("DuplicateEvent", () =>
+            Effect.succeed({ duplicate: true, stored: false })
+          ),
+          Effect.map((result) =>
+            typeof result === "boolean" ? { duplicate: false, stored: result } : result
+          )
+        )
+        stored = storeResult.stored
+        duplicateOrOlder = storeResult.duplicate
+      }
+
+      if (duplicateOrOlder) {
         return {
           responses: [okMessage(event.id, true, "duplicate: event already exists")],
+          broadcasts: [],
+        }
+      }
+
+      if (!stored) {
+        return {
+          responses: [okMessage(event.id, true, "")],
           broadcasts: [],
         }
       }

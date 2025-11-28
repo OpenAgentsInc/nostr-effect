@@ -143,7 +143,7 @@ export class StorageError extends Schema.TaggedError<StorageError>()(
   "StorageError",
   {
     message: Schema.String,
-    operation: Schema.Literal("insert", "query", "delete", "init"),
+    operation: Schema.Literal("insert", "query", "delete", "init", "upsert"),
   }
 ) {}
 
