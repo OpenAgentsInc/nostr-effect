@@ -119,6 +119,58 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 
 Always verify both before pushing and creating PRs.
 
+## Buildout Plan
+
+**IMPORTANT**: Follow the buildout plan in `docs/BUILDOUT.md` for all development work.
+
+### Workflow for Each Issue
+
+1. **Check the buildout order** - Read `docs/BUILDOUT.md` to determine the next issue to work on. Follow the phase order (1 → 2 → 3 → 4) and the order within each phase.
+
+2. **Pick the next issue** - Select the next uncompleted issue from the buildout plan. Check dependencies - some client issues depend on relay issues being completed first.
+
+3. **Create a feature branch**:
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b feat/<issue-description>-issue-<number>
+   ```
+
+4. **Implement the feature**:
+   - Follow the existing code patterns (Effect services, branded types, etc.)
+   - Write tests alongside the implementation
+   - Ensure `bun run verify` passes (typecheck + tests)
+
+5. **Open a PR**:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --title "<Issue title>" --body "Closes #<issue-number>"
+   ```
+
+6. **Merge and clean up**:
+   ```bash
+   gh pr merge <pr-number> --squash --delete-branch
+   git checkout main
+   git pull
+   ```
+
+7. **Update BUILDOUT.md** - Mark the completed issue and update the current state section. Commit this update to main.
+
+### Current Focus
+
+Check `docs/BUILDOUT.md` for:
+- **Current State**: What's completed vs in-progress
+- **Phase Order**: Foundation → Core NIPs → Encryption/Auth → Advanced
+- **Dependencies**: Which client issues need relay issues completed first
+
+### Keep BUILDOUT.md Updated
+
+After completing each issue:
+1. Mark the issue as done in the phase tables
+2. Update the "Completed" section in Current State
+3. Move any completed issues from "Open Issues" to "Completed"
+4. Commit the BUILDOUT.md update to main
+
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
 
