@@ -235,6 +235,25 @@ export type RelayMessage = typeof RelayMessage.Type
 export const AUTH_EVENT_KIND = 22242 as EventKind
 
 // =============================================================================
+// NIP-28 Public Chat Event Kinds
+// =============================================================================
+
+/** Channel creation (NIP-28) */
+export const CHANNEL_CREATE_KIND = 40 as EventKind
+
+/** Channel metadata update (NIP-28) */
+export const CHANNEL_METADATA_KIND = 41 as EventKind
+
+/** Channel message (NIP-28) */
+export const CHANNEL_MESSAGE_KIND = 42 as EventKind
+
+/** Hide message - client-side moderation (NIP-28) */
+export const CHANNEL_HIDE_MESSAGE_KIND = 43 as EventKind
+
+/** Mute user - client-side moderation (NIP-28) */
+export const CHANNEL_MUTE_USER_KIND = 44 as EventKind
+
+// =============================================================================
 // Event Kind Classification (NIP-16/33)
 // =============================================================================
 
