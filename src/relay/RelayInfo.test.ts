@@ -7,7 +7,7 @@ import {
   defaultRelayInfo,
   mergeRelayInfo,
   type RelayInfo,
-} from "./RelayInfo.js"
+} from "./core/RelayInfo.js"
 import { startTestRelay, startRelay, type RelayHandle } from "./index.js"
 
 describe("RelayInfo", () => {

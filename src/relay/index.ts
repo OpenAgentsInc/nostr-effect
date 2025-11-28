@@ -1,7 +1,8 @@
 /**
  * Nostr Relay Module
  *
- * Effect-based NIP-01 relay implementation using Bun.serve.
+ * Effect-based NIP-01 relay implementation.
+ * Default backend uses Bun (bun:sqlite + Bun.serve).
  *
  * @example
  * ```ts
@@ -15,39 +16,49 @@
  * ```
  */
 import { Effect, Layer } from "effect"
-import { SqliteEventStoreLive, MemoryEventStoreLive } from "./EventStore.js"
-import { SubscriptionManagerLive } from "./SubscriptionManager.js"
-import { MessageHandlerLive } from "./MessageHandler.js"
-import { RelayServer, RelayServerLive, type RelayConfig, type RelayHandle } from "./RelayServer.js"
-import { PolicyPipelineLive } from "./policy/index.js"
+
+// Import from new structure
+import {
+  BunSqliteStoreLive,
+  MemoryEventStoreLive,
+  RelayServer,
+  RelayServerLive,
+  type RelayConfig,
+  type RelayHandle,
+} from "./backends/bun/index.js"
+import {
+  MessageHandlerLive,
+  SubscriptionManagerLive,
+  PolicyPipelineLive,
+} from "./core/index.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { CryptoServiceLive } from "../services/CryptoService.js"
 
 // =============================================================================
-// Re-exports
+// Re-exports - Storage
 // =============================================================================
 
-export { EventStore, SqliteEventStoreLive, MemoryEventStoreLive } from "./EventStore.js"
-export {
-  SubscriptionManager,
-  SubscriptionManagerLive,
-  type Subscription,
-} from "./SubscriptionManager.js"
+export { EventStore, type ReplaceableStoreResult } from "./storage/EventStore.js"
+
+// =============================================================================
+// Re-exports - Core (platform-agnostic)
+// =============================================================================
+
 export {
   MessageHandler,
   MessageHandlerLive,
   type HandleResult,
   type BroadcastMessage,
-} from "./MessageHandler.js"
-export {
-  RelayServer,
-  RelayServerLive,
-  type RelayConfig,
-  type RelayHandle,
-  type ConnectionData,
-} from "./RelayServer.js"
+} from "./core/MessageHandler.js"
 
-// NIP-11 Relay Info
+export {
+  SubscriptionManager,
+  SubscriptionManagerLive,
+  type Subscription,
+} from "./core/SubscriptionManager.js"
+
+export { matchesFilter, matchesFilters } from "./core/FilterMatcher.js"
+
 export {
   RelayInfo,
   RelayLimitation,
@@ -55,10 +66,25 @@ export {
   defaultRelayInfo,
   mergeRelayInfo,
   type RetentionSpec,
-} from "./RelayInfo.js"
+} from "./core/RelayInfo.js"
 
 // Policy module
-export * from "./policy/index.js"
+export * from "./core/policy/index.js"
+
+// =============================================================================
+// Re-exports - Bun Backend (default)
+// =============================================================================
+
+export {
+  BunSqliteStoreLive,
+  MemoryEventStoreLive,
+  SqliteEventStoreLive, // Legacy alias
+  RelayServer,
+  RelayServerLive,
+  type RelayConfig,
+  type RelayHandle,
+  type ConnectionData,
+} from "./backends/bun/index.js"
 
 // =============================================================================
 // Full Relay Layer
@@ -72,7 +98,7 @@ export const makeRelayLayer = (dbPath: string) =>
     Layer.provide(MessageHandlerLive),
     Layer.provide(PolicyPipelineLive),
     Layer.provide(SubscriptionManagerLive),
-    Layer.provide(SqliteEventStoreLive(dbPath)),
+    Layer.provide(BunSqliteStoreLive(dbPath)),
     Layer.provide(EventServiceLive),
     Layer.provide(CryptoServiceLive)
   )

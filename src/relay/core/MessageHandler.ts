@@ -6,11 +6,11 @@
  */
 import { Context, Effect, Layer } from "effect"
 import { Schema } from "@effect/schema"
-import { EventStore } from "./EventStore.js"
+import { EventStore } from "../storage/EventStore.js"
 import { SubscriptionManager, type Subscription } from "./SubscriptionManager.js"
 import { PolicyPipeline } from "./policy/index.js"
-import { MessageParseError, DuplicateEvent, StorageError } from "../core/Errors.js"
-import type { CryptoError, InvalidPublicKey } from "../core/Errors.js"
+import { MessageParseError, DuplicateEvent, StorageError } from "../../core/Errors.js"
+import type { CryptoError, InvalidPublicKey } from "../../core/Errors.js"
 import {
   ClientMessage,
   type NostrEvent,
@@ -20,7 +20,7 @@ import {
   isReplaceableKind,
   isParameterizedReplaceableKind,
   getDTagValue,
-} from "../core/Schema.js"
+} from "../../core/Schema.js"
 
 // =============================================================================
 // Response Types
@@ -176,7 +176,7 @@ const make = Effect.gen(function* () {
   const handleReq = (
     connectionId: string,
     subscriptionId: SubscriptionId,
-    filters: readonly (typeof import("../core/Schema.js").Filter.Type)[]
+    filters: readonly (typeof import("../../core/Schema.js").Filter.Type)[]
   ): Effect.Effect<HandleResult, StorageError> =>
     Effect.gen(function* () {
       // Register the subscription

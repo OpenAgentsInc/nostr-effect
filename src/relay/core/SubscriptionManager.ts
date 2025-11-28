@@ -5,7 +5,7 @@
  * Provides filter matching for event distribution.
  */
 import { Context, Effect, Layer, Ref } from "effect"
-import type { NostrEvent, Filter, SubscriptionId } from "../core/Schema.js"
+import type { NostrEvent, Filter, SubscriptionId } from "../../core/Schema.js"
 import { matchesFilters } from "./FilterMatcher.js"
 
 // =============================================================================
