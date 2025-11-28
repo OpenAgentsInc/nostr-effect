@@ -30,7 +30,7 @@
     "@effect/language-service": "0.57.0",
     "@types/bun": "1.1.14",
     "typescript": "5.7.2",
-    "wrangler": "3.91.0"
+    "wrangler": "4.51.0"
   },
   "dependencies": {
     "@effect/platform": "0.93.5",
