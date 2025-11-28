@@ -291,7 +291,8 @@ describe("RelayServer", () => {
 
       const info = (await response.json()) as { supported_nips: number[]; software: string }
       expect(info.supported_nips).toContain(1)
-      expect(info.software).toBe("nostr-effect")
+      expect(info.supported_nips).toContain(11)
+      expect(info.software).toContain("nostr-effect")
     })
   })
 

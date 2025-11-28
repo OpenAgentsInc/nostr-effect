@@ -18,6 +18,7 @@ Building both sides of the protocol in tandem - using each to test the other.
 - [x] RelayServer (Bun.serve WebSocket)
 - [x] PolicyPipeline (composable event validation)
 - [x] NIP-16/33 Replaceable Events
+- [x] NIP-11 Relay Information Document
 - [ ] NIP module system
 
 ### Client
