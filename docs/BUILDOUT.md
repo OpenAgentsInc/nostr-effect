@@ -253,6 +253,8 @@ src/client/
 - FilterMatcher (currently in relay/) should be extracted to shared code for client-side filtering
 - Each phase builds on the previous - don't skip ahead
 - Client and relay can be worked on in parallel within the same phase
+- Relay NIP registry: if a NIP is enforced by the relay (message handling, storage rules, policies, or NIP‑11 info), add a module under `src/relay/core/nip/modules/**` and register it in `src/relay/core/nip/modules/index.ts` so `supported_nips` is accurate via NipRegistry.
+- Wrappers vs Services: wrappers in `src/wrappers/**` are convenience Promise APIs; core logic MUST live in Effect services/modules under `src/client/**`, `src/relay/core/**`, or `src/core/**`.
 
 ## Test Parity Policy
 
