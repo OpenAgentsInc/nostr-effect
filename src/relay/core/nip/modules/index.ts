@@ -16,6 +16,7 @@ export { Nip45Module } from "./Nip45Module.js"
 export { Nip50Module } from "./Nip50Module.js"
 export { Nip62Module } from "./Nip62Module.js"
 export { Nip70Module } from "./Nip70Module.js"
+export { Nip15Module } from "./Nip15Module.js"
 export {
   createNip42Module,
   verifyAuthEvent,
@@ -39,6 +40,7 @@ import { Nip45Module } from "./Nip45Module.js"
 import { Nip50Module } from "./Nip50Module.js"
 import { Nip62Module } from "./Nip62Module.js"
 import { Nip70Module } from "./Nip70Module.js"
+import { Nip15Module } from "./Nip15Module.js"
 import type { NipModule } from "../NipModule.js"
 
 /**
@@ -57,4 +59,5 @@ export const DefaultModules: readonly NipModule[] = [
   Nip50Module,
   Nip62Module,
   Nip70Module,
+  Nip15Module,
 ]

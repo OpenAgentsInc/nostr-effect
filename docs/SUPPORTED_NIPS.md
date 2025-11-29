@@ -22,7 +22,7 @@ Keep this file up to date whenever adding or removing support.
 | 11 | Relay information | `~/code/nips/11.md` | `src/relay/core/nip/modules/Nip11Module.ts` | `src/core/Nip11.test.ts`, `src/relay/RelayInfo.test.ts` |
 | 13 | Proof of Work | `~/code/nips/13.md` | `src/wrappers/nip13.ts` | `src/core/Nip13.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
-| 15 | Nostr Marketplace | `~/code/nips/15.md` | `src/wrappers/nip15.ts` | `src/wrappers/nip15.test.ts` |
+| 15 | Nostr Marketplace | `~/code/nips/15.md` | `src/client/MarketplaceService.ts` | `src/client/MarketplaceService.test.ts` |
 | 16 | Event treatment | `~/code/nips/16.md` | `src/relay/core/nip/modules/Nip16Module.ts` | `src/relay/core/nip/NipRegistry.test.ts` |
 | 17 | Private direct messages | `~/code/nips/17.md` | `src/client/Nip17Service.ts` | `src/core/Nip17.test.ts`, `src/client/Nip17Service.test.ts` |
 | 18 | Reposts | `~/code/nips/18.md` | `src/client/Nip18Service.ts` | `src/client/Nip18Service.test.ts` |
