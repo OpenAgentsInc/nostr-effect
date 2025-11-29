@@ -18,7 +18,7 @@ npm install nostr-effect
 
 **200+ exports** covering the full Nostr protocol:
 
-- **NIP modules**: 01, 04, 05, 06, 10, 11, 13, 16, 17, 18, 19, 21, 25, 27, 28, 30, 34, 39, 40, 42, 44, 46, 47, 49, 54, 57, 58, 59, 75, 94, 98, 99 (32 NIPs)
+- See supported NIPs in `docs/SUPPORTED_NIPS.md` (single source of truth)
 - **Effect Services**: CryptoService, EventService, DVMService, Nip05Service, Nip17Service, Nip25Service, Nip39Service, Nip46Service, Nip58Service, RelayService, and more
 - **Branded Types**: NostrEvent, Filter, PublicKey, SecretKey, EventId, Signature, SubscriptionId, UnixTimestamp
 - **NIP-19 Encoding**: encode/decode for npub, nsec, note, nprofile, nevent, naddr

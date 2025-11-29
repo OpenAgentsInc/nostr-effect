@@ -240,6 +240,83 @@ describe("MintDiscoverabilityService (NIP-87)", () => {
     await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
   })
 
+  test("findRecommendations respects authors filter and limit", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      // Two authors
+      const author1 = yield* crypto.generatePrivateKey()
+      const author2 = yield* crypto.generatePrivateKey()
+
+      // Publish two minimal recommendations from different authors
+      yield* mintService.recommendMint({ kind: 38172, d: "r-auth-1" }, author1)
+      yield* mintService.recommendMint({ kind: 38172, d: "r-auth-2" }, author2)
+
+      // Filter by author1 only
+      const recs1 = yield* mintService.findRecommendations({ authors: [yield* crypto.getPublicKey(author1)], filterByKind: 38172, limit: 5 })
+      expect(recs1.length).toBeGreaterThan(0)
+      for (const r of recs1) {
+        expect(r.recommendedKind).toBe(38172)
+        expect(r.d.length).toBeGreaterThan(0)
+      }
+
+      // Filter by author2 and limit 1
+      const recs2 = yield* mintService.findRecommendations({ authors: [yield* crypto.getPublicKey(author2)], filterByKind: 38172, limit: 1 })
+      expect(recs2.length).toBe(1)
+      expect(recs2[0]?.d).toBe("r-auth-2")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("recommendation with multiple 'a' pointers parses all", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      // Publish two info events
+      const sk1 = yield* crypto.generatePrivateKey()
+      const pk1 = yield* crypto.getPublicKey(sk1)
+      const sk2 = yield* crypto.generatePrivateKey()
+      const pk2 = yield* crypto.getPublicKey(sk2)
+      yield* mintService.publishCashuMintInfo({ d: "multi-a-1", url: "https://m1" }, sk1)
+      yield* mintService.publishCashuMintInfo({ d: "multi-a-2", url: "https://m2" }, sk2)
+
+      // Recommend with two pointers
+      const author = yield* crypto.generatePrivateKey()
+      yield* mintService.recommendMint({
+        kind: 38172,
+        d: "multi-a-1",
+        pointers: [
+          { kind: 38172, pubkey: pk1, d: "multi-a-1", relay: "wss://hint1", label: "m1" },
+          { kind: 38172, pubkey: pk2, d: "multi-a-2", relay: "wss://hint2", label: "m2" },
+        ],
+        content: "two mints",
+      }, author)
+
+      const recs = yield* mintService.findRecommendations({ filterByKind: 38172, limit: 3 })
+      const rec = recs.find((x) => x.d === "multi-a-1")
+      expect(rec).toBeDefined()
+      expect(rec?.pointers.length).toBeGreaterThanOrEqual(2)
+      const labels = (rec?.pointers ?? []).map((p) => p.label)
+      expect(labels).toContain("m1")
+      expect(labels).toContain("m2")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
   test("findRecommendations filters by kind and ignores invalid 'k' or missing 'd'", async () => {
     const program = Effect.gen(function* () {
       const relayService = yield* RelayService

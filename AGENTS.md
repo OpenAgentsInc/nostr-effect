@@ -286,6 +286,13 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Quick filter: `decodeFilter({ kinds: [decodeKind(K)], "#d": [d], limit: 1 })`.
 - Recommendation pointers: encode `'a'` as `${kind}:${pubkey}:${d}` and include optional relay hints.
 
+### NIP‑87 Tips
+
+- Kinds: 38000 (recommendation), 38172 (Cashu info), 38173 (Fedimint info). Add constants in `src/wrappers/kinds.ts` and use schema decoders.
+- Tags: `k` (recommended kind), `d` (identifier), `u` (URL or invite), `a` (pointer `${kind}:${pubkey}:${d}` with optional relay/label), `nuts`, `modules`, `n` (network).
+- Queries: filter recommendations with `{ kinds: [38000], '#k': ['38172'|'38173'], authors?, limit? }`.
+- Tests: cover authors filter, multiple `a` pointers, and negative cases (missing `d` or invalid `k`).
+
 
 
 <!-- effect-solutions:start -->
