@@ -1,6 +1,6 @@
 {
   "name": "nostr-effect",
-  "version": "0.0.1-rc4",
+  "version": "0.0.1",
   "description": "A type-safe, composable Nostr library built with Effect",
   "author": "Christopher David <chris@openagents.com>",
   "license": "CC0-1.0",
