@@ -31,6 +31,7 @@ Keep this file up to date whenever adding or removing support.
 | 34 | Git collaboration | `~/code/nips/34.md` | `src/core/Nip34.ts` | `src/core/Nip34.test.ts` |
 | 23 | Long-form content | `~/code/nips/23.md` | `src/client/Nip23Service.ts` | `src/client/Nip23Service.test.ts` |
 | 39 | External identities | `~/code/nips/39.md` | `src/client/Nip39Service.ts` | `src/client/Nip39Service.test.ts` |
+| 52 | Calendar events | `~/code/nips/52.md` | `src/client/Nip52Service.ts` | `src/client/Nip52Service.test.ts` |
 | 40 | Expiration timestamp | `~/code/nips/40.md` | (handled by relay policies) | `src/core/Nip40.test.ts` |
 | 42 | Client authentication | `~/code/nips/42.md` | `src/relay/core/nip/modules/Nip42Module.ts` | `src/core/Nip42.test.ts`, `src/relay/core/nip/modules/Nip42Module.test.ts` |
 | 44 | Versioned encryption | `~/code/nips/44.md` | `src/services/Nip44Service.ts` | `src/services/Nip44Service.test.ts` |
