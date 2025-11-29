@@ -43,6 +43,7 @@ Keep this file up to date whenever adding or removing support.
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
 | 75 | Zap goals | `~/code/nips/75.md` | `src/wrappers/nip75.ts` | `src/core/Nip75.test.ts` |
 | 78 | Arbitrary custom app data | `~/code/nips/78.md` | `src/client/AppDataService.ts` | `src/client/AppDataService.test.ts` |
+| 66 | Relay discovery & liveness | `~/code/nips/66.md` | `src/client/RelayDiscoveryService.ts` | `src/client/RelayDiscoveryService.test.ts` |
 | 87 | Ecash mint discoverability | `~/code/nips/87.md` | `src/client/MintDiscoverabilityService.ts` | `src/client/MintDiscoverabilityService.test.ts` |
 | 89 | Recommended application handlers | `~/code/nips/89.md` | `src/client/HandlerService.ts` | `src/client/HandlerService.test.ts` |
 | 90 | Data vending machine | `~/code/nips/90.md` | `src/client/DVMService.ts` | `src/client/DVMService.test.ts` |

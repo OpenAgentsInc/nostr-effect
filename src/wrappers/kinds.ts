@@ -351,6 +351,16 @@ export const WikiArticle = 30818
 export const Redirect = 30819
 
 // =============================================================================
+// Relay Discovery & Liveness (NIP-66)
+// =============================================================================
+
+/** Relay discovery info (NIP-66) */
+export const RelayDiscoveryInfo = 30166
+
+/** Relay monitor announcement (NIP-66) */
+export const RelayMonitorAnnouncement = 10166
+
+// =============================================================================
 // DVM Events (NIP-90)
 // =============================================================================
 
