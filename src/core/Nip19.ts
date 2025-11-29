@@ -615,8 +615,153 @@ export const decode = (bech32String: string): Effect.Effect<Nip19Data, DecodingE
   })
 
 // =============================================================================
-// Synchronous Decode (for content parsing)
+// Synchronous Functions (for wrappers and content parsing)
 // =============================================================================
+
+// TLV encoding helper for sync functions
+const encodeTLVSync = (entries: Array<{ type: number; value: Uint8Array }>): Uint8Array => {
+  const chunks: Uint8Array[] = []
+  for (const { type, value } of entries) {
+    chunks.push(new Uint8Array([type, value.length]))
+    chunks.push(value)
+  }
+  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+  const result = new Uint8Array(totalLength)
+  let offset = 0
+  for (const chunk of chunks) {
+    result.set(chunk, offset)
+    offset += chunk.length
+  }
+  return result
+}
+
+/**
+ * Synchronously encode a public key to npub format
+ * @throws Error if encoding fails
+ */
+export const npubEncodeSync = (pubkey: string): string => {
+  const bytes = hexToBytes(pubkey)
+  if (bytes.length !== 32) {
+    throw new Error(`Invalid pubkey length: expected 32 bytes, got ${bytes.length}`)
+  }
+  return bech32.encode("npub", bech32.toWords(bytes), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode a private key to nsec format
+ * @throws Error if encoding fails
+ */
+export const nsecEncodeSync = (privkey: Uint8Array): string => {
+  if (privkey.length !== 32) {
+    throw new Error(`Invalid private key length: expected 32 bytes, got ${privkey.length}`)
+  }
+  return bech32.encode("nsec", bech32.toWords(privkey), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode an event ID to note format
+ * @throws Error if encoding fails
+ */
+export const noteEncodeSync = (eventId: string): string => {
+  const bytes = hexToBytes(eventId)
+  if (bytes.length !== 32) {
+    throw new Error(`Invalid event ID length: expected 32 bytes, got ${bytes.length}`)
+  }
+  return bech32.encode("note", bech32.toWords(bytes), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode a profile pointer to nprofile format
+ * @throws Error if encoding fails
+ */
+export const nprofileEncodeSync = (profile: ProfilePointer): string => {
+  const entries: Array<{ type: number; value: Uint8Array }> = []
+
+  const pubkeyBytes = hexToBytes(profile.pubkey)
+  if (pubkeyBytes.length !== 32) {
+    throw new Error(`Invalid pubkey length: expected 32 bytes, got ${pubkeyBytes.length}`)
+  }
+  entries.push({ type: TLV_SPECIAL, value: pubkeyBytes })
+
+  for (const relay of profile.relays || []) {
+    entries.push({ type: TLV_RELAY, value: new TextEncoder().encode(relay) })
+  }
+
+  const tlv = encodeTLVSync(entries)
+  return bech32.encode("nprofile", bech32.toWords(tlv), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode an event pointer to nevent format
+ * @throws Error if encoding fails
+ */
+export const neventEncodeSync = (event: EventPointer): string => {
+  const entries: Array<{ type: number; value: Uint8Array }> = []
+
+  const idBytes = hexToBytes(event.id)
+  if (idBytes.length !== 32) {
+    throw new Error(`Invalid event ID length: expected 32 bytes, got ${idBytes.length}`)
+  }
+  entries.push({ type: TLV_SPECIAL, value: idBytes })
+
+  for (const relay of event.relays || []) {
+    entries.push({ type: TLV_RELAY, value: new TextEncoder().encode(relay) })
+  }
+
+  if (event.author) {
+    const authorBytes = hexToBytes(event.author)
+    if (authorBytes.length !== 32) {
+      throw new Error(`Invalid author pubkey length: expected 32 bytes, got ${authorBytes.length}`)
+    }
+    entries.push({ type: TLV_AUTHOR, value: authorBytes })
+  }
+
+  if (event.kind !== undefined) {
+    const kindBytes = new Uint8Array(4)
+    const view = new DataView(kindBytes.buffer)
+    view.setUint32(0, event.kind, false)
+    entries.push({ type: TLV_KIND, value: kindBytes })
+  }
+
+  const tlv = encodeTLVSync(entries)
+  return bech32.encode("nevent", bech32.toWords(tlv), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode an address pointer to naddr format
+ * @throws Error if encoding fails
+ */
+export const naddrEncodeSync = (addr: AddressPointer): string => {
+  const entries: Array<{ type: number; value: Uint8Array }> = []
+
+  entries.push({ type: TLV_SPECIAL, value: new TextEncoder().encode(addr.identifier) })
+
+  for (const relay of addr.relays || []) {
+    entries.push({ type: TLV_RELAY, value: new TextEncoder().encode(relay) })
+  }
+
+  const pubkeyBytes = hexToBytes(addr.pubkey)
+  if (pubkeyBytes.length !== 32) {
+    throw new Error(`Invalid pubkey length: expected 32 bytes, got ${pubkeyBytes.length}`)
+  }
+  entries.push({ type: TLV_AUTHOR, value: pubkeyBytes })
+
+  const kindBytes = new Uint8Array(4)
+  const view = new DataView(kindBytes.buffer)
+  view.setUint32(0, addr.kind, false)
+  entries.push({ type: TLV_KIND, value: kindBytes })
+
+  const tlv = encodeTLVSync(entries)
+  return bech32.encode("naddr", bech32.toWords(tlv), BECH32_MAX_SIZE)
+}
+
+/**
+ * Synchronously encode arbitrary bytes to bech32 with given prefix
+ * @throws Error if encoding fails
+ */
+export const encodeBytesSync = <Prefix extends string>(prefix: Prefix, bytes: Uint8Array): `${Prefix}1${string}` => {
+  return bech32.encode(prefix, bech32.toWords(bytes), BECH32_MAX_SIZE) as `${Prefix}1${string}`
+}
 
 /**
  * Synchronously decode any NIP-19 bech32 string

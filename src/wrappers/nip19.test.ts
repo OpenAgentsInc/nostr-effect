@@ -91,8 +91,10 @@ describe("nip19.ts wrapper", () => {
       const decoded = decode(nprofile)
 
       expect(decoded.type).toBe("nprofile")
-      expect(decoded.data.pubkey).toBe(TEST_PUBKEY)
-      expect(decoded.data.relays).toEqual(relays)
+      if (decoded.type === "nprofile") {
+        expect(decoded.data.pubkey).toBe(TEST_PUBKEY)
+        expect(decoded.data.relays).toEqual(relays)
+      }
     })
   })
 
@@ -123,10 +125,12 @@ describe("nip19.ts wrapper", () => {
       const decoded = decode(nevent)
 
       expect(decoded.type).toBe("nevent")
-      expect(decoded.data.id).toBe(TEST_EVENT_ID)
-      expect(decoded.data.relays).toEqual(relays)
-      expect(decoded.data.author).toBe(TEST_PUBKEY)
-      expect(decoded.data.kind).toBe(1)
+      if (decoded.type === "nevent") {
+        expect(decoded.data.id).toBe(TEST_EVENT_ID)
+        expect(decoded.data.relays).toEqual(relays)
+        expect(decoded.data.author).toBe(TEST_PUBKEY)
+        expect(decoded.data.kind).toBe(1)
+      }
     })
   })
 
@@ -161,10 +165,12 @@ describe("nip19.ts wrapper", () => {
       const decoded = decode(naddr)
 
       expect(decoded.type).toBe("naddr")
-      expect(decoded.data.identifier).toBe("my-article")
-      expect(decoded.data.pubkey).toBe(TEST_PUBKEY)
-      expect(decoded.data.kind).toBe(30023)
-      expect(decoded.data.relays).toEqual(relays)
+      if (decoded.type === "naddr") {
+        expect(decoded.data.identifier).toBe("my-article")
+        expect(decoded.data.pubkey).toBe(TEST_PUBKEY)
+        expect(decoded.data.kind).toBe(30023)
+        expect(decoded.data.relays).toEqual(relays)
+      }
     })
   })
 
