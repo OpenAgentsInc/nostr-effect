@@ -236,6 +236,17 @@ Common NIPs for this project:
 - `46.md` - Nostr Connect (remote signing)
 - `65.md` - Relay list metadata (kind 10002)
 
+### Definitive NIP Support List
+
+- Canonical list: `docs/SUPPORTED_NIPS.md`.
+- Treat that file as the single source of truth for what we support. When you add or change a NIP implementation (service/wrapper/registry module), update `docs/SUPPORTED_NIPS.md` in the same PR.
+- Do not add additional NIP support tables elsewhere (e.g., README). Link to `docs/SUPPORTED_NIPS.md` instead.
+- Include links to:
+  - Spec (local): `~/code/nips/<nip>.md`
+  - Code entry points: service/wrapper/module paths
+  - Tests
+
+
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
 
