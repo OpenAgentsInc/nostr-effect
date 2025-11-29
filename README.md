@@ -32,7 +32,7 @@ npm install nostr-effect
 
 The Promise API provides a simple interface inspired by [nostr-tools](https://github.com/nbd-wtf/nostr-tools). Under the hood, it uses the full Effect-based implementation with type-safe services and NIP modules.
 
-> **Note:** The Promise API currently covers only a small fraction of the library's functionality (key generation, event signing, NIP-19 encoding, and relay pooling). More wrappers are coming, but full access to all NIPs and services requires using the Effect API.
+> **Note:** The Promise API covers the most common functionality. Full access to all NIPs and services is available via the Effect API.
 
 ```typescript
 import { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } from "nostr-effect/pure"
@@ -150,6 +150,116 @@ pool.publish(relays, event)              // Promise<string>[]
 pool.destroy()
 ```
 
+#### `nostr-effect/relay`
+
+Single relay connection (simpler than SimplePool).
+
+```typescript
+import { Relay, connectRelay } from "nostr-effect/relay"
+
+// Create and connect
+const relay = new Relay('wss://relay.damus.io')
+relay.on('connect', () => console.log('Connected!'))
+relay.on('error', (err) => console.error(err))
+await relay.connect()
+
+// Or use convenience function
+const relay = await connectRelay('wss://relay.damus.io')
+
+// Subscribe to events
+const sub = relay.subscribe([{ kinds: [1], limit: 10 }], {
+  onevent: (event) => console.log(event),
+  oneose: () => console.log('End of stored events'),
+})
+
+// Publish an event
+await relay.publish(signedEvent)
+
+// Clean up
+sub.close()
+relay.close()
+```
+
+#### `nostr-effect/nip04`
+
+Legacy encrypted DMs (NIP-04).
+
+```typescript
+import { encrypt, decrypt } from "nostr-effect/nip04"
+
+// Encrypt a message (uses shared secret from sender's privkey + receiver's pubkey)
+const ciphertext = await encrypt(senderSecretKey, receiverPubkey, "Hello!")
+
+// Decrypt a message
+const plaintext = await decrypt(receiverSecretKey, senderPubkey, ciphertext)
+```
+
+#### `nostr-effect/nip05`
+
+DNS-based identity verification (NIP-05).
+
+```typescript
+import { queryProfile, isValid, searchDomain, NIP05_REGEX } from "nostr-effect/nip05"
+
+// Look up a user's profile
+const profile = await queryProfile('bob@example.com')
+if (profile) {
+  console.log('Pubkey:', profile.pubkey)
+  console.log('Relays:', profile.relays)
+}
+
+// Verify an identifier matches a pubkey
+const valid = await isValid(pubkey, 'bob@example.com')
+
+// Search for users on a domain
+const users = await searchDomain('example.com', 'bob')
+```
+
+#### `nostr-effect/kinds`
+
+Event kind constants for all NIPs.
+
+```typescript
+import { kinds } from "nostr-effect/kinds"
+
+// Use kind constants
+const event = { kind: kinds.ShortTextNote, ... }  // kind 1
+
+// Check if event is a reaction
+if (event.kind === kinds.Reaction) { ... }
+
+// Helper functions
+kinds.isReplaceable(kind)              // kind 0, 3, or 10000-19999
+kinds.isEphemeral(kind)                // kind 20000-29999
+kinds.isParameterizedReplaceable(kind) // kind 30000-39999
+kinds.getDVMResultKind(requestKind)    // 5xxx -> 6xxx
+```
+
+#### `nostr-effect/utils`
+
+Helper utilities for working with events.
+
+```typescript
+import {
+  matchFilter, matchFilters,           // Check if event matches filter(s)
+  sortEvents, sortEventsAsc,           // Sort events by timestamp
+  normalizeURL,                        // Normalize relay URLs
+  getTagValue, getTagValues, getTags,  // Extract tags from events
+  deduplicateEvents,                   // Remove duplicate events by ID
+  getLatestReplaceable,                // Get latest version of replaceable events
+  now, timestampToDate, dateToTimestamp, // Timestamp helpers
+} from "nostr-effect/utils"
+
+// Check if an event matches a filter
+const matches = matchFilter({ kinds: [1], authors: [pubkey] }, event)
+
+// Sort events newest first
+const sorted = sortEvents(events)
+
+// Get tag values
+const referencedPubkeys = getTagValues(event, "p")
+```
+
 ### Effect Services
 
 #### `nostr-effect` (main)
@@ -211,12 +321,13 @@ import {
 } from "nostr-effect/client"
 ```
 
-#### `nostr-effect/relay`
+#### `nostr-effect/relay-server`
 
 ```typescript
 import {
-  // Relay implementation modules
-} from "nostr-effect/relay"
+  // Relay server implementation
+  RelayServer, PolicyPipeline, NipRegistry, EventStore, SubscriptionManager
+} from "nostr-effect/relay-server"
 ```
 
 ## NIP Support
