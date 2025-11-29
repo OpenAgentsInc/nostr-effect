@@ -28,6 +28,7 @@ Keep this file up to date whenever adding or removing support.
 | 19 | bech32 encoding | `~/code/nips/19.md` | `src/core/Nip19.ts`, `src/wrappers/nip19.ts` | `src/core/Nip19.test.ts`, `src/wrappers/nip19.test.ts` |
 | 20 | Command results | `~/code/nips/20.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip20CommandResults.test.ts` |
 | 21 | nostr: URI scheme | `~/code/nips/21.md` | `src/core/Nip21.ts`, `src/wrappers/nip21.ts` | `src/core/Nip21.test.ts` |
+| 22 | Comment | `~/code/nips/22.md` | `src/wrappers/nip22.ts` | `src/wrappers/nip22.test.ts` |
 | 23 | Long-form content | `~/code/nips/23.md` | `src/client/Nip23Service.ts` | `src/client/Nip23Service.test.ts` |
 | 25 | Reactions | `~/code/nips/25.md` | `src/client/Nip25Service.ts` | `src/client/Nip25Service.test.ts` |
 | 26 | Delegated event signing | `~/code/nips/26.md` | `src/wrappers/nip26.ts` | `src/wrappers/nip26.test.ts` |
