@@ -10,9 +10,9 @@ import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { makeRelayPool } from "./RelayPool.js"
 import type { PublicKey } from "../core/Schema.js"
 
-const TestLayer = Layer.merge(
-  Layer.merge(Nip17ServiceLive, CryptoServiceLive),
-  makeRelayPool()
+const TestLayer = Layer.provideMerge(
+  Nip17ServiceLive,
+  Layer.merge(CryptoServiceLive, makeRelayPool())
 )
 
 describe("NIP-17: Private Direct Messages", () => {
