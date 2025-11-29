@@ -42,6 +42,7 @@ Keep this file up to date whenever adding or removing support.
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
 | 75 | Zap goals | `~/code/nips/75.md` | `src/wrappers/nip75.ts` | `src/core/Nip75.test.ts` |
+| 78 | Arbitrary custom app data | `~/code/nips/78.md` | `src/client/AppDataService.ts` | `src/client/AppDataService.test.ts` |
 | 87 | Ecash mint discoverability | `~/code/nips/87.md` | `src/client/MintDiscoverabilityService.ts` | `src/client/MintDiscoverabilityService.test.ts` |
 | 89 | Recommended application handlers | `~/code/nips/89.md` | `src/client/HandlerService.ts` | `src/client/HandlerService.test.ts` |
 | 90 | Data vending machine | `~/code/nips/90.md` | `src/client/DVMService.ts` | `src/client/DVMService.test.ts` |
@@ -53,4 +54,3 @@ Notes
 - Registry modules live under `src/relay/core/nip/modules/**`. Default relay modules: NIP-01, NIP-11, NIP-16/33. Others (e.g., NIP-28, NIP-57, NIP-42) are available but may not be in `DefaultModules`.
 - Client services live under `src/client/**`. Wrappers for specific NIPs live under `src/wrappers/**`.
 - Some NIPs are primarily policy/behavior and validated by integration tests rather than a dedicated “NipXXService”.
-
