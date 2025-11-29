@@ -67,8 +67,8 @@ export interface SimplePoolOptions {
 
 /** Subscription callback params */
 export interface SubscribeParams {
-  /** Called when an event is received */
-  onevent?: (event: NostrEvent) => void
+  /** Called when an event is received. Includes the relay URL the event came from. */
+  onevent?: (event: NostrEvent, relay?: string) => void
   /** Called when EOSE (end of stored events) is received */
   oneose?: () => void
   /** Called when subscription is closed */
@@ -276,7 +276,7 @@ export class SimplePool {
   /**
    * Handle incoming WebSocket message.
    */
-  private handleMessage(_url: string, connection: RelayConnection, data: string): void {
+  private handleMessage(url: string, connection: RelayConnection, data: string): void {
     try {
       const msg = JSON.parse(data)
       const type = msg[0]
@@ -307,7 +307,7 @@ export class SimplePool {
               }
             }
 
-            sub.params.onevent?.(event)
+            sub.params.onevent?.(event, url)
           }
           break
         }
