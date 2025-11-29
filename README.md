@@ -2,6 +2,10 @@
 
 A type-safe Nostr library built with [Effect](https://effect.website/).
 
+## Why
+
+We want the entire Nostr protocol—client library and relay—implemented in fully typed Effect TypeScript. This gives us composable error handling, dependency injection via layers, and structured concurrency out of the box.
+
 ## Installation
 
 ```bash
@@ -10,7 +14,25 @@ bun add nostr-effect
 npm install nostr-effect
 ```
 
+## What's Included
+
+**200+ exports** covering the full Nostr protocol:
+
+- **NIP modules**: 01, 04, 05, 06, 10, 11, 13, 16, 17, 18, 19, 21, 25, 27, 28, 30, 34, 39, 40, 42, 44, 46, 47, 49, 54, 57, 58, 59, 75, 94, 98, 99 (32 NIPs)
+- **Effect Services**: CryptoService, EventService, DVMService, Nip05Service, Nip17Service, Nip25Service, Nip39Service, Nip46Service, Nip58Service, RelayService, and more
+- **Branded Types**: NostrEvent, Filter, PublicKey, SecretKey, EventId, Signature, SubscriptionId, UnixTimestamp
+- **NIP-19 Encoding**: encode/decode for npub, nsec, note, nprofile, nevent, naddr
+- **NIP-06 Keys**: Seed word/mnemonic key derivation
+- **Relay Server**: RelayServer, PolicyPipeline, NipRegistry, EventStore, SubscriptionManager
+- **Typed Errors**: CryptoError, InvalidSignature, ValidationError, ConnectionError, and more
+
 ## Quick Start
+
+### Promise API
+
+The Promise API provides a simple interface inspired by [nostr-tools](https://github.com/nbd-wtf/nostr-tools). Under the hood, it uses the full Effect-based implementation with type-safe services and NIP modules.
+
+> **Note:** The Promise API currently covers only a small fraction of the library's functionality (key generation, event signing, NIP-19 encoding, and relay pooling). More wrappers are coming, but full access to all NIPs and services requires using the Effect API.
 
 ```typescript
 import { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } from "nostr-effect/pure"
@@ -45,9 +67,39 @@ const events = await pool.querySync(
 pool.destroy()
 ```
 
-## API
+### Effect API
 
-### `nostr-effect/pure`
+```typescript
+import { Effect } from "effect"
+import { CryptoService, EventService } from "nostr-effect"
+import * as Nip19 from "nostr-effect"
+
+const program = Effect.gen(function* () {
+  const crypto = yield* CryptoService
+  const events = yield* EventService
+
+  // Generate keypair
+  const keyPair = yield* crypto.generateKeyPair()
+
+  // Encode to npub
+  const npub = Nip19.npubEncode(keyPair.publicKey)
+
+  // Create and sign event
+  const event = yield* events.createSignedEvent({
+    kind: 1,
+    content: "Hello from Effect!",
+    tags: []
+  }, keyPair.secretKey)
+
+  return { npub, event }
+})
+```
+
+## API Reference
+
+### Promise Wrappers
+
+#### `nostr-effect/pure`
 
 Key generation, event signing, and verification.
 
@@ -60,11 +112,11 @@ import {
   serializeEvent,     // (event) => string
   getEventHash,       // (event) => string
   validateEvent,      // (event) => boolean
-  sortEvents,         // (events) => void (in-place sort)
+  sortEvents,         // (events) => void
 } from "nostr-effect/pure"
 ```
 
-### `nostr-effect/nip19`
+#### `nostr-effect/nip19`
 
 Bech32 encoding/decoding for Nostr identifiers.
 
@@ -82,7 +134,7 @@ import {
 } from "nostr-effect/nip19"
 ```
 
-### `nostr-effect/pool`
+#### `nostr-effect/pool`
 
 SimplePool for managing relay connections.
 
@@ -90,30 +142,119 @@ SimplePool for managing relay connections.
 import { SimplePool } from "nostr-effect/pool"
 
 const pool = new SimplePool()
-
-// Query with callback
-pool.subscribe(relays, filters, {
-  onevent: (event) => console.log(event),
-  oneose: () => console.log("end of stored events"),
-})
-
-// Query as async iterator
-for await (const event of pool.subscribeIterator(relays, filters)) {
-  console.log(event)
-}
-
-// Query all at once
-const events = await pool.querySync(relays, filters)
-
-// Get single event
-const event = await pool.get(relays, filters)
-
-// Publish
-await Promise.all(pool.publish(relays, signedEvent))
-
-// Cleanup
+pool.subscribe(relays, filters, { onevent, oneose })
+pool.subscribeIterator(relays, filters)  // AsyncIterable
+pool.querySync(relays, filters)          // Promise<Event[]>
+pool.get(relays, filters)                // Promise<Event | null>
+pool.publish(relays, event)              // Promise<string>[]
 pool.destroy()
 ```
+
+### Effect Services
+
+#### `nostr-effect` (main)
+
+```typescript
+import {
+  // Services
+  CryptoService,    // Key generation, signing, encryption
+  EventService,     // Event creation and validation
+
+  // Core types and schemas
+  NostrEvent,       // Event schema
+  Filter,           // Filter schema
+  PublicKey,        // Branded type
+  SecretKey,        // Branded type
+  EventId,          // Branded type
+  Signature,        // Branded type
+
+  // NIP modules (namespaced)
+  Nip04,            // Legacy encrypted DMs
+  Nip06,            // Key derivation from mnemonic
+  Nip11,            // Relay information
+  Nip13,            // Proof of Work
+  Nip17,            // Private direct messages
+  Nip19,            // bech32 encoding (Effect version)
+  Nip21,            // nostr: URI scheme
+  Nip27,            // Content parsing
+  Nip30,            // Custom emoji
+  Nip34,            // Git collaboration
+  Nip40,            // Expiration timestamp
+  Nip42,            // Client authentication
+  Nip47,            // Nostr Wallet Connect
+  Nip49,            // Encrypted private keys
+  Nip54,            // Wiki
+  Nip59,            // Gift wrap
+  Nip75,            // Zap goals
+  Nip94,            // File metadata
+  Nip98,            // HTTP auth
+  Nip99,            // Classified listings
+} from "nostr-effect"
+```
+
+#### `nostr-effect/services`
+
+```typescript
+import {
+  CryptoService,    // Key generation, schnorr signing
+  EventService,     // Event creation and validation
+  Nip44Service,     // NIP-44 encryption
+} from "nostr-effect/services"
+```
+
+#### `nostr-effect/client`
+
+```typescript
+import {
+  Nip17Service,     // Private direct messages
+  // ... other client services
+} from "nostr-effect/client"
+```
+
+#### `nostr-effect/relay`
+
+```typescript
+import {
+  // Relay implementation modules
+} from "nostr-effect/relay"
+```
+
+## NIP Support
+
+| NIP | Description |
+|-----|-------------|
+| [01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic protocol flow |
+| [04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Legacy encrypted DMs |
+| [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers |
+| [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic |
+| [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading |
+| [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information |
+| [13](https://github.com/nostr-protocol/nips/blob/master/13.md) | Proof of Work |
+| [16](https://github.com/nostr-protocol/nips/blob/master/16.md) | Event treatment |
+| [17](https://github.com/nostr-protocol/nips/blob/master/17.md) | Private direct messages |
+| [18](https://github.com/nostr-protocol/nips/blob/master/18.md) | Reposts |
+| [19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32 encoding |
+| [21](https://github.com/nostr-protocol/nips/blob/master/21.md) | nostr: URI scheme |
+| [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions |
+| [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing |
+| [28](https://github.com/nostr-protocol/nips/blob/master/28.md) | Public chat |
+| [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji |
+| [34](https://github.com/nostr-protocol/nips/blob/master/34.md) | Git collaboration |
+| [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities |
+| [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp |
+| [42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Client authentication |
+| [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption |
+| [46](https://github.com/nostr-protocol/nips/blob/master/46.md) | Nostr Connect |
+| [47](https://github.com/nostr-protocol/nips/blob/master/47.md) | Nostr Wallet Connect |
+| [49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Encrypted private keys |
+| [54](https://github.com/nostr-protocol/nips/blob/master/54.md) | Wiki |
+| [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps |
+| [58](https://github.com/nostr-protocol/nips/blob/master/58.md) | Badges |
+| [59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift wrap |
+| [75](https://github.com/nostr-protocol/nips/blob/master/75.md) | Zap goals |
+| [94](https://github.com/nostr-protocol/nips/blob/master/94.md) | File metadata |
+| [98](https://github.com/nostr-protocol/nips/blob/master/98.md) | HTTP auth |
+| [99](https://github.com/nostr-protocol/nips/blob/master/99.md) | Classified listings |
 
 ## License
 
