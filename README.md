@@ -19,24 +19,34 @@ Building both sides of the protocol in tandem - using each to test the other.
 | [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers | Client |
 | [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic | Core |
 | [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading | Client |
-| [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information | Relay |
+| [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information | Both |
 | [13](https://github.com/nostr-protocol/nips/blob/master/13.md) | Proof of Work | Core |
 | [16](https://github.com/nostr-protocol/nips/blob/master/16.md) | Event treatment | Relay |
+| [17](https://github.com/nostr-protocol/nips/blob/master/17.md) | Private direct messages | Core |
 | [18](https://github.com/nostr-protocol/nips/blob/master/18.md) | Reposts | Client |
 | [19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32 encoding | Core |
 | [21](https://github.com/nostr-protocol/nips/blob/master/21.md) | nostr: URI scheme | Core |
 | [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions | Client |
 | [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing | Core |
+| [28](https://github.com/nostr-protocol/nips/blob/master/28.md) | Public chat | Client |
 | [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji | Core |
 | [33](https://github.com/nostr-protocol/nips/blob/master/33.md) | Parameterized replaceable events | Relay |
 | [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities | Client |
+| [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp | Core |
+| [42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Client authentication | Core |
 | [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption | Core |
+| [49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Encrypted private keys | Core |
+| [54](https://github.com/nostr-protocol/nips/blob/master/54.md) | Wiki | Core |
 | [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps | Client |
 | [58](https://github.com/nostr-protocol/nips/blob/master/58.md) | Badges | Client |
 | [59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift wrap | Core |
 | [65](https://github.com/nostr-protocol/nips/blob/master/65.md) | Relay list metadata | Client |
+| [75](https://github.com/nostr-protocol/nips/blob/master/75.md) | Zap goals | Core |
 | [89](https://github.com/nostr-protocol/nips/blob/master/89.md) | Application handlers | Client |
 | [90](https://github.com/nostr-protocol/nips/blob/master/90.md) | Data vending machines | Client |
+| [94](https://github.com/nostr-protocol/nips/blob/master/94.md) | File metadata | Core |
+| [98](https://github.com/nostr-protocol/nips/blob/master/98.md) | HTTP auth | Core |
+| [99](https://github.com/nostr-protocol/nips/blob/master/99.md) | Classified listings | Core |
 
 **Scope**: *Core* = shared utilities, *Relay* = relay implementation, *Client* = client library
 
