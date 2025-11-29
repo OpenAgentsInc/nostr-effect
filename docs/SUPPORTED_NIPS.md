@@ -28,6 +28,7 @@ Keep this file up to date whenever adding or removing support.
 | 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` | (none yet) |
 | 30 | Custom emoji | `~/code/nips/30.md` | `src/wrappers/nip30.ts` | `src/core/Nip30.test.ts` |
 | 33 | Parameterized replaceable events | `~/code/nips/33.md` | `src/relay/core/nip/modules/Nip16Module.ts` | `src/relay/core/nip/NipRegistry.test.ts` |
+| 32 | Labeling | `~/code/nips/32.md` | `src/client/Nip32Service.ts` | `src/client/Nip32Service.test.ts` |
 | 34 | Git collaboration | `~/code/nips/34.md` | `src/core/Nip34.ts` | `src/core/Nip34.test.ts` |
 | 23 | Long-form content | `~/code/nips/23.md` | `src/client/Nip23Service.ts` | `src/client/Nip23Service.test.ts` |
 | 39 | External identities | `~/code/nips/39.md` | `src/client/Nip39Service.ts` | `src/client/Nip39Service.test.ts` |
