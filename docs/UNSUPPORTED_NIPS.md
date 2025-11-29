@@ -18,7 +18,6 @@ Source of truth for supported NIPs: `docs/SUPPORTED_NIPS.md`.
 - 60 — `~/code/nips/60.md`
 - 61 — `~/code/nips/61.md`
 - 64 — `~/code/nips/64.md`
-- 69 — `~/code/nips/69.md`
 - 73 — `~/code/nips/73.md`
 - 77 — `~/code/nips/77.md`
 - 86 — `~/code/nips/86.md`
