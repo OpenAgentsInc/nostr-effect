@@ -254,6 +254,16 @@ export const CHANNEL_HIDE_MESSAGE_KIND = 43 as EventKind
 export const CHANNEL_MUTE_USER_KIND = 44 as EventKind
 
 // =============================================================================
+// NIP-57 Lightning Zaps Event Kinds
+// =============================================================================
+
+/** Zap request - sent to LNURL endpoint (NIP-57) */
+export const ZAP_REQUEST_KIND = 9734 as EventKind
+
+/** Zap receipt - published after payment (NIP-57) */
+export const ZAP_RECEIPT_KIND = 9735 as EventKind
+
+// =============================================================================
 // Event Kind Classification (NIP-16/33)
 // =============================================================================
 
