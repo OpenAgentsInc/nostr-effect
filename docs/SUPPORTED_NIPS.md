@@ -61,6 +61,7 @@ Keep this file up to date whenever adding or removing support.
 | 52 | Calendar events | `~/code/nips/52.md` | `src/client/Nip52Service.ts` | `src/client/Nip52Service.test.ts` |
 | 53 | Live activities | `~/code/nips/53.md` | `src/client/Nip53Service.ts` | `src/client/Nip53Service.test.ts` |
 | 54 | Wiki | `~/code/nips/54.md` | `src/wrappers/nip54.ts` | `src/core/Nip54.test.ts` |
+| 55 | Android signer application | `~/code/nips/55.md` | `src/wrappers/nip55.ts` | `src/wrappers/nip55.test.ts` |
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
 | 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts`, `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts` |
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` | `src/client/Nip58Service.test.ts` |

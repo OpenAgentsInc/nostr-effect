@@ -56,6 +56,8 @@ describe("Nip38Service (NIP-38 User Statuses)", () => {
       expect(s1?.tags.find((t) => t[0] === "d")?.[1]).toBe("general")
       expect(s1?.tags.find((t) => t[0] === "r")?.[1]).toBe("https://example")
 
+      // Ensure next event has greater created_at than previous replaceable
+      yield* Effect.sleep(1100)
       // Update with the same d-tag (should replace) and different content
       const r2 = yield* svc.publishStatus({ type: "general", content: "Hiking" }, sk)
       expect(r2.accepted).toBe(true)
