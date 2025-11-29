@@ -16,6 +16,7 @@ Building both sides of the protocol in tandem - using each to test the other.
 |-----|-------------|-------|
 | [01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic protocol flow | Both |
 | [02](https://github.com/nostr-protocol/nips/blob/master/02.md) | Follow list | Client |
+| [04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Legacy encrypted DMs | Core |
 | [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers | Client |
 | [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic | Core |
 | [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading | Client |
@@ -35,6 +36,7 @@ Building both sides of the protocol in tandem - using each to test the other.
 | [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp | Core |
 | [42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Client authentication | Core |
 | [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption | Core |
+| [47](https://github.com/nostr-protocol/nips/blob/master/47.md) | Nostr Wallet Connect | Core |
 | [49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Encrypted private keys | Core |
 | [54](https://github.com/nostr-protocol/nips/blob/master/54.md) | Wiki | Core |
 | [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps | Client |
