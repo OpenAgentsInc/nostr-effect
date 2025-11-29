@@ -62,6 +62,7 @@
     "./nip57": "./src/wrappers/nip57.ts",
     "./nip58": "./src/wrappers/nip58.ts",
     "./nip59": "./src/wrappers/nip59.ts",
+    "./nip64": "./src/wrappers/nip64.ts",
     "./nip75": "./src/wrappers/nip75.ts",
     "./nip77": "./src/wrappers/nip77.ts",
     "./nip94": "./src/wrappers/nip94.ts",
