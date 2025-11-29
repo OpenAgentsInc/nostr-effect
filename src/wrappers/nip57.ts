@@ -19,11 +19,11 @@
  * ```
  */
 
-import { bech32 } from "@scure/base"
 import { validateEvent, verifyEvent } from "./pure.js"
 import { isReplaceable, isParameterizedReplaceable } from "./kinds.js"
 
-const utf8Decoder = new TextDecoder()
+// Re-export pure functions from service
+export { getSatoshisAmountFromBolt11, decodeLnurl } from "../client/ZapService.js"
 
 let _fetch: typeof fetch = globalThis.fetch
 
@@ -77,6 +77,9 @@ export interface ZapReceiptParams {
   paidAt: Date
 }
 
+// Import decodeLnurl for internal use
+import { decodeLnurl } from "../client/ZapService.js"
+
 /**
  * Get the zap endpoint from profile metadata
  */
@@ -88,9 +91,7 @@ export async function getZapEndpoint(metadata: Event): Promise<string | null> {
       const [name, domain] = lud16.split("@")
       lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
     } else if (lud06) {
-      const { words } = bech32.decode(lud06, 1000)
-      const data = bech32.fromWords(words)
-      lnurl = utf8Decoder.decode(new Uint8Array(data))
+      lnurl = decodeLnurl(lud06)
     } else {
       return null
     }
@@ -198,55 +199,4 @@ export function makeZapReceipt(params: ZapReceiptParams): EventTemplate {
   }
 
   return zap
-}
-
-/**
- * Parse satoshi amount from BOLT11 invoice
- */
-export function getSatoshisAmountFromBolt11(bolt11: string): number {
-  if (bolt11.length < 50) {
-    return 0
-  }
-  bolt11 = bolt11.substring(0, 50)
-  const idx = bolt11.lastIndexOf("1")
-  if (idx === -1) {
-    return 0
-  }
-  const hrp = bolt11.substring(0, idx)
-  if (!hrp.startsWith("lnbc")) {
-    return 0
-  }
-  const amount = hrp.substring(4)
-
-  if (amount.length < 1) {
-    return 0
-  }
-
-  const char = amount[amount.length - 1]!
-  const digit = char.charCodeAt(0) - "0".charCodeAt(0)
-  const isDigit = digit >= 0 && digit <= 9
-
-  let cutPoint = amount.length - 1
-  if (isDigit) {
-    cutPoint++
-  }
-
-  if (cutPoint < 1) {
-    return 0
-  }
-
-  const num = parseInt(amount.substring(0, cutPoint))
-
-  switch (char) {
-    case "m":
-      return num * 100000
-    case "u":
-      return num * 100
-    case "n":
-      return num / 10
-    case "p":
-      return num / 10000
-    default:
-      return num * 100000000
-  }
 }

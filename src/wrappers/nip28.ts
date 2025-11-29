@@ -32,6 +32,16 @@ import {
   ChannelMuteUser,
 } from "./kinds.js"
 
+// Re-export pure functions from service
+export {
+  parseChannelMetadata,
+  getChannelIdFromMessage,
+  getReplyToFromMessage,
+} from "../client/ChatService.js"
+
+// Re-export types
+export type { ChannelMetadata as ParsedChannelMetadata } from "../client/ChatService.js"
+
 /** Event type */
 export interface Event {
   id: string
