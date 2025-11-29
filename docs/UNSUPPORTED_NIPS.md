@@ -5,7 +5,6 @@ This file lists NIPs present in the local specs repo (`~/code/nips`) that are no
 Source of truth for supported NIPs: `docs/SUPPORTED_NIPS.md`.
 
 - 12 — `~/code/nips/12.md`
-- 55 — `~/code/nips/55.md`
 - 77 — `~/code/nips/77.md`
 
 Notes
