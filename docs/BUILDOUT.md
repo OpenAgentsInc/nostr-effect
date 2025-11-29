@@ -133,19 +133,21 @@ Completed in this phase:
 - NIP-50 Search Capability (filter.search + tests) — PR #79
 - NIP-09 Event Deletion (relay support + test) — PR #80
 
-Priority next:
-- NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
+Priority now (do these before any other backlog):
+- NIP-15 Nostr Marketplace — commerce flows (listing/bid semantics, tags)
+- NIP-60 Cashu Wallets — wallet helpers and flows; complements NIP‑87
+- NIP-61 Nutzaps — zap semantics extension; align with NIP‑57 ZapService
+- NIP-86 Relay Management API — admin/management events + relay limitations
 
 Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):
 | NIP | Title | Area |
 |-----|-------|------|
 | 03 | OpenTimestamps Attestations for Events | Integrity
 | 07 | `window.nostr` capability for web browsers | Client API
-| 08 | NIP-08 | Core
+| 08 | Handling Mentions | Core
 | 09 | Event Deletion Request | Relay
 | 12 | Generic Tag Queries | Core/Query
 | 14 | Subject tag in Text events | Content
-| 15 | Nostr Marketplace | Commerce
 | 20 | Command Results | Relay
 | 22 | Comment | Content
 | 23 | Long-form Content | Content
@@ -166,8 +168,8 @@ Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md
 | 53 | Live Activities | Realtime
 | 55 | Android Signer Application | Mobile/Auth
 | 56 | Reporting | Moderation
-| 60 | Cashu Wallets | Payments
-| 61 | Nutzaps | Payments
+| 60 | Cashu Wallets | Payments |
+| 61 | Nutzaps | Payments |
 | 62 | Request to Vanish | Privacy
 | 64 | Chess (Portable Game Notation) | Apps
 | 66 | Relay Discovery and Liveness Monitoring | Discovery
@@ -179,7 +181,7 @@ Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md
 | 73 | External Content IDs | Linking
 | 77 | Negentropy Syncing | Sync
 | 84 | Highlights | Content
-| 86 | Relay Management API | Relay/Admin
+| 86 | Relay Management API | Relay/Admin |
 | 88 | Polls | Content
 | 92 | Media Attachments | Media
 | 96 | NIP-96 | Media
