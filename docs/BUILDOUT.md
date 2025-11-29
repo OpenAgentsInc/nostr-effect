@@ -133,9 +133,10 @@ Completed in this phase:
 - NIP-50 Search Capability (filter.search + tests) — PR #79
 - NIP-09 Event Deletion (relay support + test) — PR #80
 - NIP-61 Nutzaps (NutzapService, tests) — PR #105
+- NIP-86 Relay Management API (HTTP JSON-RPC, NIP-98 auth) — PR #106
 
 Priority now (do these before any other backlog):
-- NIP-86 Relay Management API — admin/management events + relay limitations
+— None
 
 Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):
 | NIP | Title | Area |
