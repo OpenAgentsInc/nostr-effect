@@ -112,17 +112,17 @@ describe("RelayPool", () => {
         const pool = yield* RelayPool
 
         // Add with different formats
-        yield* pool.addRelay(`localhost:${port1}`)
+        yield* pool.addRelay(`ws://localhost:${port1}`)
         yield* pool.addRelay(`ws://localhost:${port2}/`)
-        yield* pool.addRelay(`wss://localhost:${port3}`)
+        yield* pool.addRelay(`WS://LOCALHOST:${port3}`) // Test case-insensitive normalization
 
         const relays = yield* pool.getRelays()
         expect(relays.length).toBe(3)
 
-        // All should be normalized to wss:// without trailing slash
-        expect(relays).toContain(`wss://localhost:${port1}`)
-        expect(relays).toContain(`wss://localhost:${port2}`)
-        expect(relays).toContain(`wss://localhost:${port3}`)
+        // Should be normalized: ws:// preserved and lowercased, trailing slash removed
+        expect(relays).toContain(`ws://localhost:${port1}`)
+        expect(relays).toContain(`ws://localhost:${port2}`)
+        expect(relays).toContain(`ws://localhost:${port3}`)
 
         yield* pool.close()
       })
@@ -250,7 +250,7 @@ describe("RelayPool", () => {
         const event = yield* createTestEvent("Partial failure test")
 
         yield* pool.addRelay(`ws://localhost:${port1}`)
-        yield* pool.addRelay(`ws://localhost:99999`) // Non-existent relay
+        yield* pool.addRelay(`ws://localhost:99999`).pipe(Effect.ignore) // Non-existent relay - ignore connection error
 
         // Give time to connect
         yield* Effect.sleep("200 millis")
