@@ -247,6 +247,23 @@ Common NIPs for this project:
   - Tests
   - Keep the table sorted numerically by NIP (ascending). If you touch the file, fix ordering in the same PR.
 
+### Relay NIPs: Registry Requirement
+
+- Any NIP implemented by the relay (message handling, storage, policies, or NIP‑11 info) MUST be registered in the NIP module registry so it appears in `supported_nips` and is discoverable.
+  - Location: `src/relay/core/nip/modules/**` for module definitions.
+  - Registration: export from `src/relay/core/nip/modules/index.ts` and include in `DefaultModules` unless the NIP is intentionally opt‑in.
+  - The registry (`src/relay/core/nip/NipRegistry.ts`) aggregates supported NIPs for NIP‑11 and provides hooks/policies to the pipeline.
+- MessageHandler logic may still enforce certain NIPs (e.g., NIP‑70 protected events, NIP‑09 deletion), but each such NIP must also have a module stub to advertise support via NIP‑11 and keep configuration centralized.
+
+### Wrapper vs Service
+
+- Wrappers under `src/wrappers/**` exist to offer a light Promise‑style API and small builders.
+- The authoritative implementation MUST live as Effect services/modules in `src/client/**`, `src/relay/core/**`, or `src/core/**`.
+- When adding a new NIP:
+  - Implement the logic in an Effect service (client) and/or relay module (server) first.
+  - Optionally expose a thin wrapper for Promise users.
+  - Ensure the Effect service is exported (package.json exports) and the relay module is registered in the NipRegistry (see above).
+
 ## NIP Implementation Playbook
 
 When adding or updating a NIP, follow these patterns to move fast and keep consistency.
@@ -282,6 +299,7 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
   - Link PR to the appropriate issue(s).
   - Add export mapping in `package.json` (e.g., `"./nipXX": "./src/wrappers/nipXX.ts"`).
   - Update `docs/UNSUPPORTED_NIPS.md` to remove implemented NIPs.
+  - If a relay NIP: add/adjust a registry module under `src/relay/core/nip/modules/**` and include it in `DefaultModules` as needed.
 
 ### Docs Hygiene
 

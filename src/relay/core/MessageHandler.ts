@@ -148,6 +148,16 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
         }
 
         // Run pre-store hooks and store
+        // NIP-62: Request to Vanish (kind 62) — delete all events from pubkey up to created_at
+        if (event.kind === 62) {
+          const events = yield* eventStore.queryEvents([{ authors: [event.pubkey as any] } as any])
+          for (const ev of events) {
+            if (ev.created_at <= event.created_at) {
+              yield* eventStore.deleteEvent(ev.id).pipe(Effect.ignore)
+            }
+          }
+        }
+
         let stored = false
         let duplicateOrOlder = false
         let eventToStore = event
@@ -197,15 +207,6 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           }
         } else {
           // Fallback: use hard-coded logic (for backwards compatibility)
-          // NIP-62: Request to Vanish (kind 62) — delete all events from pubkey up to created_at
-          if (event.kind === 62) {
-            const events = yield* eventStore.queryEvents([{ authors: [event.pubkey as any] } as any])
-            for (const ev of events) {
-              if (ev.created_at <= event.created_at) {
-                yield* eventStore.deleteEvent(ev.id).pipe(Effect.ignore)
-              }
-            }
-          }
           if (isReplaceableKind(event.kind)) {
             // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
             const result = yield* eventStore.storeReplaceableEvent(event)
