@@ -335,6 +335,7 @@ import {
 | NIP | Description |
 |-----|-------------|
 | [01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic protocol flow |
+| [02](https://github.com/nostr-protocol/nips/blob/master/02.md) | Follow list |
 | [04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Legacy encrypted DMs |
 | [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers |
 | [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic |
@@ -349,7 +350,9 @@ import {
 | [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions |
 | [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing |
 | [28](https://github.com/nostr-protocol/nips/blob/master/28.md) | Public chat |
+| [29](https://github.com/nostr-protocol/nips/blob/master/29.md) | Relay-based groups |
 | [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji |
+| [33](https://github.com/nostr-protocol/nips/blob/master/33.md) | Parameterized replaceable events |
 | [34](https://github.com/nostr-protocol/nips/blob/master/34.md) | Git collaboration |
 | [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities |
 | [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp |
@@ -358,10 +361,14 @@ import {
 | [46](https://github.com/nostr-protocol/nips/blob/master/46.md) | Nostr Connect |
 | [47](https://github.com/nostr-protocol/nips/blob/master/47.md) | Nostr Wallet Connect |
 | [49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Encrypted private keys |
+| [65](https://github.com/nostr-protocol/nips/blob/master/65.md) | Relay list metadata |
 | [54](https://github.com/nostr-protocol/nips/blob/master/54.md) | Wiki |
 | [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps |
 | [58](https://github.com/nostr-protocol/nips/blob/master/58.md) | Badges |
 | [59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift wrap |
+| [87](https://github.com/nostr-protocol/nips/blob/master/87.md) | Ecash mint discoverability |
+| [89](https://github.com/nostr-protocol/nips/blob/master/89.md) | Recommended application handlers |
+| [90](https://github.com/nostr-protocol/nips/blob/master/90.md) | Data vending machine |
 | [75](https://github.com/nostr-protocol/nips/blob/master/75.md) | Zap goals |
 | [94](https://github.com/nostr-protocol/nips/blob/master/94.md) | File metadata |
 | [98](https://github.com/nostr-protocol/nips/blob/master/98.md) | HTTP auth |

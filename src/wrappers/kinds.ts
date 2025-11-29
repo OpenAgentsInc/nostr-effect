@@ -280,6 +280,19 @@ export const ApplicationSpecificData = 30078
 /** Application (NIP-78) - alias */
 export const Application = 30078
 
+// =============================================================================
+// Ecash Mint Discoverability (NIP-87)
+// =============================================================================
+
+/** Mint recommendation (NIP-87) */
+export const MintRecommendation = 38000
+
+/** Cashu mint information (NIP-87) */
+export const CashuMintInformation = 38172
+
+/** Fedimint information (NIP-87) */
+export const FedimintInformation = 38173
+
 /** Live event (NIP-53) */
 export const LiveEvent = 30311
 
