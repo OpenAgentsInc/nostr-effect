@@ -32,7 +32,7 @@ src/
 - **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits, ConnectionManager, NIP-42 Authentication (AuthService)
 - **Relay Backends**: Bun (SQLite), Cloudflare Durable Objects (DO SQLite)
-- **Client**: RelayService (WebSocket connection management), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28), ZapService (NIP-57)
+- **Client**: RelayService (WebSocket connection management), RelayPool (multi-relay orchestration), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28), ZapService (NIP-57), Nip05Service (NIP-05 verification)
 
 ### Open Issues
 
@@ -54,12 +54,12 @@ src/
 |-------|-------------|
 | ~~#14~~ | ~~RelayService (WebSocket management)~~ ✅ |
 | ~~#17~~ | ~~NIP-19 bech32 encoding (Core)~~ ✅ |
-| #18 | NIP-05 identifier verification |
+| ~~#18~~ | ~~NIP-05 identifier verification~~ ✅ |
 | ~~#19~~ | ~~NIP-44 versioned encryption~~ ✅ |
 | ~~#20~~ | ~~NIP-02 follow list management~~ ✅ |
 | ~~#21~~ | ~~NIP-65 relay list metadata~~ ✅ |
 | ~~#22~~ | ~~NIP-04 legacy DM encryption~~ (not planned) |
-| #23 | RelayPool multi-relay connections |
+| ~~#23~~ | ~~RelayPool multi-relay connections~~ ✅ |
 | #24 | NIP-46 remote signing |
 | ~~#31~~ | ~~NIP-89 application handlers~~ ✅ |
 | ~~#32~~ | ~~NIP-90 DVM support~~ ✅ |
@@ -84,7 +84,7 @@ src/
 | 2.2 | ✅ #9: Replaceable | ✅ #21: NIP-65 Relay Lists | Client needs relay for kind 10002 |
 | 2.3 | ✅ #8: NIP-11 Info | - | Client reads relay capabilities |
 | 2.4 | ✅ #10: Timestamp Limits | - | created_at bounds (NIP-11 limitation) |
-| 2.5 | - | #18: NIP-05 | Independent (HTTP only) |
+| 2.5 | - | ✅ #18: NIP-05 | Independent (HTTP only) |
 
 ### Phase 3: DVM & Discovery
 **Goal**: Data Vending Machine and application discovery
