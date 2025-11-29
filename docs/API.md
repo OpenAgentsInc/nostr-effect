@@ -72,6 +72,10 @@ import {
   RelayService, makeRelayServiceScoped,
   Nip17Service, Nip17ServiceLive,
   Nip46Service, Nip46ServiceLive,
+  MintDiscoverabilityService, MintDiscoverabilityServiceLive,
+  AppDataService, AppDataServiceLive,
+  RelayDiscoveryService, RelayDiscoveryServiceLive,
+  Nip23Service, Nip23ServiceLive,
   // ... all services
 } from 'nostr-effect/client'
 
@@ -615,4 +619,102 @@ const program = Effect.gen(function* () {
 
 const layer = Layer.merge(makeRelayPool(), CryptoServiceLive)
 await Effect.runPromise(program.pipe(Effect.provide(layer)))
+```
+### Selected Client Services
+
+Below are concise examples for three client services recently added.
+
+NIP-78: AppDataService (addressable app data via kind 30078)
+
+```typescript
+import { Effect, Layer } from 'effect'
+import { AppDataService, AppDataServiceLive, RelayService, makeRelayServiceScoped } from 'nostr-effect/client'
+import { CryptoService, CryptoServiceLive, EventService, EventServiceLive } from 'nostr-effect/services'
+
+const RelayLayer = makeRelayServiceScoped({ url: 'wss://relay.example', reconnect: false })
+const ServiceLayer = Layer.merge(CryptoServiceLive, EventServiceLive.pipe(Layer.provide(CryptoServiceLive)))
+const LayerAll = Layer.merge(RelayLayer, AppDataServiceLive.pipe(Layer.provide(RelayLayer), Layer.provide(ServiceLayer)))
+
+await Effect.runPromise(Effect.gen(function* () {
+  const relay = yield* RelayService
+  const app = yield* AppDataService
+  const crypto = yield* CryptoService
+  yield* relay.connect()
+  const sk = yield* crypto.generatePrivateKey()
+  const pk = yield* crypto.getPublicKey(sk)
+  // Store JSON
+  yield* app.putJSON({ key: 'settings.theme', value: { theme: 'dark' } }, sk)
+  // Read back by d-tag
+  const evt = yield* app.get({ pubkey: pk, key: 'settings.theme' })
+  console.log('content:', evt?.content)
+  yield* relay.disconnect()
+}).pipe(Effect.provide(LayerAll)))
+```
+
+NIP-87: MintDiscoverabilityService (discover ecash mints)
+
+```typescript
+import { MintDiscoverabilityService, MintDiscoverabilityServiceLive } from 'nostr-effect/client'
+
+const LayerAll2 = Layer.merge(RelayLayer, MintDiscoverabilityServiceLive.pipe(Layer.provide(RelayLayer), Layer.provide(ServiceLayer)))
+
+await Effect.runPromise(Effect.gen(function* () {
+  const relay = yield* RelayService
+  const svc = yield* MintDiscoverabilityService
+  const crypto = yield* CryptoService
+  yield* relay.connect()
+  const sk = yield* crypto.generatePrivateKey()
+  // Publish a cashu mint info event (38172)
+  yield* svc.publishCashuMintInfo({ d: 'mint-pubkey', url: 'https://cashu.example', nuts: [1,2], network: 'mainnet' }, sk)
+  // Recommend that mint (38000)
+  yield* svc.recommendMint({ kind: 38172, d: 'mint-pubkey', u: ['https://cashu.example'] }, sk)
+  // Query recommendations
+  const recs = yield* svc.findRecommendations({ filterByKind: 38172, limit: 2 })
+  console.log('recs:', recs.length)
+  yield* relay.disconnect()
+}).pipe(Effect.provide(LayerAll2)))
+```
+
+NIP-66: RelayDiscoveryService (discovery & monitors)
+
+```typescript
+import { RelayDiscoveryService, RelayDiscoveryServiceLive } from 'nostr-effect/client'
+
+const LayerAll3 = Layer.merge(RelayLayer, RelayDiscoveryServiceLive.pipe(Layer.provide(RelayLayer), Layer.provide(ServiceLayer)))
+
+await Effect.runPromise(Effect.gen(function* () {
+  const relay = yield* RelayService
+  const svc = yield* RelayDiscoveryService
+  const crypto = yield* CryptoService
+  yield* relay.connect()
+  const sk = yield* crypto.generatePrivateKey()
+  // Publish discovery (30166)
+  yield* svc.publishDiscovery({ relayId: 'wss://relay.example', metrics: { rtt_open: 200 }, tags: { network: 'clearnet', topics: ['nostr'] } }, sk)
+  // Get latest by d-tag
+  const latest = yield* svc.getLatestForRelay('wss://relay.example')
+  console.log('latest kind:', latest?.kind)
+  yield* relay.disconnect()
+}).pipe(Effect.provide(LayerAll3)))
+```
+NIP-23: Nip23Service (long-form content)
+
+```typescript
+import { Nip23Service, Nip23ServiceLive } from 'nostr-effect/client'
+
+const LayerAll4 = Layer.merge(RelayLayer, Nip23ServiceLive.pipe(Layer.provide(RelayLayer), Layer.provide(ServiceLayer)))
+
+await Effect.runPromise(Effect.gen(function* () {
+  const relay = yield* RelayService
+  const svc = yield* Nip23Service
+  const crypto = yield* CryptoService
+  yield* relay.connect()
+  const sk = yield* crypto.generatePrivateKey()
+  const pk = yield* crypto.getPublicKey(sk)
+  // Publish article
+  yield* svc.publishArticle({ d: 'hello-world', content: '# Hello\nThis is a post', title: 'Hello' }, sk)
+  // Get by d-tag
+  const article = yield* svc.getArticle({ author: pk, d: 'hello-world' })
+  console.log('article length:', article?.content.length)
+  yield* relay.disconnect()
+}).pipe(Effect.provide(LayerAll4)))
 ```
