@@ -127,6 +127,7 @@ Completed in this phase:
 - NIP-53 Live Activities (Nip53Service, tests) — PR #73
 - NIP-32 Labeling (Nip32Service, tests) — PR #74
 - NIP-71 Video Events (Nip71Service, tests) — PR #75
+- NIP-88 Polls (Nip88Service, tests) — PR #76
 
 Priority next:
 - NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
