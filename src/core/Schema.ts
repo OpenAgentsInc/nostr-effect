@@ -116,6 +116,8 @@ export const Filter = Schema.Struct({
   since: Schema.optional(UnixTimestamp),
   until: Schema.optional(UnixTimestamp),
   limit: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  // NIP-50 search capability
+  search: Schema.optional(Schema.String),
   // Tag filters (#e, #p, #a, #d, #t, etc.)
   "#e": Schema.optional(Schema.Array(EventId)),
   "#p": Schema.optional(Schema.Array(PublicKey)),
