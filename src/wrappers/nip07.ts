@@ -23,7 +23,7 @@
 /** Unsigned event template */
 export interface EventTemplate {
   kind: number
-  created_at?: number
+  created_at: number
   content: string
   tags: string[][]
 }
