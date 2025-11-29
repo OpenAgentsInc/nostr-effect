@@ -79,3 +79,30 @@ export function extractBech32(uri: string): string | null {
   const match = uri.match(NOSTR_URI_REGEX)
   return match ? match[1]! : null
 }
+
+/**
+ * Encode a bech32 string as a nostr: URI
+ * @throws Error if the bech32 string is invalid
+ */
+export function encode(bech32: string): NostrURI {
+  // Validate that it's a valid bech32 string
+  if (!BECH32_REGEX.test(bech32)) {
+    throw new Error(`Invalid bech32 string: ${bech32}`)
+  }
+
+  // Verify it can be decoded (will throw if invalid)
+  decodeSync(bech32)
+
+  return `nostr:${bech32}` as NostrURI
+}
+
+/**
+ * Safely encode a bech32 string as a nostr: URI, returning null on failure
+ */
+export function safeEncode(bech32: string): NostrURI | null {
+  try {
+    return encode(bech32)
+  } catch {
+    return null
+  }
+}

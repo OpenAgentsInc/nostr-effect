@@ -2,7 +2,16 @@
  * NIP-21: nostr: URI Scheme Tests
  */
 import { describe, test, expect } from "bun:test"
-import { test as testUri, parse, safeParse, extractBech32, NOSTR_URI_REGEX, BECH32_REGEX } from "./Nip21.js"
+import {
+  test as testUri,
+  parse,
+  safeParse,
+  extractBech32,
+  encode,
+  safeEncode,
+  NOSTR_URI_REGEX,
+  BECH32_REGEX
+} from "./Nip21.js"
 import type { NostrURI } from "./Nip21.js"
 
 const TEST_NPUB = "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m"
@@ -114,6 +123,53 @@ describe("NIP-21: nostr: URI Scheme", () => {
     test("should return null for text without nostr URI", () => {
       expect(extractBech32("no uri here")).toBeNull()
       expect(extractBech32(TEST_NPUB)).toBeNull()
+    })
+  })
+
+  describe("encode()", () => {
+    test("should encode npub to nostr URI", () => {
+      const result = encode(TEST_NPUB)
+      expect(result).toBe(`nostr:${TEST_NPUB}`)
+      expect(testUri(result)).toBe(true)
+    })
+
+    test("should encode note to nostr URI", () => {
+      const result = encode(TEST_NOTE)
+      expect(result).toBe(`nostr:${TEST_NOTE}`)
+      expect(testUri(result)).toBe(true)
+    })
+
+    test("should encode nprofile to nostr URI", () => {
+      const result = encode(TEST_NPROFILE)
+      expect(result).toBe(`nostr:${TEST_NPROFILE}`)
+      expect(testUri(result)).toBe(true)
+    })
+
+    test("should throw for invalid bech32", () => {
+      expect(() => encode("invalid")).toThrow()
+      expect(() => encode("not-bech32")).toThrow()
+      expect(() => encode("")).toThrow()
+    })
+
+    test("roundtrip: encode then parse", () => {
+      const uri = encode(TEST_NPUB)
+      const parsed = parse(uri)
+      expect(parsed.value).toBe(TEST_NPUB)
+      expect(parsed.decoded.type).toBe("npub")
+    })
+  })
+
+  describe("safeEncode()", () => {
+    test("should encode valid bech32", () => {
+      const result = safeEncode(TEST_NPUB)
+      expect(result).not.toBeNull()
+      expect(result).toBe(`nostr:${TEST_NPUB}`)
+    })
+
+    test("should return null for invalid bech32", () => {
+      expect(safeEncode("invalid")).toBeNull()
+      expect(safeEncode("not-bech32")).toBeNull()
+      expect(safeEncode("")).toBeNull()
     })
   })
 })
