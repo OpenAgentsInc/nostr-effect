@@ -59,6 +59,7 @@ Keep this file up to date whenever adding or removing support.
 | 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip09Deletion.test.ts` |
 | 62 | Request to Vanish | `~/code/nips/62.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip62Vanish.test.ts` |
 | 70 | Protected events | `~/code/nips/70.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip70Protected.test.ts` |
+| 20 | Command results | `~/code/nips/20.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip20CommandResults.test.ts` |
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
 | 36 | Sensitive content (content-warning) | `~/code/nips/36.md` | `src/wrappers/nip36.ts` | `src/wrappers/nip36.test.ts` |
