@@ -236,6 +236,58 @@ Common NIPs for this project:
 - `46.md` - Nostr Connect (remote signing)
 - `65.md` - Relay list metadata (kind 10002)
 
+### Definitive NIP Support List
+
+- Canonical list: `docs/SUPPORTED_NIPS.md`.
+- Treat that file as the single source of truth for what we support. When you add or change a NIP implementation (service/wrapper/registry module), update `docs/SUPPORTED_NIPS.md` in the same PR.
+- Do not add additional NIP support tables elsewhere (e.g., README). Link to `docs/SUPPORTED_NIPS.md` instead.
+- Include links to:
+  - Spec (local): `~/code/nips/<nip>.md`
+  - Code entry points: service/wrapper/module paths
+  - Tests
+
+## NIP Implementation Playbook
+
+When adding or updating a NIP, follow these patterns to move fast and keep consistency.
+
+- Source of truth for support
+  - Update `docs/SUPPORTED_NIPS.md` with spec path, code entry points, and tests.
+  - README should only link to `docs/SUPPORTED_NIPS.md` (no extra lists).
+
+- Client service pattern
+  - File under `src/client/<Name>Service.ts`
+  - Define `export interface <Name>Service` methods, `export const <Name>Service = Context.GenericTag<...>()`, and `export const <Name>ServiceLive = Layer.effect(..., make)`
+  - Compose with `RelayService`, `EventService`, and `CryptoService` (only when needed).
+  - Use `@effect/schema` decoders (`decodeKind`, `decodeFilter`, `decodeTag`) to build safe event/filter payloads.
+
+- Kinds and tags
+  - Add constants in `src/wrappers/kinds.ts` with clear comments and NIP numbers.
+  - For parameterized‑replaceable events (NIP‑33), always include `d` tag; query with `#d` filters.
+  - Follow tag semantics from the spec (e.g., for NIP‑87: `k`, `d`, `u`, `a`, `nuts`, `modules`, `n`).
+
+- Tests (bun test)
+  - Use `startTestRelay(port)` for in‑memory relay; layer composition via `makeRelayService()`.
+  - Prefer `Effect.race(Stream.runHead, Effect.sleep(...))` for bounded subscriptions.
+  - Structure tests similar to existing service tests (create/publish, query/parse, negatives).
+
+- Registry modules (relay)
+  - Add new modules under `src/relay/core/nip/modules/**` using `createModule`.
+  - If exposing by default, add to `DefaultModules` in `src/relay/core/nip/modules/index.ts`.
+  - Ensure `nips: [ .. ]` is accurate; contribute relay info via `limitations` when applicable.
+
+- PR checklist
+  - `bun run verify` passes (typecheck + tests).
+  - Update `docs/SUPPORTED_NIPS.md`.
+  - Link PR to the appropriate issue(s).
+
+### Useful code patterns
+
+- Build tags: collect as `string[][]`, then `tags.map(decodeTag)`.
+- Quick filter: `decodeFilter({ kinds: [decodeKind(K)], "#d": [d], limit: 1 })`.
+- Recommendation pointers: encode `'a'` as `${kind}:${pubkey}:${d}` and include optional relay hints.
+
+
+
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
 

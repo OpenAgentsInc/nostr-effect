@@ -332,40 +332,7 @@ import {
 
 ## NIP Support
 
-| NIP | Description |
-|-----|-------------|
-| [01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic protocol flow |
-| [04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Legacy encrypted DMs |
-| [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers |
-| [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic |
-| [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading |
-| [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information |
-| [13](https://github.com/nostr-protocol/nips/blob/master/13.md) | Proof of Work |
-| [16](https://github.com/nostr-protocol/nips/blob/master/16.md) | Event treatment |
-| [17](https://github.com/nostr-protocol/nips/blob/master/17.md) | Private direct messages |
-| [18](https://github.com/nostr-protocol/nips/blob/master/18.md) | Reposts |
-| [19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32 encoding |
-| [21](https://github.com/nostr-protocol/nips/blob/master/21.md) | nostr: URI scheme |
-| [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions |
-| [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing |
-| [28](https://github.com/nostr-protocol/nips/blob/master/28.md) | Public chat |
-| [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji |
-| [34](https://github.com/nostr-protocol/nips/blob/master/34.md) | Git collaboration |
-| [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities |
-| [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp |
-| [42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Client authentication |
-| [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption |
-| [46](https://github.com/nostr-protocol/nips/blob/master/46.md) | Nostr Connect |
-| [47](https://github.com/nostr-protocol/nips/blob/master/47.md) | Nostr Wallet Connect |
-| [49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Encrypted private keys |
-| [54](https://github.com/nostr-protocol/nips/blob/master/54.md) | Wiki |
-| [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps |
-| [58](https://github.com/nostr-protocol/nips/blob/master/58.md) | Badges |
-| [59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift wrap |
-| [75](https://github.com/nostr-protocol/nips/blob/master/75.md) | Zap goals |
-| [94](https://github.com/nostr-protocol/nips/blob/master/94.md) | File metadata |
-| [98](https://github.com/nostr-protocol/nips/blob/master/98.md) | HTTP auth |
-| [99](https://github.com/nostr-protocol/nips/blob/master/99.md) | Classified listings |
+See the definitive support list: `docs/SUPPORTED_NIPS.md`.
 
 ## License
 
