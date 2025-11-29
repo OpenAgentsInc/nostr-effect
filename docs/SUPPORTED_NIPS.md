@@ -70,6 +70,7 @@ Keep this file up to date whenever adding or removing support.
 | 26 | Delegated event signing | `~/code/nips/26.md` | `src/wrappers/nip26.ts` | `src/wrappers/nip26.test.ts` |
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
 | 43 | Relay access metadata/requests | `~/code/nips/43.md` | `src/wrappers/nip43.ts` | `src/wrappers/nip43.test.ts` |
+| 84 | Highlights | `~/code/nips/84.md` | `src/wrappers/nip84.ts` | `src/wrappers/nip84.test.ts` |
 
 Notes
 - Registry modules live under `src/relay/core/nip/modules/**`. Default relay modules: NIP-01, NIP-11, NIP-16/33. Others (e.g., NIP-28, NIP-57, NIP-42) are available but may not be in `DefaultModules`.
