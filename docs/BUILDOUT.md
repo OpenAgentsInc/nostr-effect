@@ -121,9 +121,13 @@ src/
 Completed in this phase:
 - NIP-87 Ecash Mint Discoverability (MintDiscoverabilityService, tests) — PR #68
 - NIP-78 Arbitrary Custom App Data (AppDataService, tests) — PR #69
+- NIP-66 Relay Discovery & Liveness (RelayDiscoveryService, tests) — PR #70
+- NIP-23 Long-form Content (Nip23Service, tests) — PR #71
+- NIP-52 Calendar Events (Nip52Service, tests) — PR #72
+- NIP-53 Live Activities (Nip53Service, tests) — PR #73
+- NIP-32 Labeling (Nip32Service, tests) — PR #74
 
 Priority next:
-- NIP-66 Relay Discovery & Liveness: discovery/monitor events + client helpers (issue #67)
 - NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
 
 Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):
