@@ -12,7 +12,6 @@ Source of truth for supported NIPs: `docs/SUPPORTED_NIPS.md`.
 - 20 — `~/code/nips/20.md`
 - 22 — `~/code/nips/22.md`
 - 24 — `~/code/nips/24.md`
-- 26 — `~/code/nips/26.md`
 - 35 — `~/code/nips/35.md`
 - 37 — `~/code/nips/37.md`
 - 38 — `~/code/nips/38.md`
