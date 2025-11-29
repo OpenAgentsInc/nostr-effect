@@ -32,6 +32,7 @@ Building both sides of the protocol in tandem - using each to test the other.
 | [28](https://github.com/nostr-protocol/nips/blob/master/28.md) | Public chat | Client |
 | [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji | Core |
 | [33](https://github.com/nostr-protocol/nips/blob/master/33.md) | Parameterized replaceable events | Relay |
+| [34](https://github.com/nostr-protocol/nips/blob/master/34.md) | Git collaboration | Core |
 | [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities | Client |
 | [40](https://github.com/nostr-protocol/nips/blob/master/40.md) | Expiration timestamp | Core |
 | [42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Client authentication | Core |
