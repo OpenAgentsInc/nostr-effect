@@ -30,6 +30,7 @@
     "./nip07": "./src/wrappers/nip07.ts",
     "./nip10": "./src/wrappers/nip10.ts",
     "./nip22": "./src/wrappers/nip22.ts",
+    "./nip24": "./src/wrappers/nip24.ts",
     "./nip11": "./src/wrappers/nip11.ts",
     "./nip13": "./src/wrappers/nip13.ts",
     "./nip15": "./src/wrappers/nip15.ts",
