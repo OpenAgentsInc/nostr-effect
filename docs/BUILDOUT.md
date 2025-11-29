@@ -32,7 +32,7 @@ src/
 - **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits, ConnectionManager, NIP-42 Authentication (AuthService)
 - **Relay Backends**: Bun (SQLite), Cloudflare Durable Objects (DO SQLite)
-- **Client**: RelayService (WebSocket connection management), RelayPool (multi-relay orchestration), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28), ZapService (NIP-57), Nip05Service (NIP-05 verification)
+- **Client**: RelayService (WebSocket connection management), RelayPool (multi-relay orchestration), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28), ZapService (NIP-57), Nip05Service (NIP-05 verification), MintDiscoverabilityService (NIP-87), AppDataService (NIP-78)
 
 ### Open Issues
 
@@ -114,6 +114,65 @@ src/
 | 5.4 | ✅ #5: NIP Module System | - | Pluggable NIPs |
 | 5.5 | - | #23: RelayPool | Multi-relay |
 | 5.6 | - | #24: NIP-46 | Remote signing |
+
+### Phase 6: Remaining NIPs
+**Goal**: Implement the remaining NIPs to reach broad protocol coverage.
+
+Completed in this phase:
+- NIP-87 Ecash Mint Discoverability (MintDiscoverabilityService, tests) — PR #68
+- NIP-78 Arbitrary Custom App Data (AppDataService, tests) — PR #69
+
+Priority next:
+- NIP-66 Relay Discovery & Liveness: discovery/monitor events + client helpers (issue #67)
+- NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
+
+Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):
+| NIP | Title | Area |
+|-----|-------|------|
+| 03 | OpenTimestamps Attestations for Events | Integrity
+| 07 | `window.nostr` capability for web browsers | Client API
+| 08 | NIP-08 | Core
+| 09 | Event Deletion Request | Relay
+| 12 | Generic Tag Queries | Core/Query
+| 14 | Subject tag in Text events | Content
+| 15 | Nostr Marketplace | Commerce
+| 20 | Command Results | Relay
+| 22 | Comment | Content
+| 23 | Long-form Content | Content
+| 24 | Extra metadata fields and tags | Content
+| 26 | Delegated Event Signing | Auth
+| 31 | Dealing with unknown event kinds | Core
+| 32 | Labeling | Moderation
+| 35 | Torrents | Media
+| 36 | Sensitive Content / Content Warning | Moderation
+| 37 | Draft Wraps | Content
+| 38 | NIP-38 | Core
+| 43 | Relay Access Metadata and Requests | Relay/Admin
+| 45 | Event Counts | Aggregation
+| 48 | Proxy Tags | Core
+| 50 | Search Capability | Discovery
+| 51 | Lists | Content
+| 52 | Calendar Events | Content
+| 53 | Live Activities | Realtime
+| 55 | Android Signer Application | Mobile/Auth
+| 56 | Reporting | Moderation
+| 60 | Cashu Wallets | Payments
+| 61 | Nutzaps | Payments
+| 62 | Request to Vanish | Privacy
+| 64 | Chess (Portable Game Notation) | Apps
+| 66 | Relay Discovery and Liveness Monitoring | Discovery
+| 68 | Picture-first feeds | Content
+| 69 | Peer-to-peer Order events | Commerce
+| 70 | Protected Events | Encryption
+| 71 | Video Events | Media
+| 72 | Moderated Communities (Reddit Style) | Governance
+| 73 | External Content IDs | Linking
+| 77 | Negentropy Syncing | Sync
+| 84 | Highlights | Content
+| 86 | Relay Management API | Relay/Admin
+| 88 | Polls | Content
+| 92 | Media Attachments | Media
+| 96 | NIP-96 | Media
 
 ## Parallel Development Strategy
 
