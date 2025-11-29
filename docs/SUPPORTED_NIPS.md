@@ -75,6 +75,7 @@ Keep this file up to date whenever adding or removing support.
 | 68 | Picture-first feeds | `~/code/nips/68.md` | `src/wrappers/nip68.ts` | `src/wrappers/nip68.test.ts` |
 | 69 | Peer-to-peer orders | `~/code/nips/69.md` | `src/wrappers/nip69.ts` | `src/wrappers/nip69.test.ts` |
 | 73 | External content IDs | `~/code/nips/73.md` | `src/wrappers/nip73.ts` | `src/wrappers/nip73.test.ts` |
+| 96 | HTTP file storage | `~/code/nips/96.md` | `src/wrappers/nip96.ts` | `src/wrappers/nip96.test.ts` |
 
 Notes
 - Registry modules live under `src/relay/core/nip/modules/**`. Default relay modules: NIP-01, NIP-11, NIP-16/33. Others (e.g., NIP-28, NIP-57, NIP-42) are available but may not be in `DefaultModules`.
