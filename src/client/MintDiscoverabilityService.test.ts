@@ -11,7 +11,11 @@ import {
 import { RelayService, makeRelayService } from "./RelayService.js"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
-import { EventServiceLive } from "../services/EventService.js"
+import { EventService, EventServiceLive } from "../services/EventService.js"
+import { Schema } from "@effect/schema"
+import { EventKind, Tag } from "../core/Schema.js"
+const decodeKind = Schema.decodeSync(EventKind)
+const decodeTag = Schema.decodeSync(Tag)
 
 describe("MintDiscoverabilityService (NIP-87)", () => {
   let relay: RelayHandle
@@ -132,6 +136,175 @@ describe("MintDiscoverabilityService (NIP-87)", () => {
       expect(info2?.kind as number).toBe(38173)
       const modules = info2?.tags.find((t) => t[0] === "modules")?.[1]
       expect(modules).toBe("lightning,wallet,mint")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("cashu info includes nuts and network tags", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      const key = yield* crypto.generatePrivateKey()
+      const d = "cashu-pk-abc"
+      const res = yield* mintService.publishCashuMintInfo(
+        { d, url: "https://cashu.test", nuts: [1, 2, 7], network: "mainnet" },
+        key
+      )
+      expect(res.accepted).toBe(true)
+
+      const evt = yield* mintService.getMintInfoByD({ kind: 38172, d })
+      expect(evt?.kind as number).toBe(38172)
+      expect(evt?.tags.find((t) => t[0] === "u")?.[1]).toBe("https://cashu.test")
+      expect(evt?.tags.find((t) => t[0] === "nuts")?.[1]).toBe("1,2,7")
+      expect(evt?.tags.find((t) => t[0] === "n")?.[1]).toBe("mainnet")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("fedimint info includes multiple invites and modules tag", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      const key = yield* crypto.generatePrivateKey()
+      const d = "fedimint-id-abc"
+      const res = yield* mintService.publishFedimintInfo(
+        { d, invites: ["fed11AAA..", "fed11BBB.."], modules: ["wallet", "mint"], network: "signet" },
+        key
+      )
+      expect(res.accepted).toBe(true)
+
+      const evt = yield* mintService.getMintInfoByD({ kind: 38173, d })
+      expect(evt?.kind as number).toBe(38173)
+      const uTags = evt?.tags.filter((t) => t[0] === "u") ?? []
+      expect(uTags.length).toBe(2)
+      expect(uTags.map((t) => t[1])).toEqual(["fed11AAA..", "fed11BBB.."])
+      expect(evt?.tags.find((t) => t[0] === "modules")?.[1]).toBe("wallet,mint")
+      expect(evt?.tags.find((t) => t[0] === "n")?.[1]).toBe("signet")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("recommendation 'a' pointer parsing with relay hint and label", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      const key = yield* crypto.generatePrivateKey()
+      const pub = yield* crypto.getPublicKey(key)
+      const d = "cashu-pk-xyz"
+      // Publish info first
+      yield* mintService.publishCashuMintInfo({ d, url: "https://cashu.parse" }, key)
+
+      // Recommend
+      const r = yield* mintService.recommendMint(
+        {
+          kind: 38172,
+          d,
+          u: ["https://cashu.parse"],
+          pointers: [{ kind: 38172, pubkey: pub, d, relay: "wss://hint.example", label: "cashu" }],
+          content: "Great mint",
+        },
+        key
+      )
+      expect(r.accepted).toBe(true)
+
+      const recs = yield* mintService.findRecommendations({ filterByKind: 38172, limit: 2 })
+      expect(recs.length).toBeGreaterThan(0)
+      const match = recs.find((x) => x.d === d)
+      expect(match?.pointers[0]?.relay).toBe("wss://hint.example")
+      expect(match?.pointers[0]?.label).toBe("cashu")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("findRecommendations filters by kind and ignores invalid 'k' or missing 'd'", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const eventService = yield* EventService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      // Good recommendation
+      const user = yield* crypto.generatePrivateKey()
+      const d = "good-mint"
+      yield* mintService.recommendMint({ kind: 38172, d }, user)
+
+      // Bad: wrong kind in 'k'
+      const badUser = yield* crypto.generatePrivateKey()
+      const badEvent = yield* eventService.createEvent(
+        {
+          kind: decodeKind(38000),
+          content: "",
+          tags: [["k", "99999"], ["d", "bad"]].map((t) => decodeTag(t as any)),
+        },
+        badUser
+      )
+      // Publish directly
+      const p1 = yield* relayService.publish(badEvent)
+      expect(p1.accepted).toBe(true)
+
+      // Bad: missing d
+      const badUser2 = yield* crypto.generatePrivateKey()
+      const badEvent2 = yield* eventService.createEvent(
+        {
+          kind: decodeKind(38000),
+          content: "",
+          tags: [["k", "38172"]].map((t) => decodeTag(t as any)),
+        },
+        badUser2
+      )
+      const p2 = yield* relayService.publish(badEvent2)
+      expect(p2.accepted).toBe(true)
+
+      // Query filtered by correct kind, should only include the good one
+      const recs = yield* mintService.findRecommendations({ filterByKind: 38172, limit: 5 })
+      // Ensure all returned recs have k=38172 and have a d tag
+      expect(recs.length).toBeGreaterThan(0)
+      for (const r of recs) {
+        expect(r.recommendedKind).toBe(38172)
+        expect(r.d.length).toBeGreaterThan(0)
+      }
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("getMintInfoByD returns null when not found", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+
+      yield* relayService.connect()
+
+      const missing = yield* mintService.getMintInfoByD({ kind: 38172, d: "__missing__" })
+      expect(missing).toBeNull()
 
       yield* relayService.disconnect()
     })
