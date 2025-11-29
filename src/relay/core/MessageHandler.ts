@@ -123,7 +123,20 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           }
         }
 
-        // Policy accepted - run pre-store hooks and store
+        // Policy accepted
+        // NIP-09: Deletion request (kind 5) – delete referenced events authored by the same pubkey
+        if (event.kind === 5) {
+          const idsToDelete = event.tags.filter((t) => t[0] === "e").map((t) => t[1]!).filter(Boolean)
+          for (const id of idsToDelete) {
+            const matches = yield* eventStore.queryEvents([{ ids: [id as any] } as any])
+            const target = matches.find((e) => e.id === id)
+            if (target && target.pubkey === event.pubkey) {
+              yield* eventStore.deleteEvent(id as any).pipe(Effect.ignore)
+            }
+          }
+        }
+
+        // Run pre-store hooks and store
         let stored = false
         let duplicateOrOlder = false
         let eventToStore = event
