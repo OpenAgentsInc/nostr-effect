@@ -77,6 +77,7 @@ Keep this file up to date whenever adding or removing support.
 | 73 | External content IDs | `~/code/nips/73.md` | `src/wrappers/nip73.ts` | `src/wrappers/nip73.test.ts` |
 | 96 | HTTP file storage | `~/code/nips/96.md` | `src/wrappers/nip96.ts` | `src/wrappers/nip96.test.ts` |
 | 35 | Torrents | `~/code/nips/35.md` | `src/wrappers/nip35.ts` | `src/wrappers/nip35.test.ts` |
+| 37 | Draft wraps | `~/code/nips/37.md` | `src/wrappers/nip37.ts` | `src/wrappers/nip37.test.ts` |
 
 Notes
 - Registry modules live under `src/relay/core/nip/modules/**`. Default relay modules: NIP-01, NIP-11, NIP-16/33. Others (e.g., NIP-28, NIP-57, NIP-42) are available but may not be in `DefaultModules`.
