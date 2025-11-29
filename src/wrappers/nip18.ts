@@ -20,9 +20,16 @@
  * ```
  */
 
-import { finalizeEvent, verifyEvent } from "./pure.js"
+import { finalizeEvent } from "./pure.js"
 import { Repost, GenericRepost, ShortTextNote } from "./kinds.js"
-import type { EventPointer } from "../core/Nip19.js"
+
+// Re-export pure functions from service
+export {
+  getRepostedEventPointer,
+  getRepostedEvent,
+  REPOST_KIND,
+  GENERIC_REPOST_KIND,
+} from "../client/Nip18Service.js"
 
 /** Event type for reposts */
 export interface Event {
@@ -88,74 +95,4 @@ export function finishRepostEvent(
     },
     privateKey
   ) as unknown as Event
-}
-
-/**
- * Get the pointer to the reposted event
- */
-export function getRepostedEventPointer(event: Event): EventPointer | undefined {
-  if (event.kind !== Repost && event.kind !== GenericRepost) {
-    return undefined
-  }
-
-  let lastETag: string[] | undefined
-  let lastPTag: string[] | undefined
-
-  for (let i = event.tags.length - 1; i >= 0 && (lastETag === undefined || lastPTag === undefined); i--) {
-    const tag = event.tags[i]
-    if (tag && tag.length >= 2) {
-      if (tag[0] === "e" && lastETag === undefined) {
-        lastETag = tag
-      } else if (tag[0] === "p" && lastPTag === undefined) {
-        lastPTag = tag
-      }
-    }
-  }
-
-  if (lastETag === undefined) {
-    return undefined
-  }
-
-  const result: EventPointer = {
-    id: lastETag[1]!,
-    relays: [lastETag[2], lastPTag?.[2]].filter((x): x is string => typeof x === "string"),
-  }
-
-  if (lastPTag?.[1]) {
-    (result as { author?: string }).author = lastPTag[1]
-  }
-
-  return result
-}
-
-/**
- * Get the reposted event from a repost event's content
- */
-export function getRepostedEvent(
-  event: Event,
-  { skipVerification }: GetRepostedEventOptions = {}
-): Event | undefined {
-  const pointer = getRepostedEventPointer(event)
-
-  if (pointer === undefined || event.content === "") {
-    return undefined
-  }
-
-  let repostedEvent: Event | undefined
-
-  try {
-    repostedEvent = JSON.parse(event.content) as Event
-  } catch (_error) {
-    return undefined
-  }
-
-  if (repostedEvent.id !== pointer.id) {
-    return undefined
-  }
-
-  if (!skipVerification && !verifyEvent(repostedEvent as Parameters<typeof verifyEvent>[0])) {
-    return undefined
-  }
-
-  return repostedEvent
 }

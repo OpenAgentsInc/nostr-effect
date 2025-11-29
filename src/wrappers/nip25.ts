@@ -21,7 +21,12 @@
 
 import { finalizeEvent } from "./pure.js"
 import { Reaction } from "./kinds.js"
-import type { EventPointer } from "../core/Nip19.js"
+
+// Re-export pure functions from service
+export { getReactedEventPointer, REACTION_KIND } from "../client/Nip25Service.js"
+
+// Re-export types
+export type { EventPointer } from "../core/Nip19.js"
 
 /** Event type for reactions */
 export interface Event {
@@ -70,42 +75,4 @@ export function finishReactionEvent(
     },
     privateKey
   ) as unknown as Event
-}
-
-/**
- * Get the pointer to the event being reacted to
- */
-export function getReactedEventPointer(event: Event): EventPointer | undefined {
-  if (event.kind !== Reaction) {
-    return undefined
-  }
-
-  let lastETag: string[] | undefined
-  let lastPTag: string[] | undefined
-
-  for (let i = event.tags.length - 1; i >= 0 && (lastETag === undefined || lastPTag === undefined); i--) {
-    const tag = event.tags[i]
-    if (tag && tag.length >= 2) {
-      if (tag[0] === "e" && lastETag === undefined) {
-        lastETag = tag
-      } else if (tag[0] === "p" && lastPTag === undefined) {
-        lastPTag = tag
-      }
-    }
-  }
-
-  if (lastETag === undefined || lastPTag === undefined) {
-    return undefined
-  }
-
-  const result: EventPointer = {
-    id: lastETag[1]!,
-    relays: [lastETag[2], lastPTag[2]].filter((x): x is string => x !== undefined),
-  }
-
-  if (lastPTag[1]) {
-    (result as { author?: string }).author = lastPTag[1]
-  }
-
-  return result
 }

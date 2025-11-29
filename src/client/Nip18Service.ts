@@ -15,6 +15,7 @@ import type {
 import { EventService } from "../services/EventService.js"
 import { CryptoService } from "../services/CryptoService.js"
 import type { EventPointer } from "../core/Nip19.js"
+import { verifyEvent as verifyEventSync } from "../wrappers/pure.js"
 
 /** Kind 6: Repost of a kind 1 text note */
 export const REPOST_KIND = 6 as EventKind
@@ -51,8 +52,9 @@ export const Nip18Service = Context.GenericTag<Nip18Service>("Nip18Service")
 
 /**
  * Get pointer to the reposted event from a repost (pure function)
+ * Exported for use by wrappers
  */
-function extractRepostedEventPointer(event: NostrEvent): EventPointer | undefined {
+export function getRepostedEventPointer(event: NostrEvent): EventPointer | undefined {
   if (event.kind !== REPOST_KIND && event.kind !== GENERIC_REPOST_KIND) {
     return undefined
   }
@@ -91,6 +93,40 @@ function extractRepostedEventPointer(event: NostrEvent): EventPointer | undefine
   return result
 }
 
+/**
+ * Get the reposted event from a repost event's content (sync version)
+ * Uses pure verifyEvent for signature verification
+ * Exported for use by wrappers
+ */
+export function getRepostedEvent(
+  event: NostrEvent,
+  { skipVerification }: { skipVerification?: boolean } = {}
+): NostrEvent | undefined {
+  const pointer = getRepostedEventPointer(event)
+
+  if (pointer === undefined || event.content === "") {
+    return undefined
+  }
+
+  let repostedEvent: NostrEvent
+
+  try {
+    repostedEvent = JSON.parse(event.content) as NostrEvent
+  } catch {
+    return undefined
+  }
+
+  if (repostedEvent.id !== pointer.id) {
+    return undefined
+  }
+
+  if (!skipVerification && !verifyEventSync(repostedEvent as unknown as Parameters<typeof verifyEventSync>[0])) {
+    return undefined
+  }
+
+  return repostedEvent
+}
+
 export const Nip18ServiceLiveLayer = Effect.gen(function* () {
   const eventService = yield* EventService
   const cryptoService = yield* CryptoService
@@ -123,11 +159,11 @@ export const Nip18ServiceLiveLayer = Effect.gen(function* () {
       return yield* eventService.createEvent(unsigned, privateKey)
     })
 
-  const getRepostedEventPointer: Nip18Service["getRepostedEventPointer"] = extractRepostedEventPointer
+  const getRepostedEventPointerImpl: Nip18Service["getRepostedEventPointer"] = getRepostedEventPointer
 
-  const getRepostedEvent: Nip18Service["getRepostedEvent"] = (event, options = {}) =>
+  const getRepostedEventImpl: Nip18Service["getRepostedEvent"] = (event, options = {}) =>
     Effect.gen(function* () {
-      const pointer = extractRepostedEventPointer(event)
+      const pointer = getRepostedEventPointer(event)
 
       if (pointer === undefined || event.content === "") {
         return undefined
@@ -157,7 +193,7 @@ export const Nip18ServiceLiveLayer = Effect.gen(function* () {
 
   return Nip18Service.of({
     createRepost,
-    getRepostedEventPointer,
-    getRepostedEvent,
+    getRepostedEventPointer: getRepostedEventPointerImpl,
+    getRepostedEvent: getRepostedEventImpl,
   })
 })

@@ -62,6 +62,54 @@ export interface Nip25Service {
 export const Nip25Service = Context.GenericTag<Nip25Service>("Nip25Service")
 
 // =============================================================================
+// Pure Functions (exported for wrappers)
+// =============================================================================
+
+/**
+ * Get the pointer to the event being reacted to (pure function)
+ * Exported for use by wrappers
+ */
+export function getReactedEventPointer(event: NostrEvent): EventPointer | undefined {
+  if ((event.kind as number) !== REACTION_KIND) {
+    return undefined
+  }
+
+  let lastETag: readonly string[] | undefined
+  let lastPTag: readonly string[] | undefined
+
+  // Find the last e and p tags
+  for (let i = event.tags.length - 1; i >= 0; i--) {
+    const tag = event.tags[i]
+    if (tag && tag.length >= 2) {
+      if (tag[0] === "e" && lastETag === undefined) {
+        lastETag = tag
+      } else if (tag[0] === "p" && lastPTag === undefined) {
+        lastPTag = tag
+      }
+    }
+    if (lastETag !== undefined && lastPTag !== undefined) {
+      break
+    }
+  }
+
+  if (lastETag === undefined || lastPTag === undefined) {
+    return undefined
+  }
+
+  const result: EventPointer = {
+    id: lastETag[1]!,
+    relays: [lastETag[2], lastPTag[2]].filter((x): x is string => typeof x === "string"),
+  }
+
+  // Only add author if defined
+  if (lastPTag[1]) {
+    ;(result as { author: string }).author = lastPTag[1]
+  }
+
+  return result
+}
+
+// =============================================================================
 // Service Implementation
 // =============================================================================
 
@@ -96,46 +144,6 @@ const make = Effect.gen(function* () {
 
       return event
     })
-
-  const getReactedEventPointer: Nip25Service["getReactedEventPointer"] = (event) => {
-    if ((event.kind as number) !== REACTION_KIND) {
-      return undefined
-    }
-
-    let lastETag: readonly string[] | undefined
-    let lastPTag: readonly string[] | undefined
-
-    // Find the last e and p tags
-    for (let i = event.tags.length - 1; i >= 0; i--) {
-      const tag = event.tags[i]
-      if (tag && tag.length >= 2) {
-        if (tag[0] === "e" && lastETag === undefined) {
-          lastETag = tag
-        } else if (tag[0] === "p" && lastPTag === undefined) {
-          lastPTag = tag
-        }
-      }
-      if (lastETag !== undefined && lastPTag !== undefined) {
-        break
-      }
-    }
-
-    if (lastETag === undefined || lastPTag === undefined) {
-      return undefined
-    }
-
-    const result: EventPointer = {
-      id: lastETag[1]!,
-      relays: [lastETag[2], lastPTag[2]].filter((x): x is string => typeof x === "string"),
-    }
-
-    // Only add author if defined
-    if (lastPTag[1]) {
-      ;(result as { author: string }).author = lastPTag[1]
-    }
-
-    return result
-  }
 
   return {
     _tag: "Nip25Service" as const,
