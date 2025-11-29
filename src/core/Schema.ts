@@ -158,11 +158,19 @@ export const ClientAuthMessage = Schema.Tuple(
 export type ClientAuthMessage = typeof ClientAuthMessage.Type
 
 /** All client message types */
+/** COUNT message (NIP-45): request event counts */
+export const ClientCountMessage = Schema.Tuple(
+  [Schema.Literal("COUNT"), SubscriptionId],
+  Filter
+)
+export type ClientCountMessage = typeof ClientCountMessage.Type
+
 export const ClientMessage = Schema.Union(
   ClientEventMessage,
   ClientReqMessage,
   ClientCloseMessage,
-  ClientAuthMessage
+  ClientAuthMessage,
+  ClientCountMessage
 )
 export type ClientMessage = typeof ClientMessage.Type
 
@@ -217,13 +225,25 @@ export const RelayAuthMessage = Schema.Tuple(
 export type RelayAuthMessage = typeof RelayAuthMessage.Type
 
 /** All relay message types */
+/** COUNT response (NIP-45): relay returns count for a query id */
+export const RelayCountMessage = Schema.Tuple(
+  Schema.Literal("COUNT"),
+  SubscriptionId,
+  Schema.Struct({
+    count: Schema.Number,
+    approximate: Schema.optional(Schema.Boolean),
+  })
+)
+export type RelayCountMessage = typeof RelayCountMessage.Type
+
 export const RelayMessage = Schema.Union(
   RelayEventMessage,
   RelayOkMessage,
   RelayEoseMessage,
   RelayClosedMessage,
   RelayNoticeMessage,
-  RelayAuthMessage
+  RelayAuthMessage,
+  RelayCountMessage
 )
 export type RelayMessage = typeof RelayMessage.Type
 
