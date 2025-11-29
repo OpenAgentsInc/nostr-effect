@@ -124,6 +124,17 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
         }
 
         // Policy accepted
+        // NIP-70: Protected events require NIP-42 AUTH for the same pubkey
+        if (event.tags.some((t) => t[0] === "-" && t.length === 1)) {
+          if (!authService) {
+            return { responses: [okMessage(event.id, false, "auth-required: protected event")], broadcasts: [] }
+          }
+          const authed = yield* authService.isAuthenticated(connectionId)
+          const authedPk = authed ? yield* authService.getAuthPubkey(connectionId) : undefined
+          if (!authed || !authedPk || authedPk !== event.pubkey) {
+            return { responses: [okMessage(event.id, false, "auth-required: protected event")], broadcasts: [] }
+          }
+        }
         // NIP-09: Deletion request (kind 5) – delete referenced events authored by the same pubkey
         if (event.kind === 5) {
           const idsToDelete = event.tags.filter((t) => t[0] === "e").map((t) => t[1]!).filter(Boolean)
@@ -186,6 +197,15 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           }
         } else {
           // Fallback: use hard-coded logic (for backwards compatibility)
+          // NIP-62: Request to Vanish (kind 62) — delete all events from pubkey up to created_at
+          if (event.kind === 62) {
+            const events = yield* eventStore.queryEvents([{ authors: [event.pubkey as any] } as any])
+            for (const ev of events) {
+              if (ev.created_at <= event.created_at) {
+                yield* eventStore.deleteEvent(ev.id).pipe(Effect.ignore)
+              }
+            }
+          }
           if (isReplaceableKind(event.kind)) {
             // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
             const result = yield* eventStore.storeReplaceableEvent(event)
