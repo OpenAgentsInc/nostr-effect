@@ -59,6 +59,7 @@ Keep this file up to date whenever adding or removing support.
 | 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip09Deletion.test.ts` |
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
+| 36 | Sensitive content (content-warning) | `~/code/nips/36.md` | `src/wrappers/nip36.ts` | `src/wrappers/nip36.test.ts` |
 | 94 | File metadata | `~/code/nips/94.md` | `src/core/Nip94.ts`, `src/wrappers/nip94.ts` | `src/core/Nip94.test.ts` |
 | 98 | HTTP auth | `~/code/nips/98.md` | `src/wrappers/nip98.ts` | `src/core/Nip98.test.ts` |
 | 99 | Classified listings | `~/code/nips/99.md` | `src/wrappers/nip99.ts` | `src/core/Nip99.test.ts` |
