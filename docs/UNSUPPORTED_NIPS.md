@@ -12,7 +12,7 @@ Source of truth for supported NIPs: `docs/SUPPORTED_NIPS.md`.
 - 24 — `~/code/nips/24.md`
 - 38 — `~/code/nips/38.md`
 - 55 — `~/code/nips/55.md`
-- 60 — `~/code/nips/60.md`
+- ~~60 — `~/code/nips/60.md`~~
 - 61 — `~/code/nips/61.md`
 - ~~64 — `~/code/nips/64.md`~~
 - 77 — `~/code/nips/77.md`
