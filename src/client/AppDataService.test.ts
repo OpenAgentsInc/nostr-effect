@@ -81,6 +81,8 @@ describe("AppDataService (NIP-78)", () => {
 
       const r1 = yield* app.put({ key: d, content: "v1" }, keypair)
       expect(r1.accepted).toBe(true)
+      // Ensure created_at differs so replacement wins deterministically
+      yield* Effect.sleep(1100)
       const r2 = yield* app.put({ key: d, content: "v2" }, keypair)
       expect(r2.accepted).toBe(true)
 
