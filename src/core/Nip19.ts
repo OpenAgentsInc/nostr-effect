@@ -60,6 +60,35 @@ export type Nip19Data =
   | { type: "nevent"; data: Nevent }
   | { type: "naddr"; data: Naddr }
 
+/** Alias for Nip19Data for compatibility with other NIP modules */
+export type DecodeResult = Nip19Data
+
+// =============================================================================
+// Pointer Types (for NIP-10, NIP-21, NIP-27, etc.)
+// =============================================================================
+
+/** Profile pointer - references a pubkey with optional relays */
+export interface ProfilePointer {
+  readonly pubkey: string
+  readonly relays?: ReadonlyArray<string>
+}
+
+/** Event pointer - references an event with optional metadata */
+export interface EventPointer {
+  readonly id: string
+  readonly relays?: ReadonlyArray<string>
+  readonly author?: string
+  readonly kind?: number
+}
+
+/** Address pointer - references an addressable event (naddr) */
+export interface AddressPointer {
+  readonly identifier: string
+  readonly pubkey: string
+  readonly kind: number
+  readonly relays?: ReadonlyArray<string>
+}
+
 // =============================================================================
 // Bare Encodings
 // =============================================================================
@@ -584,3 +613,142 @@ export const decode = (bech32String: string): Effect.Effect<Nip19Data, DecodingE
         )
     }
   })
+
+// =============================================================================
+// Synchronous Decode (for content parsing)
+// =============================================================================
+
+/**
+ * Synchronously decode any NIP-19 bech32 string
+ * Throws on error - use in try/catch blocks
+ * Useful for content parsing where Effects cannot be used
+ */
+export const decodeSync = (bech32String: string): DecodeResult => {
+  const { prefix, words } = bech32.decode(bech32String as Bech32String, BECH32_MAX_SIZE)
+  const data = bech32.fromWords(words)
+
+  switch (prefix) {
+    case "npub": {
+      if (data.length !== 32) {
+        throw new Error(`Invalid pubkey length: expected 32 bytes, got ${data.length}`)
+      }
+      return { type: "npub", data: bytesToHex(data) as PublicKey }
+    }
+    case "nsec": {
+      if (data.length !== 32) {
+        throw new Error(`Invalid private key length: expected 32 bytes, got ${data.length}`)
+      }
+      return { type: "nsec", data: bytesToHex(data) as PrivateKey }
+    }
+    case "note": {
+      if (data.length !== 32) {
+        throw new Error(`Invalid event ID length: expected 32 bytes, got ${data.length}`)
+      }
+      return { type: "note", data: bytesToHex(data) as EventId }
+    }
+    case "nprofile": {
+      const entries = decodeTLV(data)
+      let pubkey: PublicKey | undefined
+      const relays: string[] = []
+
+      for (const { type, value } of entries) {
+        if (type === TLV_SPECIAL) {
+          if (value.length !== 32) {
+            throw new Error(`Invalid pubkey length: expected 32 bytes, got ${value.length}`)
+          }
+          pubkey = bytesToHex(value) as PublicKey
+        } else if (type === TLV_RELAY) {
+          relays.push(new TextDecoder().decode(value))
+        }
+      }
+
+      if (!pubkey) {
+        throw new Error("Missing pubkey in nprofile")
+      }
+
+      return { type: "nprofile", data: { pubkey, relays } }
+    }
+    case "nevent": {
+      const entries = decodeTLV(data)
+      let id: EventId | undefined
+      const relays: string[] = []
+      let author: PublicKey | undefined
+      let kind: EventKind | undefined
+
+      for (const { type, value } of entries) {
+        if (type === TLV_SPECIAL) {
+          if (value.length !== 32) {
+            throw new Error(`Invalid event ID length: expected 32 bytes, got ${value.length}`)
+          }
+          id = bytesToHex(value) as EventId
+        } else if (type === TLV_RELAY) {
+          relays.push(new TextDecoder().decode(value))
+        } else if (type === TLV_AUTHOR) {
+          if (value.length !== 32) {
+            throw new Error(`Invalid author pubkey length: expected 32 bytes, got ${value.length}`)
+          }
+          author = bytesToHex(value) as PublicKey
+        } else if (type === TLV_KIND) {
+          if (value.length !== 4) {
+            throw new Error(`Invalid kind length: expected 4 bytes, got ${value.length}`)
+          }
+          const view = new DataView(value.buffer, value.byteOffset, value.byteLength)
+          kind = view.getUint32(0, false) as EventKind
+        }
+      }
+
+      if (!id) {
+        throw new Error("Missing event ID in nevent")
+      }
+
+      const result: Nevent = { id, relays }
+      if (author !== undefined) {
+        (result as { author: PublicKey }).author = author
+      }
+      if (kind !== undefined) {
+        (result as { kind: EventKind }).kind = kind
+      }
+      return { type: "nevent", data: result }
+    }
+    case "naddr": {
+      const entries = decodeTLV(data)
+      let identifier: string | undefined
+      const relays: string[] = []
+      let pubkey: PublicKey | undefined
+      let kind: EventKind | undefined
+
+      for (const { type, value } of entries) {
+        if (type === TLV_SPECIAL) {
+          identifier = new TextDecoder().decode(value)
+        } else if (type === TLV_RELAY) {
+          relays.push(new TextDecoder().decode(value))
+        } else if (type === TLV_AUTHOR) {
+          if (value.length !== 32) {
+            throw new Error(`Invalid pubkey length: expected 32 bytes, got ${value.length}`)
+          }
+          pubkey = bytesToHex(value) as PublicKey
+        } else if (type === TLV_KIND) {
+          if (value.length !== 4) {
+            throw new Error(`Invalid kind length: expected 4 bytes, got ${value.length}`)
+          }
+          const view = new DataView(value.buffer, value.byteOffset, value.byteLength)
+          kind = view.getUint32(0, false) as EventKind
+        }
+      }
+
+      if (identifier === undefined) {
+        throw new Error("Missing identifier in naddr")
+      }
+      if (!pubkey) {
+        throw new Error("Missing pubkey in naddr")
+      }
+      if (kind === undefined) {
+        throw new Error("Missing kind in naddr")
+      }
+
+      return { type: "naddr", data: { identifier, pubkey, kind, relays } }
+    }
+    default:
+      throw new Error(`Unknown NIP-19 prefix: '${prefix}'`)
+  }
+}
