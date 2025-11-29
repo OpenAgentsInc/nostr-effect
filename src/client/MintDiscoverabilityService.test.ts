@@ -240,6 +240,47 @@ describe("MintDiscoverabilityService (NIP-87)", () => {
     await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
   })
 
+  test("recommend fedimint (38173) with invites and 'a' pointer", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const mintService = yield* MintDiscoverabilityService
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      // Publish a fedimint info event to point at
+      const fedSk = yield* crypto.generatePrivateKey()
+      const fedPk = yield* crypto.getPublicKey(fedSk)
+      const d = "fedimint-xyz"
+      yield* mintService.publishFedimintInfo({ d, invites: ["fed11one", "fed11two"], modules: ["wallet"], network: "regtest" }, fedSk)
+
+      // Recommend that fedimint with invites and a pointer + relay/label
+      const author = yield* crypto.generatePrivateKey()
+      yield* mintService.recommendMint({
+        kind: 38173,
+        d,
+        u: ["fed11one", "fed11two"],
+        pointers: [{ kind: 38173, pubkey: fedPk, d, relay: "wss://fed.hint", label: "fedimint" }],
+        content: "solid federation",
+      }, author)
+
+      const recs = yield* mintService.findRecommendations({ filterByKind: 38173, limit: 2 })
+      expect(recs.length).toBeGreaterThan(0)
+      const rec = recs.find((x) => x.d === d)
+      expect(rec?.recommendedKind).toBe(38173)
+      // ensures both invites are surfaced from 'u' tags
+      expect(rec?.urls.includes("fed11one")).toBe(true)
+      expect(rec?.urls.includes("fed11two")).toBe(true)
+      expect(rec?.pointers[0]?.kind).toBe(38173)
+      expect(rec?.pointers[0]?.relay).toBe("wss://fed.hint")
+      expect(rec?.pointers[0]?.label).toBe("fedimint")
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
   test("findRecommendations respects authors filter and limit", async () => {
     const program = Effect.gen(function* () {
       const relayService = yield* RelayService
