@@ -264,6 +264,24 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
       return { responses: [], broadcasts: [] }
     })
 
+  // NIP-45: COUNT message
+  const handleCount = (
+    _connectionId: string,
+    subscriptionId: SubscriptionId,
+    filters: readonly (typeof import("../../core/Schema.js").Filter.Type)[]
+  ): Effect.Effect<HandleResult, StorageError> =>
+    Effect.gen(function* () {
+      // For now, evaluate counts by querying and counting results
+      const events = yield* eventStore.queryEvents(filters)
+      const count = events.length
+      const response: RelayMessage = [
+        "COUNT",
+        subscriptionId,
+        { count, approximate: false },
+      ] as RelayMessage
+      return { responses: [response], broadcasts: [] }
+    })
+
   const handleAuth = (
     connectionId: string,
     authEvent: NostrEvent
@@ -302,6 +320,11 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
 
       case "AUTH":
         return handleAuth(connectionId, message[1])
+
+      case "COUNT": {
+        const [, subscriptionId, ...filters] = message as any
+        return handleCount(connectionId, subscriptionId, filters)
+      }
     }
   }
 

@@ -62,6 +62,12 @@ interface PendingOk {
   reject: (error: Error) => void
 }
 
+/** Pending COUNT resolver (NIP-45) */
+interface PendingCount {
+  resolve: (result: { count: number; approximate?: boolean }) => void
+  reject: (error: Error) => void
+}
+
 // =============================================================================
 // Service Interface
 // =============================================================================
@@ -106,6 +112,15 @@ export interface RelayService {
    * Wait for a specific event ID to be acknowledged
    */
   waitForOk(eventId: EventId, timeoutMs?: number): Effect.Effect<PublishResult, TimeoutError>
+
+  /**
+   * Request a COUNT with filters (NIP-45) and await response
+   */
+  count(
+    filters: readonly Filter[],
+    requestId?: string,
+    timeoutMs?: number
+  ): Effect.Effect<{ count: number; approximate?: boolean }, TimeoutError | ConnectionError>
 }
 
 // =============================================================================
@@ -125,6 +140,7 @@ const make = (config: RelayConnectionConfig) =>
     let ws: WebSocket | null = null
     const subscriptions = new Map<string, SubscriptionState>()
     const pendingOks = new Map<string, PendingOk>()
+    const pendingCounts = new Map<string, PendingCount>()
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
     let reconnectAttempts = 0
 
@@ -185,6 +201,16 @@ const make = (config: RelayConnectionConfig) =>
           case "NOTICE": {
             const [, message] = decodeResult
             console.warn(`[Relay Notice] ${config.url}: ${message}`)
+            break
+          }
+
+          case "COUNT": {
+            const [, reqId, payload] = decodeResult as any
+            const pending = pendingCounts.get(reqId)
+            if (pending) {
+              pending.resolve(payload as { count: number; approximate?: boolean })
+              pendingCounts.delete(reqId)
+            }
             break
           }
         }
@@ -438,6 +464,57 @@ const make = (config: RelayConnectionConfig) =>
     const connectionState: RelayService["connectionState"] = () =>
       Effect.sync(() => state)
 
+    const count: RelayService["count"] = (filters, requestId, timeoutMs = 5000) =>
+      Effect.gen(function* () {
+        if (state !== "connected") {
+          return yield* Effect.fail(
+            new ConnectionError({ message: "Not connected", url: config.url })
+          )
+        }
+
+        const id = (requestId ?? generateSubId()) as SubscriptionId
+        // Send COUNT
+        yield* sendMessage(["COUNT", id, ...filters])
+
+        // Wait for COUNT response
+        return yield* Effect.async<{ count: number; approximate?: boolean }, TimeoutError>((resume) => {
+          const timeoutHandle = setTimeout(() => {
+            pendingCounts.delete(id)
+            resume(
+              Effect.fail(
+                new TimeoutError({
+                  message: `Timeout waiting for COUNT ${id}`,
+                  durationMs: timeoutMs,
+                })
+              )
+            )
+          }, timeoutMs)
+
+          pendingCounts.set(id, {
+            resolve: (result) => {
+              clearTimeout(timeoutHandle)
+              resume(Effect.succeed(result))
+            },
+            reject: (error) => {
+              clearTimeout(timeoutHandle)
+              resume(
+                Effect.fail(
+                  new TimeoutError({
+                    message: error.message,
+                    durationMs: timeoutMs,
+                  })
+                )
+              )
+            },
+          })
+
+          return Effect.sync(() => {
+            clearTimeout(timeoutHandle)
+            pendingCounts.delete(id)
+          })
+        })
+      })
+
     return {
       _tag: "RelayService" as const,
       url: config.url,
@@ -447,6 +524,7 @@ const make = (config: RelayConnectionConfig) =>
       publish,
       subscribe,
       waitForOk,
+      count,
     }
   })
 

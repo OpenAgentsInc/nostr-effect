@@ -54,6 +54,7 @@ Keep this file up to date whenever adding or removing support.
 | 71 | Video events | `~/code/nips/71.md` | `src/client/Nip71Service.ts` | `src/client/Nip71Service.test.ts` |
 | 88 | Polls | `~/code/nips/88.md` | `src/client/Nip88Service.ts` | `src/client/Nip88Service.test.ts` |
 | 51 | Lists | `~/code/nips/51.md` | `src/client/Nip51Service.ts` | `src/client/Nip51Service.test.ts` |
+| 45 | Event counts | `~/code/nips/45.md` | `src/client/Nip45Service.ts`, `src/relay/core/MessageHandler.ts` | `src/client/Nip45Service.test.ts` |
 | 94 | File metadata | `~/code/nips/94.md` | `src/core/Nip94.ts`, `src/wrappers/nip94.ts` | `src/core/Nip94.test.ts` |
 | 98 | HTTP auth | `~/code/nips/98.md` | `src/wrappers/nip98.ts` | `src/core/Nip98.test.ts` |
 | 99 | Classified listings | `~/code/nips/99.md` | `src/wrappers/nip99.ts` | `src/core/Nip99.test.ts` |
