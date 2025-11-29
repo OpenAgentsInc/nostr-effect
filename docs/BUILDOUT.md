@@ -126,6 +126,7 @@ Completed in this phase:
 - NIP-52 Calendar Events (Nip52Service, tests) — PR #72
 - NIP-53 Live Activities (Nip53Service, tests) — PR #73
 - NIP-32 Labeling (Nip32Service, tests) — PR #74
+- NIP-71 Video Events (Nip71Service, tests) — PR #75
 
 Priority next:
 - NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
