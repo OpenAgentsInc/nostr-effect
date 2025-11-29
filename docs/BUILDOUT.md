@@ -131,6 +131,7 @@ Completed in this phase:
 - NIP-51 Lists (Nip51Service, tests) — PR #77
 - NIP-45 Event Counts (Nip45Service + relay COUNT, tests) — PR #78
 - NIP-50 Search Capability (filter.search + tests) — PR #79
+- NIP-09 Event Deletion (relay support + test) — PR #80
 
 Priority next:
 - NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
