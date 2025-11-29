@@ -129,6 +129,7 @@ Completed in this phase:
 - NIP-71 Video Events (Nip71Service, tests) — PR #75
 - NIP-88 Polls (Nip88Service, tests) — PR #76
 - NIP-51 Lists (Nip51Service, tests) — PR #77
+- NIP-45 Event Counts (Nip45Service + relay COUNT, tests) — PR #78
 
 Priority next:
 - NIP-02 Follow Lists: ensure full parity tests and cross‑docs completeness
