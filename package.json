@@ -26,6 +26,7 @@
     "./nip04": "./src/wrappers/nip04.ts",
     "./nip05": "./src/wrappers/nip05.ts",
     "./nip06": "./src/wrappers/nip06.ts",
+    "./nip08": "./src/wrappers/nip08.ts",
     "./nip07": "./src/wrappers/nip07.ts",
     "./nip10": "./src/wrappers/nip10.ts",
     "./nip11": "./src/wrappers/nip11.ts",

@@ -15,6 +15,7 @@ Keep this file up to date whenever adding or removing support.
 | 04 | Legacy encrypted DMs | `~/code/nips/04.md` | `src/wrappers/nip04.ts` | `src/core/Nip04.test.ts` |
 | 05 | DNS-based identifiers | `~/code/nips/05.md` | `src/client/Nip05Service.ts` | `src/client/Nip05Service.test.ts` |
 | 06 | Key derivation from mnemonic | `~/code/nips/06.md` | `src/wrappers/nip06.ts` | `src/core/Nip06.test.ts` |
+| 08 | Handling mentions | `~/code/nips/08.md` | `src/wrappers/nip08.ts` | `src/wrappers/nip08.test.ts` |
 | 07 | window.nostr capability | `~/code/nips/07.md` | `src/wrappers/nip07.ts` | `src/wrappers/nip07.test.ts` |
 | 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip09Deletion.test.ts` |
 | 10 | Reply threading | `~/code/nips/10.md` | `src/client/Nip10Service.ts` | `src/client/Nip10Service.test.ts` |
@@ -61,6 +62,7 @@ Keep this file up to date whenever adding or removing support.
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` | `src/client/Nip58Service.test.ts` |
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 62 | Request to Vanish | `~/code/nips/62.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip62Vanish.test.ts` |
+| 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
 | 66 | Relay discovery & liveness | `~/code/nips/66.md` | `src/client/RelayDiscoveryService.ts` | `src/client/RelayDiscoveryService.test.ts` |
