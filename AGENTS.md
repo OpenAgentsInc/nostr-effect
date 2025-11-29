@@ -293,6 +293,19 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Queries: filter recommendations with `{ kinds: [38000], '#k': ['38172'|'38173'], authors?, limit? }`.
 - Tests: cover authors filter, multiple `a` pointers, and negative cases (missing `d` or invalid `k`).
 
+### NIP‑26 Tips
+
+- Message: `nostr:delegation:${delegatePubkey}:${conditions}`; sign sha256(message) with delegator secret key.
+- Tag: `["delegation", delegatorPubkey, conditions, signature]`.
+- Delegate signs the actual event; include the delegation tag in `tags`.
+- Helpers live in `src/wrappers/nip26.ts`; tests in `src/wrappers/nip26.test.ts`.
+
+### NIP‑56 Tips
+
+- Kind 1984 with report type in third position of `p`/`e`/`x` tag: e.g., `["p", pubkey, "impersonation"]`.
+- Blob reports: include `x` (hash), optional `e` (event containing blob), and optional `server` URL.
+- Helpers live in `src/wrappers/nip56.ts`; tests in `src/wrappers/nip56.test.ts`.
+
 
 
 <!-- effect-solutions:start -->
