@@ -53,7 +53,64 @@ Building both sides of the protocol in tandem - using each to test the other.
 
 **Scope**: *Core* = shared utilities, *Relay* = relay implementation, *Client* = client library
 
+## Installation
+
+```bash
+bun add nostr-effect
+# or
+npm install nostr-effect
+```
+
 ## Quick Start
+
+### Promise API
+
+```typescript
+import { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } from "nostr-effect/pure"
+import { npubEncode, nsecEncode, decode } from "nostr-effect/nip19"
+import { SimplePool } from "nostr-effect/pool"
+
+// Generate keys
+const sk = generateSecretKey()
+const pk = getPublicKey(sk)
+
+// Encode to bech32
+const npub = npubEncode(pk)
+const nsec = nsecEncode(sk)
+
+// Create and sign an event
+const event = finalizeEvent({
+  kind: 1,
+  created_at: Math.floor(Date.now() / 1000),
+  tags: [],
+  content: "Hello, Nostr!"
+}, sk)
+
+// Verify
+console.log(verifyEvent(event)) // true
+
+// Use SimplePool for relay connections
+const pool = new SimplePool()
+const events = await pool.querySync(
+  ["wss://relay.damus.io", "wss://nos.lol"],
+  { kinds: [1], limit: 10 }
+)
+pool.destroy()
+```
+
+### Subpath Exports
+
+| Import | Description |
+|--------|-------------|
+| `nostr-effect/pure` | Key generation, event signing, verification |
+| `nostr-effect/pool` | SimplePool for relay connections |
+| `nostr-effect/nip19` | Bech32 encoding/decoding (npub, nsec, note, etc.) |
+| `nostr-effect/core` | Core types, schemas, and errors |
+| `nostr-effect/services` | Effect services (CryptoService, EventService, etc.) |
+| `nostr-effect/client` | Effect-based Nostr client |
+| `nostr-effect/relay` | Relay implementation |
+
+### Development
 
 ```bash
 # Install dependencies
