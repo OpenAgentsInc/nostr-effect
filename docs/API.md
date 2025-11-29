@@ -685,3 +685,74 @@ import { SimplePool } from 'nostr-effect/pool'
 3. **Create implementation plan** - Break into tasks
 4. **Start coding** - Begin with `pure.ts` and `pool.ts`
 5. **Iterate** - Test, refine, document
+
+---
+
+## Review Notes & Q/A (from repo scan)
+
+Date: 2025-11-29
+
+Summary: I reviewed docs plus current sources under `src/**` and tests. Below are concrete answers to open questions and a few follow‑ups where code and design diverge.
+
+### A. Answers to Open Questions
+
+- Error handling (Promise API vs Effect):
+  - Current code defines typed errors (`src/core/Errors.ts`) and uses them across services. Keep typed classes that extend Effect’s TaggedError internally. For the Promise API wrappers, surface standard `Error` instances but preserve `name` (e.g., `ConnectionError`) and include a machine‑readable `cause` field.
+
+- WebSocket runtime handling:
+  - `RelayService` already uses global `WebSocket` (works on Bun and browsers). Given Bun‑first policy, no extra setup is required in supported environments. If we later target Node, add an explicit `setWebSocket(impl)` override on the Promise wrapper only; avoid hard dependencies on `ws`.
+
+- SimplePool options:
+  - Effect implementation exists as `RelayPool` with `autoConnect` and `deduplicateEvents`. Recommend Promise wrapper options parity with nostr‑tools, then map to:
+    - `enableReconnect` → `RelayService` reconnect options
+    - `timeout` → pass to `waitForOk` and query helpers
+    - `verifyEvent` → optional pre‑publish check using `EventService.verifyEvent`
+    - (Future) `enablePing` → add periodic ping/pong in `RelayService` if needed
+
+- Subscription API patterns:
+  - Internally we expose `Stream<NostrEvent>` on `SubscriptionHandle`. Support both Promise callbacks and an async iterator by bridging the stream in the Promise wrapper. Keep callbacks for nostr‑tools parity; add `subscribeIterator` as ergonomic sugar.
+
+- Bundle/deps policy:
+  - Today `effect` is a direct dependency in `package.json`. Given wrappers will call `Effect.runPromise` internally, Promise API users don’t need to import Effect. That keeps DX simple while retaining tree‑shaking. No peer dep needed right now.
+
+- TS/Module targets:
+  - ESM‑only is consistent with current config and Bun’s bundler. No CJS support planned.
+
+### B. Where design and code diverge (proposed alignment)
+
+- Exports surface:
+  - Design shows `nostr-effect/pure`, `nostr-effect/pool`, etc. Current exports are centralized via `src/index.ts` and `src/client/index.ts`. Proposal: add Promise wrappers under `src/wrappers/` and export them at:
+    - `./pure` (generateSecretKey/getPublicKey/finalizeEvent/verifyEvent)
+    - `./pool` (SimplePool wrapper over `RelayPool`)
+    - `./nipXX` thin wrappers that call existing services or pure modules
+
+- NIP‑46 status:
+  - Code implements NIP‑46 (`src/client/Nip46Service.ts` + tests). Update checklists that still show it as open.
+
+- EOSE exposure:
+  - `RelayService` tracks `eoseReceived` per subscription but doesn’t expose it. Promise wrapper should trigger `oneose()` once per sub and optionally provide `onclose()` for `["CLOSED", subId]`.
+
+- Backpressure and resource limits:
+  - `RelayService` uses an unbounded queue per subscription and `RelayPool` deduplicates via a growing `Set<EventId>`. Consider options to bound queues (drop/slide/backpressure) and a TTL on dedup to prevent unbounded growth for long‑lived subs.
+
+- Publish timeouts:
+  - `waitForOk` defaults to 10s. Expose this as a configurable pool/relay option and surface at the Promise level (`timeout` per call, with a sensible default).
+
+### C. Additional questions for confirmation
+
+- Runtime support policy: Is Bun the only officially supported runtime for v0.x? If yes, we can explicitly scope Node/Deno/CF client support as “best effort” until wrappers stabilize.
+
+- Nostrify type alignment: Do we want to optionally export adapters that conform to `@nostrify/types` for maximum ecosystem interop, or keep our branded Effect Schema types only?
+
+- Relay NIP‑40 (expiration): Core types/tests exist; do we want a relay module that enforces TTL at query time plus a cleanup job (policy + periodic delete)?
+
+- Docs split: Should we proceed to author `docs/PROMISE-API.md` and `docs/EFFECT-API.md` now that the Effect services are implemented, so Promise wrappers have a concrete spec to target?
+
+### D. Near‑term actions I can take
+
+- Add Promise wrappers (`pure`, `pool`, `nip19`, `nip05`, `nip17`, `nip46`) that call into existing services and expose nostr‑tools‑style APIs.
+- Add `oneose`/`onclose` signaling in wrappers by observing `RelayService` events.
+- Expose `timeout` and reconnect options on the Promise surface and map them to `RelayService`.
+- Update docs and the build `exports` map once wrappers land.
+
+If you want, I can start with `pure` and `pool` wrappers and wire up basic examples end‑to‑end.
