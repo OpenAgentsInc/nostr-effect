@@ -20,14 +20,20 @@ Building both sides of the protocol in tandem - using each to test the other.
 | [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic | Core |
 | [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading | Client |
 | [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information | Relay |
+| [13](https://github.com/nostr-protocol/nips/blob/master/13.md) | Proof of Work | Core |
 | [16](https://github.com/nostr-protocol/nips/blob/master/16.md) | Event treatment | Relay |
+| [18](https://github.com/nostr-protocol/nips/blob/master/18.md) | Reposts | Client |
 | [19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32 encoding | Core |
 | [21](https://github.com/nostr-protocol/nips/blob/master/21.md) | nostr: URI scheme | Core |
 | [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions | Client |
 | [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing | Core |
+| [30](https://github.com/nostr-protocol/nips/blob/master/30.md) | Custom emoji | Core |
 | [33](https://github.com/nostr-protocol/nips/blob/master/33.md) | Parameterized replaceable events | Relay |
+| [39](https://github.com/nostr-protocol/nips/blob/master/39.md) | External identities | Client |
 | [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption | Core |
 | [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps | Client |
+| [58](https://github.com/nostr-protocol/nips/blob/master/58.md) | Badges | Client |
+| [59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift wrap | Core |
 | [65](https://github.com/nostr-protocol/nips/blob/master/65.md) | Relay list metadata | Client |
 | [89](https://github.com/nostr-protocol/nips/blob/master/89.md) | Application handlers | Client |
 | [90](https://github.com/nostr-protocol/nips/blob/master/90.md) | Data vending machines | Client |
