@@ -12,6 +12,7 @@ Keep this file up to date whenever adding or removing support.
 | 01 | Basic protocol flow | `~/code/nips/01.md` | `src/relay/core/nip/modules/Nip01Module.ts` | `src/relay/FilterMatcher.test.ts` |
 | 02 | Follow list | `~/code/nips/02.md` | `src/client/FollowListService.ts` | `src/client/FollowListService.test.ts` |
 | 03 | OpenTimestamps attestations | `~/code/nips/03.md` | `src/wrappers/nip03.ts` | `src/wrappers/nip03.test.ts` |
+| 12 | Generic tag queries (moved to NIP-01) | `~/code/nips/12.md` | `src/core/Schema.ts`, `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts` |
 | 04 | Legacy encrypted DMs | `~/code/nips/04.md` | `src/wrappers/nip04.ts` | `src/core/Nip04.test.ts` |
 | 05 | DNS-based identifiers | `~/code/nips/05.md` | `src/client/Nip05Service.ts` | `src/client/Nip05Service.test.ts` |
 | 06 | Key derivation from mnemonic | `~/code/nips/06.md` | `src/wrappers/nip06.ts` | `src/core/Nip06.test.ts` |
