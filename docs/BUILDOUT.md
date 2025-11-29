@@ -132,11 +132,9 @@ Completed in this phase:
 - NIP-45 Event Counts (Nip45Service + relay COUNT, tests) — PR #78
 - NIP-50 Search Capability (filter.search + tests) — PR #79
 - NIP-09 Event Deletion (relay support + test) — PR #80
+- NIP-61 Nutzaps (NutzapService, tests) — PR #105
 
 Priority now (do these before any other backlog):
-- NIP-15 Nostr Marketplace — commerce flows (listing/bid semantics, tags)
-- NIP-60 Cashu Wallets — wallet helpers and flows; complements NIP‑87
-- NIP-61 Nutzaps — zap semantics extension; align with NIP‑57 ZapService
 - NIP-86 Relay Management API — admin/management events + relay limitations
 
 Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):

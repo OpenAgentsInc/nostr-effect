@@ -82,6 +82,7 @@ Keep this file up to date whenever adding or removing support.
 | 88 | Polls | `~/code/nips/88.md` | `src/client/Nip88Service.ts` | `src/client/Nip88Service.test.ts` |
 | 89 | Recommended application handlers | `~/code/nips/89.md` | `src/client/HandlerService.ts` | `src/client/HandlerService.test.ts` |
 | 90 | Data vending machine | `~/code/nips/90.md` | `src/client/DVMService.ts` | `src/client/DVMService.test.ts` |
+| 86 | Relay Management API | `~/code/nips/86.md` | `src/relay/core/nip/modules/Nip86Module.ts`, `src/relay/backends/bun/BunServer.ts` | `src/relay/Nip86Management.test.ts` |
 | 94 | File metadata | `~/code/nips/94.md` | `src/core/Nip94.ts`, `src/wrappers/nip94.ts` | `src/core/Nip94.test.ts` |
 | 96 | HTTP file storage | `~/code/nips/96.md` | `src/wrappers/nip96.ts` | `src/wrappers/nip96.test.ts` |
 | 98 | HTTP auth | `~/code/nips/98.md` | `src/wrappers/nip98.ts` | `src/core/Nip98.test.ts` |

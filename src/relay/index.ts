@@ -38,6 +38,7 @@ import { DefaultModules } from "./core/nip/modules/index.js"
 import type { NipModule } from "./core/nip/NipModule.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { CryptoServiceLive } from "../services/CryptoService.js"
+import { Nip86AdminServiceLive } from "./core/admin/Nip86AdminService.js"
 
 // =============================================================================
 // Re-exports - Storage
@@ -146,6 +147,7 @@ export const makeRelayLayerWithNips = (
     Layer.provide(SubscriptionManagerLive),
     Layer.provide(NipRegistryLive(modules)),
     Layer.provide(BunSqliteStoreLive(dbPath)),
+    Layer.provide(Nip86AdminServiceLive()),
     Layer.provide(EventServiceLive),
     Layer.provide(CryptoServiceLive)
   )
@@ -164,6 +166,7 @@ export const makeMemoryRelayLayerWithNips = (
     Layer.provide(SubscriptionManagerLive),
     Layer.provide(NipRegistryLive(modules)),
     Layer.provide(MemoryEventStoreLive),
+    Layer.provide(Nip86AdminServiceLive()),
     Layer.provide(EventServiceLive),
     Layer.provide(CryptoServiceLive)
   )

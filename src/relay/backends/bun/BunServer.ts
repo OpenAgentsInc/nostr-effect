@@ -9,6 +9,8 @@ import { MessageHandler, type BroadcastMessage } from "../../core/MessageHandler
 import { SubscriptionManager } from "../../core/SubscriptionManager.js"
 import type { RelayMessage } from "../../../core/Schema.js"
 import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "../../core/RelayInfo.js"
+import { Nip86AdminService } from "../../core/admin/Nip86AdminService.js"
+import { unpackEventFromToken, validateEventFull } from "../../../core/Nip98.js"
 
 // =============================================================================
 // Types
@@ -61,6 +63,7 @@ export const RelayServer = Context.GenericTag<RelayServer>("RelayServer")
 
 const make = Effect.gen(function* () {
   const messageHandler = yield* MessageHandler
+  const admin = yield* Nip86AdminService
   const subscriptionManager = yield* SubscriptionManager
 
   // Connection ID generation (encapsulated, not global)
@@ -100,6 +103,8 @@ const make = Effect.gen(function* () {
       const relayInfo = config.relayInfo
         ? mergeRelayInfo(config.relayInfo)
         : defaultRelayInfo
+      // Mutable overlay for NIP-86 changes
+      let currentRelayInfo: Partial<RelayInfo> = { ...relayInfo }
 
       // CORS headers for NIP-11 compliance
       const corsHeaders = {
@@ -113,7 +118,7 @@ const make = Effect.gen(function* () {
         port: config.port,
         hostname: config.host ?? "0.0.0.0",
 
-        fetch(req, server) {
+        async fetch(req, server) {
           // Upgrade HTTP to WebSocket
           const url = new URL(req.url)
 
@@ -129,12 +134,163 @@ const make = Effect.gen(function* () {
           if (req.method === "GET" && url.pathname === "/" && !req.headers.get("upgrade")) {
             const accept = req.headers.get("accept") ?? ""
             if (accept.includes("application/nostr+json")) {
-              return new Response(JSON.stringify(relayInfo), {
+              // Return merged relay info (base + module-contributed + runtime admin overrides)
+              const info = { ...relayInfo, ...currentRelayInfo }
+              return new Response(JSON.stringify(info), {
                 headers: {
                   "Content-Type": "application/nostr+json",
                   ...corsHeaders,
                 },
               })
+            }
+          }
+
+          // NIP-86: Management API (HTTP JSON-RPC over same URI)
+          const ctype = (req.headers.get("content-type") ?? "").toLowerCase()
+          if (ctype.includes("application/nostr+json+rpc")) {
+            // Must include NIP-98 Authorization header
+            const auth = req.headers.get("authorization") ?? ""
+            if (!auth) return new Response("Unauthorized", { status: 401 })
+
+            let payload: any
+            try {
+              payload = await req.json()
+            } catch {
+              return new Response(JSON.stringify({ result: null, error: "invalid json" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+              })
+            }
+
+            try {
+              const event = await unpackEventFromToken(auth)
+              await validateEventFull(event, `${url.origin}${url.pathname}`, req.method.toLowerCase(), payload)
+            } catch (e: any) {
+              return new Response("Unauthorized", { status: 401 })
+            }
+
+            const method = payload?.method as string | undefined
+            const params = (payload?.params as any[]) ?? []
+
+            const respond = (result: unknown, status = 200, error?: string) =>
+              new Response(JSON.stringify({ result, ...(error ? { error } : {}) }), {
+                status,
+                headers: { "Content-Type": "application/json" },
+              })
+
+            // Dispatch methods
+            switch (method) {
+              case "supportedmethods": {
+                const methods = [
+                  "banpubkey",
+                  "listbannedpubkeys",
+                  "allowpubkey",
+                  "listallowedpubkeys",
+                  "listeventsneedingmoderation",
+                  "allowevent",
+                  "banevent",
+                  "listbannedevents",
+                  "changerelayname",
+                  "changerelaydescription",
+                  "changerelayicon",
+                  "allowkind",
+                  "disallowkind",
+                  "listallowedkinds",
+                  "blockip",
+                  "unblockip",
+                  "listblockedips",
+                ]
+                return respond(methods)
+              }
+
+              case "banpubkey": {
+                const [pubkey, reason] = params
+                const ok = await Effect.runPromise(admin.banPubkey(String(pubkey ?? ""), reason ? String(reason) : undefined))
+                return respond(ok)
+              }
+              case "listbannedpubkeys": {
+                const list = await Effect.runPromise(admin.listBannedPubkeys())
+                return respond(list)
+              }
+              case "allowpubkey": {
+                const [pubkey, reason] = params
+                const ok = await Effect.runPromise(admin.allowPubkey(String(pubkey ?? ""), reason ? String(reason) : undefined))
+                return respond(ok)
+              }
+              case "listallowedpubkeys": {
+                const list = await Effect.runPromise(admin.listAllowedPubkeys())
+                return respond(list)
+              }
+              case "listeventsneedingmoderation": {
+                const list = await Effect.runPromise(admin.listEventsNeedingModeration())
+                return respond(list)
+              }
+              case "allowevent": {
+                const [id, reason] = params
+                const ok = await Effect.runPromise(admin.allowEvent(String(id ?? ""), reason ? String(reason) : undefined))
+                return respond(ok)
+              }
+              case "banevent": {
+                const [id, reason] = params
+                const ok = await Effect.runPromise(admin.banEvent(String(id ?? ""), reason ? String(reason) : undefined))
+                return respond(ok)
+              }
+              case "listbannedevents": {
+                const list = await Effect.runPromise(admin.listBannedEvents())
+                return respond(list)
+              }
+              case "changerelayname": {
+                const [name] = params
+                const ok = await Effect.runPromise(admin.changeRelayName(String(name ?? "")))
+                // Update overlay for GET / NIP-11
+                const info = await Effect.runPromise(admin.getRelayInfo())
+                currentRelayInfo = { ...currentRelayInfo, ...info }
+                return respond(ok)
+              }
+              case "changerelaydescription": {
+                const [desc] = params
+                const ok = await Effect.runPromise(admin.changeRelayDescription(String(desc ?? "")))
+                const info = await Effect.runPromise(admin.getRelayInfo())
+                currentRelayInfo = { ...currentRelayInfo, ...info }
+                return respond(ok)
+              }
+              case "changerelayicon": {
+                const [icon] = params
+                const ok = await Effect.runPromise(admin.changeRelayIcon(String(icon ?? "")))
+                const info = await Effect.runPromise(admin.getRelayInfo())
+                currentRelayInfo = { ...currentRelayInfo, ...info }
+                return respond(ok)
+              }
+              case "allowkind": {
+                const [kind] = params
+                const ok = await Effect.runPromise(admin.allowKind(Number(kind)))
+                return respond(ok)
+              }
+              case "disallowkind": {
+                const [kind] = params
+                const ok = await Effect.runPromise(admin.disallowKind(Number(kind)))
+                return respond(ok)
+              }
+              case "listallowedkinds": {
+                const list = await Effect.runPromise(admin.listAllowedKinds())
+                return respond(list)
+              }
+              case "blockip": {
+                const [ip, reason] = params
+                const ok = await Effect.runPromise(admin.blockIp(String(ip ?? ""), reason ? String(reason) : undefined))
+                return respond(ok)
+              }
+              case "unblockip": {
+                const [ip] = params
+                const ok = await Effect.runPromise(admin.unblockIp(String(ip ?? "")))
+                return respond(ok)
+              }
+              case "listblockedips": {
+                const list = await Effect.runPromise(admin.listBlockedIps())
+                return respond(list)
+              }
+              default:
+                return respond(null, 400, "unsupported method")
             }
           }
 
