@@ -245,6 +245,7 @@ Common NIPs for this project:
   - Spec (local): `~/code/nips/<nip>.md`
   - Code entry points: service/wrapper/module paths
   - Tests
+  - Keep the table sorted numerically by NIP (ascending). If you touch the file, fix ordering in the same PR.
 
 ## NIP Implementation Playbook
 
@@ -279,6 +280,16 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
   - `bun run verify` passes (typecheck + tests).
   - Update `docs/SUPPORTED_NIPS.md`.
   - Link PR to the appropriate issue(s).
+  - Add export mapping in `package.json` (e.g., `"./nipXX": "./src/wrappers/nipXX.ts"`).
+  - Update `docs/UNSUPPORTED_NIPS.md` to remove implemented NIPs.
+
+### Docs Hygiene
+
+- One source of truth for NIPs: `docs/SUPPORTED_NIPS.md` (sorted ascending). Remove duplicate lists elsewhere.
+- When adding a new NIP:
+  - Add a row to `docs/SUPPORTED_NIPS.md` (spec path, code entry points, tests)
+  - Remove it from `docs/UNSUPPORTED_NIPS.md`
+  - Ensure README links only to `docs/SUPPORTED_NIPS.md`
 
 ### Useful code patterns
 
