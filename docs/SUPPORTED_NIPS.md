@@ -61,11 +61,11 @@ Keep this file up to date whenever adding or removing support.
 | 54 | Wiki | `~/code/nips/54.md` | `src/wrappers/nip54.ts` | `src/core/Nip54.test.ts` |
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
 | 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts`, `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts` |
-| 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` | `src/client/Nip58Service.test.ts` |
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
+| 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
+| 61 | Nutzaps | `~/code/nips/61.md` | `src/client/NutzapService.ts` | `src/client/NutzapService.test.ts` |
 | 62 | Request to Vanish | `~/code/nips/62.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip62Vanish.test.ts` |
-| 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
 | 66 | Relay discovery & liveness | `~/code/nips/66.md` | `src/client/RelayDiscoveryService.ts` | `src/client/RelayDiscoveryService.test.ts` |
