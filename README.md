@@ -10,43 +10,29 @@ Building both sides of the protocol in tandem - using each to test the other.
 - **[BUILDOUT.md](docs/BUILDOUT.md)** - Development roadmap and parallel build plan
 - **[CLOUDFLARE.md](docs/CLOUDFLARE.md)** - Cloudflare Workers + Durable Objects deployment guide
 
-## Status
+## Supported NIPs
 
-### Core
-- [x] Schema.ts (NIP-01 event types, filters, messages)
-- [x] Errors.ts (typed error classes)
-- [x] Nip19.ts (bech32 encoding: npub/nsec/note/nprofile/nevent/naddr)
+| NIP | Description | Scope |
+|-----|-------------|-------|
+| [01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic protocol flow | Both |
+| [02](https://github.com/nostr-protocol/nips/blob/master/02.md) | Follow list | Client |
+| [05](https://github.com/nostr-protocol/nips/blob/master/05.md) | DNS-based identifiers | Client |
+| [06](https://github.com/nostr-protocol/nips/blob/master/06.md) | Key derivation from mnemonic | Core |
+| [10](https://github.com/nostr-protocol/nips/blob/master/10.md) | Reply threading | Client |
+| [11](https://github.com/nostr-protocol/nips/blob/master/11.md) | Relay information | Relay |
+| [16](https://github.com/nostr-protocol/nips/blob/master/16.md) | Event treatment | Relay |
+| [19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32 encoding | Core |
+| [21](https://github.com/nostr-protocol/nips/blob/master/21.md) | nostr: URI scheme | Core |
+| [25](https://github.com/nostr-protocol/nips/blob/master/25.md) | Reactions | Client |
+| [27](https://github.com/nostr-protocol/nips/blob/master/27.md) | Content parsing | Core |
+| [33](https://github.com/nostr-protocol/nips/blob/master/33.md) | Parameterized replaceable events | Relay |
+| [44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned encryption | Core |
+| [57](https://github.com/nostr-protocol/nips/blob/master/57.md) | Lightning zaps | Client |
+| [65](https://github.com/nostr-protocol/nips/blob/master/65.md) | Relay list metadata | Client |
+| [89](https://github.com/nostr-protocol/nips/blob/master/89.md) | Application handlers | Client |
+| [90](https://github.com/nostr-protocol/nips/blob/master/90.md) | Data vending machines | Client |
 
-### Services
-- [x] CryptoService (keys, signing, verification)
-- [x] EventService (create, verify)
-- [x] Nip44Service (NIP-44 versioned encryption)
-
-### Relay
-- [x] EventStore (SQLite via bun:sqlite)
-- [x] SubscriptionManager
-- [x] MessageHandler (EVENT, REQ, CLOSE → OK, EOSE)
-- [x] RelayServer (Bun.serve WebSocket)
-- [x] PolicyPipeline (composable event validation)
-- [x] NIP-16/33 Replaceable Events
-- [x] NIP-11 Relay Information Document
-- [x] NIP module system (pluggable NIP support)
-- [ ] ConnectionManager
-- [ ] NIP-42 Authentication
-
-### Client
-- [x] RelayService (WebSocket connection management)
-- [x] FollowListService (NIP-02 follow lists)
-- [x] RelayListService (NIP-65 relay list metadata)
-- [x] HandlerService (NIP-89 application handlers)
-- [x] DVMService (NIP-90 Data Vending Machines)
-- [ ] RelayPool (multi-relay)
-- [ ] NIP-46 remote signing
-
-### Future
-- NIP-05 identifier verification
-- NIP-09 event deletion
-- NIP-40 event expiration
+**Scope**: *Core* = shared utilities, *Relay* = relay implementation, *Client* = client library
 
 ## Quick Start
 
