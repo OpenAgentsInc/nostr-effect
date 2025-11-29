@@ -45,6 +45,7 @@ Keep this file up to date whenever adding or removing support.
 | 35 | Torrents | `~/code/nips/35.md` | `src/wrappers/nip35.ts` | `src/wrappers/nip35.test.ts` |
 | 36 | Sensitive content (content-warning) | `~/code/nips/36.md` | `src/wrappers/nip36.ts` | `src/wrappers/nip36.test.ts` |
 | 37 | Draft wraps | `~/code/nips/37.md` | `src/wrappers/nip37.ts` | `src/wrappers/nip37.test.ts` |
+| 38 | User statuses | `~/code/nips/38.md` | `src/client/Nip38Service.ts` | `src/client/Nip38Service.test.ts` |
 | 39 | External identities | `~/code/nips/39.md` | `src/client/Nip39Service.ts` | `src/client/Nip39Service.test.ts` |
 | 40 | Expiration timestamp | `~/code/nips/40.md` | (handled by relay policies) | `src/core/Nip40.test.ts` |
 | 42 | Client authentication | `~/code/nips/42.md` | `src/relay/core/nip/modules/Nip42Module.ts` | `src/core/Nip42.test.ts`, `src/relay/core/nip/modules/Nip42Module.test.ts` |
