@@ -51,6 +51,12 @@ export const matchesFilter = (event: NostrEvent, filter: Filter): boolean => {
     }
   }
 
+  // NIP-50: basic search on content (case-insensitive substring)
+  if (filter.search && filter.search.trim().length > 0) {
+    const needle = filter.search.toLowerCase()
+    if (!event.content.toLowerCase().includes(needle)) return false
+  }
+
   return true
 }
 
