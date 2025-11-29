@@ -144,13 +144,14 @@ export interface ZapService {
 export const ZapService = Context.GenericTag<ZapService>("ZapService")
 
 // =============================================================================
-// Helper Functions
+// Pure Functions (exported for wrappers)
 // =============================================================================
 
 /**
  * Decode LNURL (bech32-encoded URL)
+ * Exported for use by wrappers
  */
-const decodeLnurl = (lnurl: string): string => {
+export function decodeLnurl(lnurl: string): string {
   const { words } = bech32.decode(lnurl as `${string}1${string}`, 1000)
   const data = bech32.fromWords(words)
   return new TextDecoder().decode(new Uint8Array(data))
@@ -158,9 +159,9 @@ const decodeLnurl = (lnurl: string): string => {
 
 /**
  * Parse satoshi amount from bolt11 invoice
- * Based on nostr-tools implementation
+ * Exported for use by wrappers
  */
-const parseBolt11Amount = (bolt11: string): number => {
+export function getSatoshisAmountFromBolt11(bolt11: string): number {
   if (bolt11.length < 50) {
     return 0
   }
@@ -381,8 +382,8 @@ const make = Effect.gen(function* () {
       return event
     })
 
-  const getSatoshisAmountFromBolt11: ZapService["getSatoshisAmountFromBolt11"] = (bolt11) =>
-    parseBolt11Amount(bolt11)
+  const getSatoshisAmountFromBolt11Impl: ZapService["getSatoshisAmountFromBolt11"] =
+    getSatoshisAmountFromBolt11
 
   return {
     _tag: "ZapService" as const,
@@ -390,7 +391,7 @@ const make = Effect.gen(function* () {
     makeZapRequest,
     validateZapRequest,
     makeZapReceipt,
-    getSatoshisAmountFromBolt11,
+    getSatoshisAmountFromBolt11: getSatoshisAmountFromBolt11Impl,
   }
 })
 

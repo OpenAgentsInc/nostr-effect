@@ -195,7 +195,7 @@ export interface ChatService {
 export const ChatService = Context.GenericTag<ChatService>("ChatService")
 
 // =============================================================================
-// Helper Functions
+// Pure Helper Functions (exported for wrappers)
 // =============================================================================
 
 /**
@@ -210,8 +210,9 @@ const serializeContent = (content: unknown): string => {
 
 /**
  * Parse channel metadata from event content
+ * Exported for use by wrappers
  */
-const parseChannelMetadata = (content: string): ChannelMetadata | undefined => {
+export function parseChannelMetadata(content: string): ChannelMetadata | undefined {
   try {
     const parsed = JSON.parse(content)
     if (typeof parsed.name === "string" && typeof parsed.about === "string" && typeof parsed.picture === "string") {
@@ -223,33 +224,40 @@ const parseChannelMetadata = (content: string): ChannelMetadata | undefined => {
   }
 }
 
+/** Generic event with tags for parsing functions */
+interface EventWithTags {
+  readonly tags: readonly (readonly string[])[]
+}
+
 /**
  * Get the root channel ID from message event tags
+ * Exported for use by wrappers
  */
-const getChannelIdFromMessage = (event: NostrEvent): EventId | undefined => {
+export function getChannelIdFromMessage(event: EventWithTags): string | undefined {
   const rootTag = event.tags.find(
     (tag) => tag[0] === "e" && tag[3] === "root"
   )
   if (rootTag && rootTag[1]) {
-    return rootTag[1] as EventId
+    return rootTag[1]
   }
   // Fallback: first e tag
   const firstETag = event.tags.find((tag) => tag[0] === "e")
   if (firstETag && firstETag[1]) {
-    return firstETag[1] as EventId
+    return firstETag[1]
   }
   return undefined
 }
 
 /**
  * Get the reply-to event ID from message event tags
+ * Exported for use by wrappers
  */
-const getReplyToFromMessage = (event: NostrEvent): EventId | undefined => {
+export function getReplyToFromMessage(event: EventWithTags): string | undefined {
   const replyTag = event.tags.find(
     (tag) => tag[0] === "e" && tag[3] === "reply"
   )
   if (replyTag && replyTag[1]) {
-    return replyTag[1] as EventId
+    return replyTag[1]
   }
   return undefined
 }
@@ -540,9 +548,9 @@ const make = Effect.gen(function* () {
 
       return events.map((event) => ({
         event,
-        channelId: getChannelIdFromMessage(event) ?? channelId,
+        channelId: (getChannelIdFromMessage(event) ?? channelId) as EventId,
         content: event.content,
-        replyTo: getReplyToFromMessage(event),
+        replyTo: getReplyToFromMessage(event) as EventId | undefined,
       })) as readonly ChannelMessage[]
     }).pipe(
       Effect.mapError(
