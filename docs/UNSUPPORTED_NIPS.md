@@ -4,17 +4,10 @@ This file lists NIPs present in the local specs repo (`~/code/nips`) that are no
 
 Source of truth for supported NIPs: `docs/SUPPORTED_NIPS.md`.
 
-- ~~07 — `~/code/nips/07.md`~~
-- ~~08 — `~/code/nips/08.md`~~
 - 12 — `~/code/nips/12.md`
-- ~~15 — `~/code/nips/15.md`~~
-- ~~22 — `~/code/nips/22.md`~~
 - 24 — `~/code/nips/24.md`
 - 38 — `~/code/nips/38.md`
 - 55 — `~/code/nips/55.md`
-- ~~60 — `~/code/nips/60.md`~~
-- 61 — `~/code/nips/61.md`
-- ~~64 — `~/code/nips/64.md`~~
 - 77 — `~/code/nips/77.md`
 - 86 — `~/code/nips/86.md`
 - 92 — `~/code/nips/92.md`
