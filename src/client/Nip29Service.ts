@@ -192,8 +192,12 @@ function parseMetadataFromEvent(event: NostrEvent): GroupMetadata {
 
   for (const tag of event.tags) {
     const [tagName, tagValue] = tag
-    if (!tagValue) continue
+    // Presence-only toggles
+    if (tagName === "public") metadata.isPublic = true
+    if (tagName === "open") metadata.isOpen = true
 
+    // Value-based fields
+    if (!tagValue) continue
     switch (tagName) {
       case "d":
         metadata.id = tagValue
@@ -206,12 +210,6 @@ function parseMetadataFromEvent(event: NostrEvent): GroupMetadata {
         break
       case "about":
         metadata.about = tagValue
-        break
-      case "public":
-        metadata.isPublic = true
-        break
-      case "open":
-        metadata.isOpen = true
         break
     }
   }
