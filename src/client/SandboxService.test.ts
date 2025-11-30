@@ -1,9 +1,9 @@
-// @ts-nocheck
 /**
  * Tests for SandboxService (NIP-SB)
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
-import { Effect, Layer, Stream, Schema } from "effect"
+import { Effect, Layer, Stream } from "effect"
+import { Schema } from "@effect/schema"
 import {
   SandboxService,
   SandboxServiceLive,
@@ -25,8 +25,8 @@ import {
   SANDBOX_GIT_CLONE_KIND,
   SANDBOX_PORT_FORWARD_KIND,
   SANDBOX_CREATE_RESULT_KIND,
-  SANDBOX_EXECUTE_RESULT_KIND,
   SANDBOX_FEEDBACK_KIND,
+  type SandboxId,
 } from "../core/NipSB.js"
 
 const decodeKind = Schema.decodeSync(EventKind)
@@ -160,7 +160,7 @@ describe("SandboxService", () => {
         yield* relayService.connect()
 
         const privateKey = yield* crypto.generatePrivateKey()
-        const sandboxId = "sb_test123"
+        const sandboxId = "sb_test123" as unknown as SandboxId
 
         const { event, result, subscription } = yield* sandboxService.execute(
           sandboxId,
@@ -213,8 +213,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const minimalSandboxId = "sb_test456" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.execute(
-          "sb_test456",
+          minimalSandboxId,
           "echo hello",
           undefined,
           privateKey
@@ -248,12 +249,13 @@ describe("SandboxService", () => {
         const privateKey = yield* crypto.generatePrivateKey()
         const fileContent = "console.log('Hello World')"
 
+        const uploadId = "sb_upload123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.uploadFile(
-          "sb_upload123",
+          uploadId,
           "/app/index.js",
           fileContent,
           {
-            encoding: "utf-8",
+            encoding: "utf8",
             permissions: "755",
           },
           privateKey
@@ -265,7 +267,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_upload123")
+        expect(sandboxTag?.[1]).toBe(uploadId)
 
         // Check param tags
         const paramTags = event.tags.filter((t) => t[0] === "param")
@@ -273,7 +275,7 @@ describe("SandboxService", () => {
         expect(pathParam?.[2]).toBe("/app/index.js")
 
         const encodingParam = paramTags.find((t) => t[1] === "encoding")
-        expect(encodingParam?.[2]).toBe("utf-8")
+        expect(encodingParam?.[2]).toBe("utf8")
 
         const permissionsParam = paramTags.find((t) => t[1] === "permissions")
         expect(permissionsParam?.[2]).toBe("755")
@@ -297,12 +299,11 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const dlId = "sb_download123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.downloadFile(
-          "sb_download123",
+          dlId,
           "/app/output.log",
-          {
-            format: "text",
-          },
+          { format: "base64" },
           privateKey
         )
 
@@ -311,7 +312,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_download123")
+        expect(sandboxTag?.[1]).toBe(dlId)
 
         // Check param tags
         const paramTags = event.tags.filter((t) => t[0] === "param")
@@ -319,7 +320,7 @@ describe("SandboxService", () => {
         expect(pathParam?.[2]).toBe("/app/output.log")
 
         const formatParam = paramTags.find((t) => t[1] === "format")
-        expect(formatParam?.[2]).toBe("text")
+        expect(formatParam?.[2]).toBe("base64")
 
         yield* subscription.unsubscribe()
         yield* relayService.disconnect()
@@ -340,8 +341,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const ctrlId = "sb_control123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.control(
-          "sb_control123",
+          ctrlId,
           "restart",
           privateKey
         )
@@ -351,7 +353,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_control123")
+        expect(sandboxTag?.[1]).toBe(ctrlId)
 
         // Check action tag
         const paramTags = event.tags.filter((t) => t[0] === "param")
@@ -378,8 +380,9 @@ describe("SandboxService", () => {
 
           const privateKey = yield* crypto.generatePrivateKey()
 
+          const actId = "sb_action_test" as unknown as SandboxId
           const { event, result, subscription } = yield* sandboxService.control(
-            "sb_action_test",
+            actId,
             action,
             privateKey
           )
@@ -411,8 +414,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const statusId = "sb_status123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.getStatus(
-          "sb_status123",
+          statusId,
           privateKey
         )
 
@@ -421,7 +425,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_status123")
+        expect(sandboxTag?.[1]).toBe(statusId)
 
         yield* subscription.unsubscribe()
         yield* relayService.disconnect()
@@ -442,8 +446,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const gitId = "sb_git123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.gitClone(
-          "sb_git123",
+          gitId,
           "https://github.com/example/repo.git",
           {
             branch: "develop",
@@ -458,7 +463,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_git123")
+        expect(sandboxTag?.[1]).toBe(gitId)
 
         // Check param tags
         const paramTags = event.tags.filter((t) => t[0] === "param")
@@ -492,8 +497,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const gitId2 = "sb_git456" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.gitClone(
-          "sb_git456",
+          gitId2,
           "https://github.com/example/simple.git",
           undefined,
           privateKey
@@ -524,8 +530,9 @@ describe("SandboxService", () => {
 
         const privateKey = yield* crypto.generatePrivateKey()
 
+        const pfId = "sb_port123" as unknown as SandboxId
         const { event, result, subscription } = yield* sandboxService.portForward(
-          "sb_port123",
+          pfId,
           3000,
           {
             protocol: "tcp",
@@ -539,7 +546,7 @@ describe("SandboxService", () => {
 
         // Check sandbox tag
         const sandboxTag = event.tags.find((t) => t[0] === "sandbox")
-        expect(sandboxTag?.[1]).toBe("sb_port123")
+        expect(sandboxTag?.[1]).toBe(pfId)
 
         // Check param tags
         const paramTags = event.tags.filter((t) => t[0] === "param")
@@ -663,7 +670,7 @@ describe("SandboxService", () => {
 
         const result = resultResponses[0]
         if (result?.type === "result") {
-          expect(result.result.id).toBe("sb_new123")
+          expect(String(result.result.id)).toBe("sb_new123")
           expect(result.result.status).toBe("running")
           expect(result.result.urls?.ssh).toBe("ssh://user@sandbox.example.com")
         }
@@ -688,8 +695,9 @@ describe("SandboxService", () => {
         const customerPubkey = yield* crypto.getPublicKey(customerKey)
 
         // Create an execute request
+        const execId = "sb_test" as unknown as SandboxId
         const { event: requestEvent, subscription } = yield* sandboxService.execute(
-          "sb_test",
+          execId,
           "bun test",
           undefined,
           customerKey
@@ -758,8 +766,9 @@ describe("SandboxService", () => {
         const customerPubkey = yield* crypto.getPublicKey(customerKey)
 
         // Create an execute request with streaming
+        const streamId = "sb_stream" as unknown as SandboxId
         const { event: requestEvent, subscription } = yield* sandboxService.execute(
-          "sb_stream",
+          streamId,
           "npm test",
           { stream: true },
           customerKey
@@ -824,4 +833,3 @@ describe("SandboxService", () => {
     })
   })
 })
-// @ts-nocheck

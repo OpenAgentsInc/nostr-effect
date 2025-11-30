@@ -46,7 +46,7 @@ import {
   type SandboxUploadOptions,
   type SandboxDownloadOptions,
   type SandboxPortForwardOptions,
-  type SandboxCreateResult,
+  // type SandboxCreateResult,
   type SandboxExecuteResult,
   type SandboxUploadResult,
   type SandboxDownloadResult,
@@ -65,7 +65,7 @@ import {
   buildSandboxTag,
   buildParamTag,
   buildEnvTag,
-  getResultKind,
+  // getResultKind,
 } from "../core/NipSB.js"
 
 // =============================================================================
@@ -81,8 +81,8 @@ export interface Sandbox {
   readonly id: SandboxId
   readonly status: SandboxStatus
   readonly urls?: {
-    readonly ssh?: string
-    readonly http?: string
+    readonly ssh?: string | undefined
+    readonly http?: string | undefined
   }
   readonly expiresAt?: number
   readonly event: NostrEvent
@@ -281,18 +281,18 @@ const parseFeedback = (event: NostrEvent, requestId: string): SandboxFeedback | 
  * Build tags for sandbox create request
  */
 const buildCreateTags = (config: SandboxCreateConfig): typeof Tag.Type[] => {
-  const tags: string[][] = []
+  const tags: Array<readonly string[]> = []
 
-  if (config.image) tags.push(buildParamTag("image", config.image) as string[])
-  if (config.cpu) tags.push(buildParamTag("cpu", String(config.cpu)) as string[])
-  if (config.memory) tags.push(buildParamTag("memory", String(config.memory)) as string[])
-  if (config.disk) tags.push(buildParamTag("disk", String(config.disk)) as string[])
-  if (config.language) tags.push(buildParamTag("language", config.language) as string[])
-  if (config.timeout) tags.push(buildParamTag("timeout", String(config.timeout)) as string[])
+  if (config.image) tags.push(buildParamTag("image", config.image))
+  if (config.cpu) tags.push(buildParamTag("cpu", String(config.cpu)))
+  if (config.memory) tags.push(buildParamTag("memory", String(config.memory)))
+  if (config.disk) tags.push(buildParamTag("disk", String(config.disk)))
+  if (config.language) tags.push(buildParamTag("language", config.language))
+  if (config.timeout) tags.push(buildParamTag("timeout", String(config.timeout)))
 
   if (config.env) {
     for (const [key, value] of Object.entries(config.env)) {
-      tags.push(buildEnvTag(key, value) as string[])
+      tags.push(buildEnvTag(key, value))
     }
   }
 
@@ -413,8 +413,8 @@ const make = Effect.gen(function* () {
           return {
             id: parsed.id,
             status: parsed.status,
-            urls: parsed.urls,
-            expiresAt: parsed.expiresAt,
+            ...(parsed.urls ? { urls: parsed.urls } : {}),
+            ...(parsed.expiresAt ? { expiresAt: parsed.expiresAt } : {}),
             event: e,
           }
         } catch {
@@ -441,12 +441,12 @@ const make = Effect.gen(function* () {
 
   const execute: SandboxService["execute"] = (sandboxId, command, options, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [buildSandboxTag(sandboxId) as string[]]
+      const tags: Array<readonly string[]> = [buildSandboxTag(sandboxId)]
 
-      if (options?.cwd) tags.push(buildParamTag("cwd", options.cwd) as string[])
-      if (options?.timeout) tags.push(buildParamTag("timeout", String(options.timeout)) as string[])
-      if (options?.stream) tags.push(buildParamTag("stream", String(options.stream)) as string[])
-      if (options?.shell) tags.push(buildParamTag("shell", options.shell) as string[])
+      if (options?.cwd) tags.push(buildParamTag("cwd", options.cwd))
+      if (options?.timeout) tags.push(buildParamTag("timeout", String(options.timeout)))
+      if (options?.stream) tags.push(buildParamTag("stream", String(options.stream)))
+      if (options?.shell) tags.push(buildParamTag("shell", options.shell))
 
       const event = yield* eventService.createEvent(
         {
@@ -486,13 +486,13 @@ const make = Effect.gen(function* () {
 
   const uploadFile: SandboxService["uploadFile"] = (sandboxId, path, content, options, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [
-        buildSandboxTag(sandboxId) as string[],
-        buildParamTag("path", path) as string[],
+      const tags: Array<readonly string[]> = [
+        buildSandboxTag(sandboxId),
+        buildParamTag("path", path),
       ]
 
-      if (options?.encoding) tags.push(buildParamTag("encoding", options.encoding) as string[])
-      if (options?.permissions) tags.push(buildParamTag("permissions", options.permissions) as string[])
+      if (options?.encoding) tags.push(buildParamTag("encoding", options.encoding))
+      if (options?.permissions) tags.push(buildParamTag("permissions", options.permissions))
 
       const event = yield* eventService.createEvent(
         {
@@ -532,12 +532,12 @@ const make = Effect.gen(function* () {
 
   const downloadFile: SandboxService["downloadFile"] = (sandboxId, path, options, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [
-        buildSandboxTag(sandboxId) as string[],
-        buildParamTag("path", path) as string[],
+      const tags: Array<readonly string[]> = [
+        buildSandboxTag(sandboxId),
+        buildParamTag("path", path),
       ]
 
-      if (options?.format) tags.push(buildParamTag("format", options.format) as string[])
+      if (options?.format) tags.push(buildParamTag("format", options.format))
 
       const event = yield* eventService.createEvent(
         {
@@ -577,9 +577,9 @@ const make = Effect.gen(function* () {
 
   const control: SandboxService["control"] = (sandboxId, action, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [
-        buildSandboxTag(sandboxId) as string[],
-        buildParamTag("action", action) as string[],
+      const tags: Array<readonly string[]> = [
+        buildSandboxTag(sandboxId),
+        buildParamTag("action", action),
       ]
 
       const event = yield* eventService.createEvent(
@@ -620,7 +620,7 @@ const make = Effect.gen(function* () {
 
   const getStatus: SandboxService["getStatus"] = (sandboxId, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [buildSandboxTag(sandboxId) as string[]]
+      const tags: Array<readonly string[]> = [buildSandboxTag(sandboxId)]
 
       const event = yield* eventService.createEvent(
         {
@@ -660,14 +660,14 @@ const make = Effect.gen(function* () {
 
   const gitClone: SandboxService["gitClone"] = (sandboxId, url, options, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [
-        buildSandboxTag(sandboxId) as string[],
-        buildParamTag("url", url) as string[],
+      const tags: Array<readonly string[]> = [
+        buildSandboxTag(sandboxId),
+        buildParamTag("url", url),
       ]
 
-      if (options?.branch) tags.push(buildParamTag("branch", options.branch) as string[])
-      if (options?.path) tags.push(buildParamTag("path", options.path) as string[])
-      if (options?.depth) tags.push(buildParamTag("depth", String(options.depth)) as string[])
+      if (options?.branch) tags.push(buildParamTag("branch", options.branch))
+      if (options?.path) tags.push(buildParamTag("path", options.path))
+      if (options?.depth) tags.push(buildParamTag("depth", String(options.depth)))
 
       const event = yield* eventService.createEvent(
         {
@@ -707,13 +707,13 @@ const make = Effect.gen(function* () {
 
   const portForward: SandboxService["portForward"] = (sandboxId, port, options, privateKey) =>
     Effect.gen(function* () {
-      const tags: string[][] = [
-        buildSandboxTag(sandboxId) as string[],
-        buildParamTag("port", String(port)) as string[],
+      const tags: Array<readonly string[]> = [
+        buildSandboxTag(sandboxId),
+        buildParamTag("port", String(port)),
       ]
 
-      if (options?.protocol) tags.push(buildParamTag("protocol", options.protocol) as string[])
-      if (options?.public !== undefined) tags.push(buildParamTag("public", String(options.public)) as string[])
+      if (options?.protocol) tags.push(buildParamTag("protocol", options.protocol))
+      if (options?.public !== undefined) tags.push(buildParamTag("public", String(options.public)))
 
       const event = yield* eventService.createEvent(
         {
