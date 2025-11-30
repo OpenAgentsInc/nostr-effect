@@ -409,6 +409,64 @@ export const DVMResultTimestamping = 6900
 export const DVMJobFeedback = 7000
 
 // =============================================================================
+// Sandbox Events (NIP-SB)
+// =============================================================================
+
+/** Sandbox create request (NIP-SB) */
+export const SandboxCreate = 5700
+
+/** Sandbox execute request (NIP-SB) */
+export const SandboxExecute = 5701
+
+/** Sandbox upload request (NIP-SB) */
+export const SandboxUpload = 5702
+
+/** Sandbox download request (NIP-SB) */
+export const SandboxDownload = 5703
+
+/** Sandbox control request (NIP-SB) */
+export const SandboxControl = 5704
+
+/** Sandbox status request (NIP-SB) */
+export const SandboxStatus = 5705
+
+/** Sandbox git clone request (NIP-SB) */
+export const SandboxGitClone = 5706
+
+/** Sandbox port forward request (NIP-SB) */
+export const SandboxPortForward = 5707
+
+/** Sandbox create result (NIP-SB) */
+export const SandboxCreateResult = 6700
+
+/** Sandbox execute result (NIP-SB) */
+export const SandboxExecuteResult = 6701
+
+/** Sandbox upload result (NIP-SB) */
+export const SandboxUploadResult = 6702
+
+/** Sandbox download result (NIP-SB) */
+export const SandboxDownloadResult = 6703
+
+/** Sandbox control result (NIP-SB) */
+export const SandboxControlResult = 6704
+
+/** Sandbox status result (NIP-SB) */
+export const SandboxStatusResult = 6705
+
+/** Sandbox git clone result (NIP-SB) */
+export const SandboxGitCloneResult = 6706
+
+/** Sandbox port forward result (NIP-SB) */
+export const SandboxPortForwardResult = 6707
+
+/** Sandbox state (NIP-SB) - replaceable */
+export const SandboxState = 31750
+
+/** Sandbox heartbeat (NIP-SB) - ephemeral */
+export const SandboxHeartbeat = 27570
+
+// =============================================================================
 // Zap Events (NIP-57)
 // =============================================================================
 
@@ -670,6 +728,26 @@ export const kinds = {
   GitStatusApplied,
   GitStatusClosed,
   GitStatusDraft,
+  // Sandbox events (NIP-SB)
+  SandboxCreate,
+  SandboxExecute,
+  SandboxUpload,
+  SandboxDownload,
+  SandboxControl,
+  SandboxStatus,
+  SandboxGitClone,
+  SandboxPortForward,
+  SandboxCreateResult,
+  SandboxExecuteResult,
+  SandboxUploadResult,
+  SandboxDownloadResult,
+  SandboxControlResult,
+  SandboxStatusResult,
+  SandboxGitCloneResult,
+  SandboxPortForwardResult,
+  SandboxState,
+  SandboxHeartbeat,
+  // Helpers
   isReplaceable,
   isEphemeral,
   isParameterizedReplaceable,

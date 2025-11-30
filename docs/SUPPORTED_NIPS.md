@@ -110,3 +110,4 @@ Lettered NIPs (Definitive)
 | C0 | Code Snippets | `~/code/nips/C0.md` | `src/client/NipC0Service.ts` | `src/client/NipC0Service.test.ts` |
 | C7 | Chats | `~/code/nips/C7.md` | `src/client/NipC7Service.ts` | `src/client/NipC7Service.test.ts` |
 | EE | MLS E2EE Messaging | `~/code/nips/EE.md` | `src/client/NipEEService.ts` | `src/client/NipEEService.test.ts` |
+| SB | Remote Sandbox Protocol | `docs/mechacoder/NIP-SB.md` (OpenAgents) | `src/core/NipSB.ts`, `src/client/SandboxService.ts` | `src/client/SandboxService.test.ts` |
