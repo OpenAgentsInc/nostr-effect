@@ -98,3 +98,6 @@ Notes
 - Registry modules live under `src/relay/core/nip/modules/**`. Default relay modules: NIP-01, NIP-11, NIP-16/33. Others (e.g., NIP-28, NIP-57, NIP-42) are available but may not be in `DefaultModules`.
 - Client services live under `src/client/**`. Wrappers for specific NIPs live under `src/wrappers/**`.
 - Some NIPs are primarily policy/behavior and validated by integration tests rather than a dedicated “NipXXService”.
+
+Lettered NIPs
+- A0: `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` (placeholder)
