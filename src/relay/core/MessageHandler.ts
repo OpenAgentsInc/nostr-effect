@@ -95,6 +95,8 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
     const eventStore = yield* EventStore
     const subscriptionManager = yield* SubscriptionManager
     const policyPipeline = yield* PolicyPipeline
+    // NIP-77: minimal in-memory session state for NEG-OPEN subscriptions
+    const negSessions = new Map<string, { readonly filter: any; lastHex: string; lastActive: number }>()
 
     const handleEvent = (
       connectionId: string,
@@ -340,6 +342,32 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
     const [type] = message
 
     switch (type) {
+      // NIP-77: Negentropy messages
+      case "NEG-OPEN": {
+        const [, subId, filter, initialHex] = message as any
+        const key = `${connectionId}:${subId}`
+        negSessions.set(key, { filter, lastHex: String(initialHex ?? ""), lastActive: Date.now() })
+        const response: any = ["NEG-MSG", subId, "61"] // Negentropy v1 with no ranges
+        return Effect.succeed({ responses: [response as any], broadcasts: [] })
+      }
+      case "NEG-MSG": {
+        const [, subId, hex] = message as any
+        const key = `${connectionId}:${subId}`
+        if (!negSessions.has(key)) {
+          const err: any = ["NEG-ERR", subId, "closed: no such session"]
+          return Effect.succeed({ responses: [err as any], broadcasts: [] })
+        }
+        const sess = negSessions.get(key)!
+        negSessions.set(key, { ...sess, lastHex: String(hex ?? ""), lastActive: Date.now() })
+        const response: any = ["NEG-MSG", subId, "61"]
+        return Effect.succeed({ responses: [response as any], broadcasts: [] })
+      }
+      case "NEG-CLOSE": {
+        const [, subId] = message as any
+        const key = `${connectionId}:${subId}`
+        negSessions.delete(key)
+        return Effect.succeed({ responses: [], broadcasts: [] })
+      }
       case "EVENT":
         return handleEvent(connectionId, message[1])
 

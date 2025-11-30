@@ -167,12 +167,37 @@ export const ClientCountMessage = Schema.Tuple(
 )
 export type ClientCountMessage = typeof ClientCountMessage.Type
 
+// NIP-77: Negentropy messages (client side)
+export const ClientNegOpenMessage = Schema.Tuple(
+  Schema.Literal("NEG-OPEN"),
+  SubscriptionId,
+  Filter,
+  Schema.String
+)
+export type ClientNegOpenMessage = typeof ClientNegOpenMessage.Type
+
+export const ClientNegMsgMessage = Schema.Tuple(
+  Schema.Literal("NEG-MSG"),
+  SubscriptionId,
+  Schema.String
+)
+export type ClientNegMsgMessage = typeof ClientNegMsgMessage.Type
+
+export const ClientNegCloseMessage = Schema.Tuple(
+  Schema.Literal("NEG-CLOSE"),
+  SubscriptionId
+)
+export type ClientNegCloseMessage = typeof ClientNegCloseMessage.Type
+
 export const ClientMessage = Schema.Union(
   ClientEventMessage,
   ClientReqMessage,
   ClientCloseMessage,
   ClientAuthMessage,
-  ClientCountMessage
+  ClientCountMessage,
+  ClientNegOpenMessage,
+  ClientNegMsgMessage,
+  ClientNegCloseMessage
 )
 export type ClientMessage = typeof ClientMessage.Type
 
@@ -245,7 +270,10 @@ export const RelayMessage = Schema.Union(
   RelayClosedMessage,
   RelayNoticeMessage,
   RelayAuthMessage,
-  RelayCountMessage
+  RelayCountMessage,
+  // NIP-77
+  Schema.Tuple(Schema.Literal("NEG-MSG"), SubscriptionId, Schema.String),
+  Schema.Tuple(Schema.Literal("NEG-ERR"), SubscriptionId, Schema.String)
 )
 export type RelayMessage = typeof RelayMessage.Type
 
