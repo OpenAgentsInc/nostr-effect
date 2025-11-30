@@ -198,6 +198,13 @@ export const NWCWalletResponse = 23195
 /** Nostr Connect (NIP-46) */
 export const NostrConnect = 24133
 
+// =============================================================================
+// Lettered NIPs
+// =============================================================================
+
+/** NIP-C0 Code Snippet */
+export const CodeSnippet = 1337
+
 /** Nostr Connect request (NIP-46) - alias */
 export const NostrConnectRequest = 24133
 
