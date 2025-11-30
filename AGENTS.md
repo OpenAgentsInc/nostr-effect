@@ -351,6 +351,14 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Testing replacement reliably: allow `createdAt` override in service so tests can publish v1/v2 with distinct seconds; tie‑breaking at same second is by id.
 - Minimal relay module advertises support and kind; replacement behavior rides on NIP‑16/33 in the pipeline.
 
+### NIP‑B7 Tips (Blossom)
+
+- Client service: `src/client/BlossomService.ts` provides upload, download, list, delete. Wrapper: `src/wrappers/nipb7.ts` exposes a Promise API (`BlossomClient`).
+- Auth: sign kind `24242` event and send as `Authorization: Nostr <base64(event)>` per BUD‑02; helper builds this in the service.
+- Server discovery: BUD‑03 uses kind `10063` (User Server List). If adding discovery helpers, define a constant for 10063 and use `RelayService` + `EventService` to publish/query `["server", url]` tags.
+- Relation to NIP‑96: `10096` (FileServerPreference) is deprecated for Blossom; prefer `10063`.
+- Keep SUPPORTED_NIPS lettered section updated with spec/code/tests; no duplicate lists elsewhere.
+
 
 
 <!-- effect-solutions:start -->
