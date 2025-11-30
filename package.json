@@ -1,6 +1,6 @@
 {
   "name": "nostr-effect",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "A type-safe, composable Nostr library built with Effect",
   "author": "Christopher David <chris@openagents.com>",
   "license": "CC0-1.0",
@@ -28,6 +28,8 @@
     "./pure": "./src/wrappers/pure.ts",
     "./pool": "./src/wrappers/pool.ts",
     "./relay": "./src/relay/index.ts",
+    "./relay-client": "./src/wrappers/relay.ts",
+    "./wrappers/relay": "./src/wrappers/relay.ts",
     "./kinds": "./src/wrappers/kinds.ts",
     "./utils": "./src/wrappers/utils.ts",
     "./nip04": "./src/wrappers/nip04.ts",
