@@ -37,7 +37,7 @@ Keep this file up to date whenever adding or removing support.
 | 26 | Delegated event signing | `~/code/nips/26.md` | `src/wrappers/nip26.ts` | `src/wrappers/nip26.test.ts` |
 | 27 | Content parsing | `~/code/nips/27.md` | `src/wrappers/nip27.ts` | `src/core/Nip27.test.ts` |
 | 28 | Public chat | `~/code/nips/28.md` | `src/client/ChatService.ts`, `src/relay/core/nip/modules/Nip28Module.ts` | `src/client/ChatService.test.ts` |
-| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` | (none yet) |
+| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` | `src/client/Nip29Service.test.ts` |
 | 30 | Custom emoji | `~/code/nips/30.md` | `src/wrappers/nip30.ts` | `src/core/Nip30.test.ts` |
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 32 | Labeling | `~/code/nips/32.md` | `src/client/Nip32Service.ts` | `src/client/Nip32Service.test.ts` |
