@@ -101,3 +101,4 @@ Notes
 
 Lettered NIPs
 - A0: `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` (placeholder)
+- B0: `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts`
