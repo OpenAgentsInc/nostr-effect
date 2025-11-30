@@ -395,6 +395,13 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Relays list (10051): repeat `["relay", url]` tags.
 - Tests should exercise: publish keypackage, publish relays list, wrap/unwrap welcome; avoid signing rumor for 444.
 
+### NIP‑7D Tips (Threads)
+
+- Kind 11 base thread with optional `title` tag; replies MUST be NIP‑22 kind 1111 pointing to the root.
+- Use uppercase root pointers/tags (`E`, `K`, `P`) and matching lowercase parent (`e`, `k`, `p`) as in our NIP‑22 helpers.
+- Favor replying to the root only (avoid nested hierarchies); include `relay-url` in pointers for portability.
+- Provide `createdAt` overrides in tests to control ordering.
+
 
 
 <!-- effect-solutions:start -->

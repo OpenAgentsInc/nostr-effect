@@ -43,6 +43,7 @@ export * as Nip75 from "./core/Nip75.js"
 export * as Nip94 from "./core/Nip94.js"
 export * as Nip98 from "./core/Nip98.js"
 export * as Nip99 from "./core/Nip99.js"
+export * as NipSB from "./core/NipSB.js"
 
 // Services
 export * from "./services/CryptoService.js"
