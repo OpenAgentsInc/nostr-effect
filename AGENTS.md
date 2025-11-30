@@ -345,6 +345,13 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Helpers live in `src/wrappers/nip56.ts`; tests in `src/wrappers/nip56.test.ts`.
 
 
+### NIP‑B0 Tips
+
+- Kind: 39701. Parameterized replaceable by `d` tag (URL without scheme).
+- Testing replacement reliably: allow `createdAt` override in service so tests can publish v1/v2 with distinct seconds; tie‑breaking at same second is by id.
+- Minimal relay module advertises support and kind; replacement behavior rides on NIP‑16/33 in the pipeline.
+
+
 
 <!-- effect-solutions:start -->
 ## Effect Solutions Usage
