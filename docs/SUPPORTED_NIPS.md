@@ -80,6 +80,7 @@ Keep this file up to date whenever adding or removing support.
 | 72 | Moderated communities | `~/code/nips/72.md` | `src/wrappers/nip72.ts` | `src/wrappers/nip72.test.ts` |
 | 73 | External content IDs | `~/code/nips/73.md` | `src/wrappers/nip73.ts` | `src/wrappers/nip73.test.ts` |
 | 75 | Zap goals | `~/code/nips/75.md` | `src/wrappers/nip75.ts` | `src/core/Nip75.test.ts` |
+| 7D | Threads | `~/code/nips/7D.md` | `src/client/Nip7DService.ts` | `src/client/Nip7DService.test.ts` |
 | 77 | Negentropy syncing | `~/code/nips/77.md` | `src/client/Nip77Service.ts`, `src/relay/core/nip/modules/Nip77Module.ts`, `src/relay/core/MessageHandler.ts` | `src/client/Nip77Service.test.ts`, `src/relay/Nip77Negentropy.test.ts` |
 | 78 | Arbitrary custom app data | `~/code/nips/78.md` | `src/client/AppDataService.ts` | `src/client/AppDataService.test.ts` |
 | 84 | Highlights | `~/code/nips/84.md` | `src/wrappers/nip84.ts` | `src/wrappers/nip84.test.ts` |
