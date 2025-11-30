@@ -9,6 +9,20 @@ export * from "./core/Schema.js"
 export * from "./core/Errors.js"
 export * from "./core/Nip19.js"
 export * from "./core/Nip06.js"
+// Explicit type re-exports for common primitives
+export type {
+  NostrEvent,
+  UnsignedEvent,
+  EventParams,
+  Filter,
+  EventId,
+  PublicKey,
+  PrivateKey,
+  Signature,
+  UnixTimestamp,
+  EventKind,
+  Tag,
+} from "./core/Schema.js"
 
 // NIP modules with namespaces to avoid conflicts
 export * as Nip04 from "./core/Nip04.js"

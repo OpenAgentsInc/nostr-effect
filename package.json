@@ -1,13 +1,13 @@
 {
   "name": "nostr-effect",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A type-safe, composable Nostr library built with Effect",
   "author": "Christopher David <chris@openagents.com>",
   "license": "CC0-1.0",
   "type": "module",
   "main": "src/index.ts",
   "module": "src/index.ts",
-  "types": "src/index.ts",
+  "types": "src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenAgentsInc/nostr-effect.git"
