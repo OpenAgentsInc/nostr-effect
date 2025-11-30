@@ -383,6 +383,18 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Use `createdAt` overrides in tests to ensure reply fetches as latest.
 - Kind 9 is separate from the numeric NIPs (e.g., NIP‑09 is deletion with kind 5); there is no conflict.
 
+### NIP‑EE Tips (MLS)
+
+- Kinds: 443 (KeyPackage), 444 (Welcome), 10051 (KeyPackage relays list). Use constants in `wrappers/kinds.ts`.
+- KeyPackage (443): `content` is hex of serialized KeyPackageBundle. Tags:
+  - `mls_protocol_version` (e.g., `1.0`), `ciphersuite` (e.g., `0x0001`),
+  - `extensions` as a multi‑param tag: `["extensions", "0x0001", "0x0002"]`
+  - optional `client` `["client", name, handler_event_id, relay?]`
+  - `relays` as multi‑param list `["relays", "wss://...", ...]`
+- Welcome (444): MUST NOT be signed. Build an unsigned rumor and wrap using NIP‑59 helpers (`wrapEvent`), then publish the gift wrap (1059).
+- Relays list (10051): repeat `["relay", url]` tags.
+- Tests should exercise: publish keypackage, publish relays list, wrap/unwrap welcome; avoid signing rumor for 444.
+
 
 
 <!-- effect-solutions:start -->
