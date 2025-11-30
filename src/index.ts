@@ -51,5 +51,5 @@ export * from "./services/EventService.js"
 // Client
 export * from "./client/index.js"
 
-// Relay
-export * from "./relay/index.js"
+// Note: Do not export the relay server from the root to keep
+// the bare import environment-agnostic. Use subpath 'nostr-effect/relay-server'.

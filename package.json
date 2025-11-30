@@ -1,6 +1,6 @@
 {
   "name": "nostr-effect",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A type-safe, composable Nostr library built with Effect",
   "author": "Christopher David <chris@openagents.com>",
   "license": "CC0-1.0",
@@ -17,7 +17,10 @@
     "url": "https://github.com/OpenAgentsInc/nostr-effect/issues"
   },
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.ts"
+    },
     "./relay/backends/cloudflare": "./src/relay/backends/cloudflare/index.ts",
     "./relay/backends/cloudflare/worker": "./src/relay/backends/cloudflare/worker.ts",
     "./relay/backends/cloudflare/NostrRelayDO": "./src/relay/backends/cloudflare/NostrRelayDO.ts",
