@@ -306,7 +306,7 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - One source of truth for NIPs: `docs/SUPPORTED_NIPS.md` (sorted ascending). Remove duplicate lists elsewhere.
 - When adding a new NIP:
   - Add a row to `docs/SUPPORTED_NIPS.md` (spec path, code entry points, tests)
-  - Remove it from `docs/UNSUPPORTED_NIPS.md`
+  - Do not maintain `UNSUPPORTED_NIPS.md`; if new specs appear in `~/code/nips`, open an issue and implement on a feature branch, then update `SUPPORTED_NIPS.md` in the same PR.
   - Ensure README links only to `docs/SUPPORTED_NIPS.md`
 
 ### Useful code patterns
