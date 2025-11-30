@@ -22,6 +22,7 @@ import {
   getDTagValue,
 } from "../../core/Schema.js"
 import { NipRegistry } from "./nip/NipRegistry.js"
+import { encodeIdListMessage, decodeIdListMessage } from "./negentropy/Codec.js"
 import { AuthService } from "./AuthService.js"
 
 // =============================================================================
@@ -346,9 +347,27 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
       case "NEG-OPEN": {
         const [, subId, filter, initialHex] = message as any
         const key = `${connectionId}:${subId}`
-        negSessions.set(key, { filter, lastHex: String(initialHex ?? ""), lastActive: Date.now() })
-        const response: any = ["NEG-MSG", subId, "61"] // Negentropy v1 with no ranges
-        return Effect.succeed({ responses: [response as any], broadcasts: [] })
+        // Parse client id list (if provided)
+        let clientIds: string[] = []
+        try {
+          if (initialHex && String(initialHex).length > 0) {
+            clientIds = decodeIdListMessage(String(initialHex)).ids
+          }
+        } catch {
+          const err: any = ["NEG-ERR", subId, "invalid: bad message"]
+          return Effect.succeed({ responses: [err as any], broadcasts: [] })
+        }
+        // Compute server ids matching filter
+        return Effect.gen(function* () {
+          const serverEvents = yield* eventStore.queryEvents([filter])
+          const serverIds = new Set(serverEvents.map((e) => e.id))
+          // Compute missing on client side
+          const missing = Array.from(serverIds).filter((id) => !clientIds.includes(id))
+          const hex = encodeIdListMessage(missing)
+          negSessions.set(key, { filter, lastHex: hex, lastActive: Date.now() })
+          const response: any = ["NEG-MSG", subId, hex]
+          return { responses: [response as any], broadcasts: [] }
+        })
       }
       case "NEG-MSG": {
         const [, subId, hex] = message as any
@@ -357,10 +376,24 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           const err: any = ["NEG-ERR", subId, "closed: no such session"]
           return Effect.succeed({ responses: [err as any], broadcasts: [] })
         }
-        const sess = negSessions.get(key)!
-        negSessions.set(key, { ...sess, lastHex: String(hex ?? ""), lastActive: Date.now() })
-        const response: any = ["NEG-MSG", subId, "61"]
-        return Effect.succeed({ responses: [response as any], broadcasts: [] })
+        // Merge client ids, recompute diff
+        return Effect.gen(function* () {
+          const sess = negSessions.get(key)!
+          let clientIds: string[] = []
+          try {
+            clientIds = decodeIdListMessage(String(hex ?? "")).ids
+          } catch {
+            const err: any = ["NEG-ERR", subId, "invalid: bad message"]
+            return { responses: [err as any], broadcasts: [] }
+          }
+          const serverEvents = yield* eventStore.queryEvents([sess.filter])
+          const serverIds = new Set(serverEvents.map((e) => e.id))
+          const missing = Array.from(serverIds).filter((id) => !clientIds.includes(id))
+          const outHex = encodeIdListMessage(missing)
+          negSessions.set(key, { ...sess, lastHex: outHex, lastActive: Date.now() })
+          const response: any = ["NEG-MSG", subId, outHex]
+          return { responses: [response as any], broadcasts: [] }
+        })
       }
       case "NEG-CLOSE": {
         const [, subId] = message as any

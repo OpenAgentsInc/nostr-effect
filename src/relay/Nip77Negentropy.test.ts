@@ -3,6 +3,7 @@
  */
 import { describe, test, expect, beforeAll, afterAll } from "bun:test"
 import { startTestRelay, type RelayHandle } from "./index.js"
+import { encodeIdListMessage } from "./core/negentropy/Codec.js"
 
 describe("NIP-77 Negentropy", () => {
   let relay: RelayHandle
@@ -34,7 +35,8 @@ describe("NIP-77 Negentropy", () => {
       })
 
     // Open
-    ws.send(JSON.stringify(["NEG-OPEN", subId, filter, "61"]))
+    const initial = encodeIdListMessage([])
+    ws.send(JSON.stringify(["NEG-OPEN", subId, filter, initial]))
     const msg1 = await recv()
     expect(msg1[0]).toBe("NEG-MSG")
     expect(msg1[1]).toBe(subId)
