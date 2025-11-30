@@ -12,7 +12,6 @@ Keep this file up to date whenever adding or removing support.
 | 01 | Basic protocol flow | `~/code/nips/01.md` | `src/relay/core/nip/modules/Nip01Module.ts` | `src/relay/FilterMatcher.test.ts` |
 | 02 | Follow list | `~/code/nips/02.md` | `src/client/FollowListService.ts` | `src/client/FollowListService.test.ts` |
 | 03 | OpenTimestamps attestations | `~/code/nips/03.md` | `src/wrappers/nip03.ts` | `src/wrappers/nip03.test.ts` |
-| 12 | Generic tag queries (moved to NIP-01) | `~/code/nips/12.md` | `src/core/Schema.ts`, `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts` |
 | 04 | Legacy encrypted DMs | `~/code/nips/04.md` | `src/wrappers/nip04.ts` | `src/core/Nip04.test.ts` |
 | 05 | DNS-based identifiers | `~/code/nips/05.md` | `src/client/Nip05Service.ts` | `src/client/Nip05Service.test.ts` |
 | 06 | Key derivation from mnemonic | `~/code/nips/06.md` | `src/wrappers/nip06.ts` | `src/core/Nip06.test.ts` |
@@ -21,6 +20,7 @@ Keep this file up to date whenever adding or removing support.
 | 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip09Deletion.test.ts` |
 | 10 | Reply threading | `~/code/nips/10.md` | `src/client/Nip10Service.ts` | `src/client/Nip10Service.test.ts` |
 | 11 | Relay information | `~/code/nips/11.md` | `src/relay/core/nip/modules/Nip11Module.ts` | `src/core/Nip11.test.ts`, `src/relay/RelayInfo.test.ts` |
+| 12 | Generic tag queries (moved to NIP-01) | `~/code/nips/12.md` | `src/core/Schema.ts`, `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts` |
 | 13 | Proof of Work | `~/code/nips/13.md` | `src/wrappers/nip13.ts` | `src/core/Nip13.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
 | 15 | Nostr Marketplace | `~/code/nips/15.md` | `src/client/MarketplaceService.ts` | `src/client/MarketplaceService.test.ts` |
@@ -79,16 +79,16 @@ Keep this file up to date whenever adding or removing support.
 | 71 | Video events | `~/code/nips/71.md` | `src/client/Nip71Service.ts` | `src/client/Nip71Service.test.ts` |
 | 72 | Moderated communities | `~/code/nips/72.md` | `src/wrappers/nip72.ts` | `src/wrappers/nip72.test.ts` |
 | 73 | External content IDs | `~/code/nips/73.md` | `src/wrappers/nip73.ts` | `src/wrappers/nip73.test.ts` |
-| 77 | Negentropy syncing | `~/code/nips/77.md` | `src/relay/core/nip/modules/Nip77Module.ts`, `src/relay/core/MessageHandler.ts` | `src/relay/Nip77Negentropy.test.ts` |
 | 75 | Zap goals | `~/code/nips/75.md` | `src/wrappers/nip75.ts` | `src/core/Nip75.test.ts` |
+| 77 | Negentropy syncing | `~/code/nips/77.md` | `src/client/Nip77Service.ts`, `src/relay/core/nip/modules/Nip77Module.ts`, `src/relay/core/MessageHandler.ts` | `src/client/Nip77Service.test.ts`, `src/relay/Nip77Negentropy.test.ts` |
 | 78 | Arbitrary custom app data | `~/code/nips/78.md` | `src/client/AppDataService.ts` | `src/client/AppDataService.test.ts` |
 | 84 | Highlights | `~/code/nips/84.md` | `src/wrappers/nip84.ts` | `src/wrappers/nip84.test.ts` |
+| 86 | Relay Management API | `~/code/nips/86.md` | `src/relay/core/nip/modules/Nip86Module.ts`, `src/relay/backends/bun/BunServer.ts` | `src/relay/Nip86Management.test.ts` |
 | 87 | Ecash mint discoverability | `~/code/nips/87.md` | `src/client/MintDiscoverabilityService.ts` | `src/client/MintDiscoverabilityService.test.ts` |
 | 88 | Polls | `~/code/nips/88.md` | `src/client/Nip88Service.ts` | `src/client/Nip88Service.test.ts` |
 | 89 | Recommended application handlers | `~/code/nips/89.md` | `src/client/HandlerService.ts` | `src/client/HandlerService.test.ts` |
 | 90 | Data vending machine | `~/code/nips/90.md` | `src/client/DVMService.ts` | `src/client/DVMService.test.ts` |
 | 92 | Media attachments | `~/code/nips/92.md` | `src/wrappers/nip92.ts` | `src/wrappers/nip92.test.ts` |
-| 86 | Relay Management API | `~/code/nips/86.md` | `src/relay/core/nip/modules/Nip86Module.ts`, `src/relay/backends/bun/BunServer.ts` | `src/relay/Nip86Management.test.ts` |
 | 94 | File metadata | `~/code/nips/94.md` | `src/core/Nip94.ts`, `src/wrappers/nip94.ts` | `src/core/Nip94.test.ts` |
 | 96 | HTTP file storage | `~/code/nips/96.md` | `src/wrappers/nip96.ts` | `src/wrappers/nip96.test.ts` |
 | 98 | HTTP auth | `~/code/nips/98.md` | `src/wrappers/nip98.ts` | `src/core/Nip98.test.ts` |

@@ -48,6 +48,14 @@ export interface SubscriptionHandle {
   readonly unsubscribe: () => Effect.Effect<void>
 }
 
+/** Negentropy (NIP-77) session handle */
+export interface NegentropySessionHandle {
+  readonly id: SubscriptionId
+  readonly messages: Stream.Stream<string, SubscriptionError>
+  readonly send: (hex: string) => Effect.Effect<void, ConnectionError>
+  readonly close: () => Effect.Effect<void, ConnectionError>
+}
+
 /** Internal subscription state */
 interface SubscriptionState {
   readonly id: SubscriptionId
@@ -121,6 +129,16 @@ export interface RelayService {
     requestId?: string,
     timeoutMs?: number
   ): Effect.Effect<{ count: number; approximate?: boolean }, TimeoutError | ConnectionError>
+
+  /**
+   * Open a Negentropy (NIP-77) reconciliation session.
+   * Returns a handle with a message stream and send/close helpers.
+   */
+  negOpen(
+    filter: Filter,
+    initialHex?: string,
+    sessionId?: string
+  ): Effect.Effect<NegentropySessionHandle, ConnectionError>
 }
 
 // =============================================================================
@@ -141,6 +159,7 @@ const make = (config: RelayConnectionConfig) =>
     const subscriptions = new Map<string, SubscriptionState>()
     const pendingOks = new Map<string, PendingOk>()
     const pendingCounts = new Map<string, PendingCount>()
+    const negQueues = new Map<string, Queue.Queue<string>>()
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
     let reconnectAttempts = 0
 
@@ -210,6 +229,25 @@ const make = (config: RelayConnectionConfig) =>
             if (pending) {
               pending.resolve(payload as { count: number; approximate?: boolean })
               pendingCounts.delete(reqId)
+            }
+            break
+          }
+
+          // NIP-77 messages
+          case "NEG-MSG": {
+            const [, subId, hex] = decodeResult as any
+            const q = negQueues.get(subId)
+            if (q) {
+              Effect.runSync(Queue.offer(q, String(hex)))
+            }
+            break
+          }
+          case "NEG-ERR": {
+            const [, subId] = decodeResult as any
+            const q = negQueues.get(subId)
+            if (q) {
+              Effect.runSync(Queue.shutdown(q))
+              negQueues.delete(subId)
             }
             break
           }
@@ -515,6 +553,45 @@ const make = (config: RelayConnectionConfig) =>
         })
       })
 
+    const negOpen: RelayService["negOpen"] = (filter, initialHex = "", sessionId) =>
+      Effect.gen(function* () {
+        if (state !== "connected") {
+          return yield* Effect.fail(
+            new ConnectionError({ message: "Not connected", url: config.url })
+          )
+        }
+
+        const id = (sessionId ?? generateSubId()) as SubscriptionId
+        const q = yield* Queue.unbounded<string>()
+        negQueues.set(id, q)
+
+        // send NEG-OPEN
+        yield* sendMessage(["NEG-OPEN", id, filter, initialHex])
+
+        const messages = Stream.fromQueue(q).pipe(
+          Stream.catchAll(() =>
+            Stream.fail(
+              new SubscriptionError({
+                message: "Negentropy session closed",
+                subscriptionId: id,
+              })
+            )
+          )
+        )
+
+        const send = (hex: string): Effect.Effect<void, ConnectionError> =>
+          sendMessage(["NEG-MSG", id, hex])
+
+        const close = (): Effect.Effect<void, ConnectionError> =>
+          Effect.gen(function* () {
+            yield* sendMessage(["NEG-CLOSE", id])
+            negQueues.delete(id)
+            yield* Queue.shutdown(q)
+          })
+
+        return { id, messages, send, close }
+      })
+
     return {
       _tag: "RelayService" as const,
       url: config.url,
@@ -525,6 +602,7 @@ const make = (config: RelayConnectionConfig) =>
       subscribe,
       waitForOk,
       count,
+      negOpen,
     }
   })
 
