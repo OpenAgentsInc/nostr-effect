@@ -99,6 +99,9 @@ Notes
 - Client services live under `src/client/**`. Wrappers for specific NIPs live under `src/wrappers/**`.
 - Some NIPs are primarily policy/behavior and validated by integration tests rather than a dedicated “NipXXService”.
 
-Lettered NIPs
-- A0: `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` (placeholder)
-- B0: `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts`
+Lettered NIPs (Definitive)
+
+| NIP | Title | Spec | Code (service/module) | Tests |
+|-----|-------|------|------------------------|-------|
+| A0 | Voice Messages | `~/code/nips/A0.md` | `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` | `src/client/NipA0Service.test.ts`, `src/relay/NipA0Module.test.ts` |
+| B0 | Web Bookmarking | `~/code/nips/B0.md` | `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts` | `src/client/NipB0Service.test.ts` |
