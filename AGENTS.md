@@ -359,6 +359,15 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Relation to NIP‑96: `10096` (FileServerPreference) is deprecated for Blossom; prefer `10063`.
 - Keep SUPPORTED_NIPS lettered section updated with spec/code/tests; no duplicate lists elsewhere.
 
+### NIP‑BE Tips (BLE Transport)
+
+- This spec is a client transport. Implement fragmentation + DEFLATE per spec; avoid platform BLE APIs in tests by mocking chunk streams.
+- Framing: two‑byte big‑endian chunk index at head, one byte tail last‑flag (1 final, 0 otherwise).
+- Enforce 64KiB max uncompressed message length before compression.
+- Default chunk size ~200 bytes (fits BLE 4.2 safely); make configurable.
+- Use `pako@2.1.0` for DEFLATE/INFLATE to keep bundles small and portable under Bun.
+- Half‑duplex NEG sync (NIP‑77) can be layered on top of the chunking helpers; prefer to keep it in a small adapter rather than in the core service.
+
 
 
 <!-- effect-solutions:start -->

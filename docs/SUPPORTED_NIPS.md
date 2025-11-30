@@ -106,3 +106,4 @@ Lettered NIPs (Definitive)
 | A0 | Voice Messages | `~/code/nips/A0.md` | `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` | `src/client/NipA0Service.test.ts`, `src/relay/NipA0Module.test.ts` |
 | B0 | Web Bookmarking | `~/code/nips/B0.md` | `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts` | `src/client/NipB0Service.test.ts` |
 | B7 | Blossom Media | `~/code/nips/B7.md` | `src/client/BlossomService.ts`, `src/wrappers/nipb7.ts` | — |
+| BE | BLE Communications | `~/code/nips/BE.md` | `src/client/NipBEService.ts` | `src/client/NipBEService.test.ts` |
