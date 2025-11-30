@@ -98,6 +98,22 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
     const policyPipeline = yield* PolicyPipeline
     // NIP-77: minimal in-memory session state for NEG-OPEN subscriptions
     const negSessions = new Map<string, { readonly filter: any; lastHex: string; lastActive: number }>()
+    // Simple in-memory rate limiter (disabled unless env set)
+    const RL_MAX = Number((globalThis as any).process?.env?.RELAY_RL_MAX_EVENTS ?? 0)
+    const RL_WINDOW = Number((globalThis as any).process?.env?.RELAY_RL_WINDOW_MS ?? 0)
+    const rlBuckets = new Map<string, { startedAt: number; count: number }>()
+
+    const checkRate = (connectionId: string): boolean => {
+      if (!RL_MAX || !RL_WINDOW) return true
+      const now = Date.now()
+      const bucket = rlBuckets.get(connectionId)
+      if (!bucket || now - bucket.startedAt >= RL_WINDOW) {
+        rlBuckets.set(connectionId, { startedAt: now, count: 1 })
+        return true
+      }
+      bucket.count += 1
+      return bucket.count <= RL_MAX
+    }
 
     const handleEvent = (
       connectionId: string,
@@ -107,6 +123,10 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
       StorageError | CryptoError | InvalidPublicKey | DuplicateEvent
     > =>
       Effect.gen(function* () {
+        // Rate limit EVENT submissions (opt-in via env)
+        if (!checkRate(connectionId)) {
+          return { responses: [okMessage(event.id, false, "rate-limited")], broadcasts: [] }
+        }
         // Run through policy pipeline
         const decision = yield* policyPipeline.evaluate(event, connectionId)
 
