@@ -331,6 +331,15 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 
 ### NIP‑56 Tips
 
+
+### NIP‑77 Client Tips
+
+- Use `RelayService.negOpen(filter, initialHex?)` to open a session; it returns `{ id, messages, send, close }`.
+- Encode/decode IdList payloads via `encodeIdListMessage` / `decodeIdListMessage` from `src/relay/core/negentropy/Codec.ts`.
+- For IdList mode, the relay responds with server-only IDs (serverIds − clientIds). Iterate until the returned list is empty.
+- Message schemas for `NEG-OPEN`, `NEG-MSG`, `NEG-ERR` are defined in `src/core/Schema.ts`.
+- Keep all imports at the top of files (no dynamic imports).
+
 - Kind 1984 with report type in third position of `p`/`e`/`x` tag: e.g., `["p", pubkey, "impersonation"]`.
 - Blob reports: include `x` (hash), optional `e` (event containing blob), and optional `server` URL.
 - Helpers live in `src/wrappers/nip56.ts`; tests in `src/wrappers/nip56.test.ts`.

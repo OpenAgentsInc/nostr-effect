@@ -136,7 +136,11 @@ Completed in this phase:
 - NIP-86 Relay Management API (HTTP JSON-RPC, NIP-98 auth) — PR #106
 
 Priority now (do these before any other backlog):
-— None
+- Completed: NIP‑15 Marketplace (client service + relay module)
+- Completed: NIP‑60 Cashu Wallets (client service)
+- Completed: NIP‑61 Nutzaps (client service)
+- Completed: NIP‑86 Relay Management API (relay module + server)
+- Current: NIP‑77 client reconciliation (Negentropy)
 
 Backlog (to be scheduled; implement with tests and update docs/SUPPORTED_NIPS.md):
 | NIP | Title | Area |
