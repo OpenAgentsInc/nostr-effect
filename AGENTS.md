@@ -368,6 +368,13 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Use `pako@2.1.0` for DEFLATE/INFLATE to keep bundles small and portable under Bun.
 - Half‑duplex NEG sync (NIP‑77) can be layered on top of the chunking helpers; prefer to keep it in a small adapter rather than in the core service.
 
+### NIP‑C0 Tips (Code Snippets)
+
+- Kind 1337. Suggested tags: `l` (language, lowercase), `name` (filename), `extension` (lowercase), `description`, `runtime`, `license` (repeatable; SPDX id with optional URL/ref), `dep` (repeatable), `repo` (URL or NIP‑34 repo address).
+- Relay filters only support `#e/#p/#a/#d/#t`. You can’t filter by `name` or `l` directly; prefer author + kind filtering and client‑side tag checks, or NIP‑50 `search` when available.
+- Keep SUPPORTED_NIPS updated; this is a client‑only NIP (no registry module needed).
+- Add a constant for the kind in `src/wrappers/kinds.ts` (CodeSnippet = 1337).
+
 
 
 <!-- effect-solutions:start -->
