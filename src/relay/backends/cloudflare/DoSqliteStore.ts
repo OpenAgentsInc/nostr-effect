@@ -264,31 +264,29 @@ const makeDoSqliteStore = (sql: SqlStorage): EventStore => ({
   queryEvents: (filters) =>
     Effect.try({
       try: () => {
-        // For simplicity, query all events and filter in-memory
-        // A production implementation would build SQL WHERE clauses
-        const rows = sql
-          .exec<EventRow>("SELECT * FROM events ORDER BY created_at DESC")
-          .toArray()
+        // If no filters, keep bounded
+        const appliedFilters = filters.length > 0 ? filters : [{ limit: 100 } as any]
 
-        const events = rows.map(rowToEvent)
+        const seen = new Set<string>()
+        const results: NostrEvent[] = []
 
-        // If no filters, return all (up to reasonable limit)
-        if (filters.length === 0) {
-          return events.slice(0, 1000)
+        for (const f of appliedFilters) {
+          const { where, params } = buildWhereClause(f)
+          const lim = typeof (f as any).limit === 'number' ? Math.max(1, Math.min((f as any).limit, 1000)) : 100
+          const q = `SELECT * FROM events${where ? ' WHERE ' + where : ''} ORDER BY created_at DESC LIMIT ?`
+          const rows = sql.exec<EventRow>(q, ...params, lim).toArray()
+          for (const row of rows) {
+            const ev = rowToEvent(row)
+            if (seen.has(ev.id)) continue
+            // Verify matches filter in case of string-based tag search edge cases
+            if (!filters.length || filters.some((fl) => matchesFilter(ev, fl as any))) {
+              seen.add(ev.id)
+              results.push(ev)
+            }
+          }
         }
 
-        // OR logic between filters
-        const matched = events.filter((event) =>
-          filters.some((filter) => matchesFilter(event, filter))
-        )
-
-        // Apply limit from first filter if specified
-        const limit = filters[0]?.limit
-        if (limit !== undefined) {
-          return matched.slice(0, limit)
-        }
-
-        return matched
+        return results
       },
       catch: (error) =>
         new StorageError({
@@ -358,3 +356,49 @@ export const initDoSchema = initSchema
 
 // Export types for use in NostrRelayDO
 export type { SqlStorage }
+
+// =============================================================================
+// SQL Builder
+// =============================================================================
+function buildWhereClause(filter: any): { where: string; params: unknown[] } {
+  const clauses: string[] = []
+  const params: unknown[] = []
+
+  if (Array.isArray(filter.ids) && filter.ids.length > 0) {
+    clauses.push(`id IN (${filter.ids.map(() => '?').join(',')})`)
+    params.push(...filter.ids)
+  }
+  if (Array.isArray(filter.authors) && filter.authors.length > 0) {
+    clauses.push(`pubkey IN (${filter.authors.map(() => '?').join(',')})`)
+    params.push(...filter.authors)
+  }
+  if (Array.isArray(filter.kinds) && filter.kinds.length > 0) {
+    clauses.push(`kind IN (${filter.kinds.map(() => '?').join(',')})`)
+    params.push(...filter.kinds)
+  }
+  if (typeof filter.since === 'number') {
+    clauses.push(`created_at >= ?`)
+    params.push(filter.since)
+  }
+  if (typeof filter.until === 'number') {
+    clauses.push(`created_at <= ?`)
+    params.push(filter.until)
+  }
+  if (Array.isArray(filter['#d']) && filter['#d'].length > 0) {
+    const dvals = filter['#d']
+    clauses.push(`d_tag IN (${dvals.map(() => '?').join(',')})`)
+    params.push(...dvals)
+  }
+  const tagClause = (tagKey: string, values: string[]) => {
+    const ors: string[] = []
+    for (const v of values) {
+      ors.push(`instr(tags, ?) > 0`)
+      params.push(`"${tagKey}","${v}"`)
+    }
+    if (ors.length > 0) clauses.push(`(${ors.join(' OR ')})`)
+  }
+  if (Array.isArray(filter['#e']) && filter['#e'].length > 0) tagClause('e', filter['#e'])
+  if (Array.isArray(filter['#p']) && filter['#p'].length > 0) tagClause('p', filter['#p'])
+
+  return { where: clauses.join(' AND '), params }
+}
