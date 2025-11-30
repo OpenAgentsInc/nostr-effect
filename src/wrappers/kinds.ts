@@ -208,6 +208,15 @@ export const CodeSnippet = 1337
 /** NIP-C7 Chat Message */
 export const ChatMessageC7 = 9
 
+/** NIP-EE KeyPackage (MLS) */
+export const MLSKeyPackage = 443
+
+/** NIP-EE Welcome (MLS) */
+export const MLSWelcome = 444
+
+/** NIP-EE KeyPackage Relays List */
+export const MLSKeyPackageRelays = 10051
+
 /** Nostr Connect request (NIP-46) - alias */
 export const NostrConnectRequest = 24133
 
