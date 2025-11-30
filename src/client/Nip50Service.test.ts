@@ -1,24 +1,29 @@
 /**
- * Tests for NIP-50 (Search Capability via filter.search)
+ * Tests for Nip50Service (NIP-50 Search)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
-import { Effect, Layer, Stream, Option } from "effect"
-import { RelayService, makeRelayService } from "./RelayService.js"
+import { describe, test, expect, beforeAll, afterAll } from "bun:test"
+import { Effect, Layer } from "effect"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
+import { RelayService, makeRelayService } from "./RelayService.js"
 import { Schema } from "@effect/schema"
-import { EventKind, Filter } from "../core/Schema.js"
+import { EventKind } from "../core/Schema.js"
+import { Nip50Service, Nip50ServiceLive } from "./Nip50Service.js"
 
 const decodeKind = Schema.decodeSync(EventKind)
-const decodeFilter = Schema.decodeSync(Filter)
 
-describe("NIP-50 Search", () => {
+const ServiceLayer = Layer.merge(
+  CryptoServiceLive,
+  EventServiceLive.pipe(Layer.provide(CryptoServiceLive))
+)
+
+describe("Nip50Service (NIP-50)", () => {
   let relay: RelayHandle
   let port: number
 
   beforeAll(async () => {
-    port = 29000 + Math.floor(Math.random() * 10000)
+    port = 30000 + Math.floor(Math.random() * 10000)
     relay = await startTestRelay(port)
   })
 
@@ -26,60 +31,65 @@ describe("NIP-50 Search", () => {
     await Effect.runPromise(relay.stop())
   })
 
-  const makeTestLayers = () => {
+  const makeLayers = () => {
     const RelayLayer = makeRelayService({ url: `ws://localhost:${port}`, reconnect: false })
-    const ServiceLayer = Layer.merge(
-      CryptoServiceLive,
-      EventServiceLive.pipe(Layer.provide(CryptoServiceLive))
+    return Layer.merge(
+      RelayLayer,
+      Layer.merge(
+        ServiceLayer,
+        Nip50ServiceLive.pipe(Layer.provide(RelayLayer), Layer.provide(ServiceLayer))
+      )
     )
-    return Layer.merge(RelayLayer, ServiceLayer)
   }
 
-  test("search content substring", async () => {
-    const program = Effect.gen(function* () {
-      const relayService = yield* RelayService
+  const publish = (content: string) =>
+    Effect.gen(function* () {
+      const relaySvc = yield* RelayService
       const crypto = yield* CryptoService
       const events = yield* EventService
-      yield* relayService.connect()
-
       const sk = yield* crypto.generatePrivateKey()
-
-      const contents = [
-        "Yaks are amazing animals.",
-        "This post is about nostr and Effect.",
-        "yak milk and yak wool", // lower case
-      ]
-      for (const c of contents) {
-        const e = yield* events.createEvent(
-          { kind: decodeKind(1), content: c, tags: [] },
-          sk
-        )
-        const res = yield* relayService.publish(e)
-        expect(res.accepted).toBe(true)
-      }
-
-      // search for 'yak' (case-insensitive): should match 2 events
-      const filter = decodeFilter({ kinds: [decodeKind(1)], search: "yak", limit: 10 })
-      const sub = yield* relayService.subscribe([filter])
-
-      const found: string[] = []
-      // collect up to 2 matching events quickly
-      for (let i = 0; i < 2; i++) {
-        const next = yield* Effect.race(
-          sub.events.pipe(Stream.runHead),
-          Effect.sleep(300).pipe(Effect.as(Option.none()))
-        )
-        if (Option.isSome(next)) found.push(next.value.content)
-      }
-
-      expect(found.length).toBeGreaterThanOrEqual(2)
-      expect(found.some((c) => c.toLowerCase().includes("yak")).valueOf()).toBe(true)
-
-      yield* sub.unsubscribe()
-      yield* relayService.disconnect()
+      yield* relaySvc.connect()
+      const ev = yield* events.createEvent(
+        { kind: decodeKind(1), content, tags: [] },
+        sk
+      )
+      const ok = yield* relaySvc.publish(ev)
+      expect(ok.accepted).toBe(true)
+      yield* relaySvc.disconnect()
+      return ev
     })
 
-    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  test("search finds events by content substring", async () => {
+    const program = Effect.gen(function* () {
+      const relaySvc = yield* RelayService
+      // Publish a few events
+      yield* publish("hello world")
+      yield* publish("HELLO again")
+      yield* publish("goodbye")
+
+      const svc = yield* Nip50Service
+      yield* relaySvc.connect()
+      const results = yield* svc.search({ query: "hello", kinds: [1], limit: 2, timeoutMs: 800 })
+      expect(results.length).toBeGreaterThanOrEqual(2)
+      for (const ev of results) expect((ev.content.toLowerCase().includes("hello"))).toBe(true)
+      yield* relaySvc.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeLayers())))
+  })
+
+  test("getOne returns first match or null", async () => {
+    const program = Effect.gen(function* () {
+      const relaySvc = yield* RelayService
+      const svc = yield* Nip50Service
+      yield* relaySvc.connect()
+      const one = yield* svc.getOne({ query: "goodbye", kinds: [1], timeoutMs: 800 })
+      expect(one).not.toBeNull()
+      const miss = yield* svc.getOne({ query: "no-such", kinds: [1], timeoutMs: 400 })
+      expect(miss).toBeNull()
+      yield* relaySvc.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeLayers())))
   })
 })
-

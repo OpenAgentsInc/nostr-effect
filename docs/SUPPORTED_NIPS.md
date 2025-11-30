@@ -57,7 +57,7 @@ Keep this file up to date whenever adding or removing support.
 | 47 | Nostr Wallet Connect | `~/code/nips/47.md` | `src/wrappers/nip47.ts` | `src/core/Nip47.test.ts` |
 | 48 | Proxy tags | `~/code/nips/48.md` | `src/wrappers/nip48.ts` | `src/wrappers/nip48.test.ts` |
 | 49 | Encrypted private keys | `~/code/nips/49.md` | `src/wrappers/nip49.ts` | `src/core/Nip49.test.ts` |
-| 50 | Search capability | `~/code/nips/50.md` | `src/relay/core/FilterMatcher.ts` | `src/client/Nip50Service.test.ts` |
+| 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` | `src/client/Nip50Service.test.ts` |
 | 51 | Lists | `~/code/nips/51.md` | `src/client/Nip51Service.ts` | `src/client/Nip51Service.test.ts` |
 | 52 | Calendar events | `~/code/nips/52.md` | `src/client/Nip52Service.ts` | `src/client/Nip52Service.test.ts` |
 | 53 | Live activities | `~/code/nips/53.md` | `src/client/Nip53Service.ts` | `src/client/Nip53Service.test.ts` |
