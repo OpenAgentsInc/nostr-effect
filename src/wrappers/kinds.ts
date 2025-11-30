@@ -205,6 +205,9 @@ export const NostrConnect = 24133
 /** NIP-C0 Code Snippet */
 export const CodeSnippet = 1337
 
+/** NIP-C7 Chat Message */
+export const ChatMessageC7 = 9
+
 /** Nostr Connect request (NIP-46) - alias */
 export const NostrConnectRequest = 24133
 

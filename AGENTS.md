@@ -375,6 +375,14 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Keep SUPPORTED_NIPS updated; this is a client‑only NIP (no registry module needed).
 - Add a constant for the kind in `src/wrappers/kinds.ts` (CodeSnippet = 1337).
 
+### NIP‑C7 Tips (Chats)
+
+- Kind 9 with quote replies via `q` tag: `["q", <event-id>, <relay-url>, <pubkey>]`.
+- Service can default `relay-url` to the current RelayService URL; allow override.
+- Filters don’t include `#q`; list by author + kind, then inspect tags client‑side.
+- Use `createdAt` overrides in tests to ensure reply fetches as latest.
+- Kind 9 is separate from the numeric NIPs (e.g., NIP‑09 is deletion with kind 5); there is no conflict.
+
 
 
 <!-- effect-solutions:start -->

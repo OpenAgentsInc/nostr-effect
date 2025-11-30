@@ -27,6 +27,7 @@ type SqlStorageCursor<T> = {
 // =============================================================================
 
 const initSchema = (sql: SqlStorage): void => {
+  // Base table
   sql.exec(`
     CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY,
@@ -35,15 +36,29 @@ const initSchema = (sql: SqlStorage): void => {
       kind INTEGER NOT NULL,
       tags TEXT NOT NULL,
       content TEXT NOT NULL,
-      sig TEXT NOT NULL,
-      d_tag TEXT
+      sig TEXT NOT NULL
     )
   `)
+
+  // Backward-compatible migration: add d_tag column if missing
+  try {
+    const cols = sql.exec<{ name: string }>("PRAGMA table_info(events)").toArray()
+    const hasDTag = Array.isArray(cols) && cols.some((c) => (c as any).name === "d_tag")
+    if (!hasDTag) {
+      sql.exec("ALTER TABLE events ADD COLUMN d_tag TEXT")
+    }
+  } catch {
+    // Ignore PRAGMA/ALTER errors and continue (older runtimes)
+    try { sql.exec("ALTER TABLE events ADD COLUMN d_tag TEXT") } catch {}
+  }
+
+  // Indexes (safe to create idempotently)
   sql.exec("CREATE INDEX IF NOT EXISTS idx_pubkey ON events(pubkey)")
   sql.exec("CREATE INDEX IF NOT EXISTS idx_kind ON events(kind)")
   sql.exec("CREATE INDEX IF NOT EXISTS idx_created_at ON events(created_at)")
   sql.exec("CREATE INDEX IF NOT EXISTS idx_pubkey_kind ON events(pubkey, kind)")
-  sql.exec("CREATE INDEX IF NOT EXISTS idx_pubkey_kind_dtag ON events(pubkey, kind, d_tag)")
+  // Only create d_tag index if column exists
+  try { sql.exec("CREATE INDEX IF NOT EXISTS idx_pubkey_kind_dtag ON events(pubkey, kind, d_tag)") } catch {}
 }
 
 // =============================================================================
