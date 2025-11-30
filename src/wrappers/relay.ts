@@ -30,21 +30,26 @@
  * ```
  */
 
-import { verifyEvent, type NostrEvent } from "./pure.js"
+import { verifyEvent } from "./pure.js"
+import type { Event as PureEvent } from "./pure.js"
+import type { NostrEvent as CoreEvent } from "../core/Schema.js"
 import type { Filter } from "./pool.js"
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export type { Filter, NostrEvent }
+type AnyEvent = CoreEvent | PureEvent
+
+export type { Filter }
+export type { NostrEvent as PureNostrEvent } from "./pure.js"
 
 /** Relay connection status */
 export type RelayStatus = "disconnected" | "connecting" | "connected" | "error"
 
 /** Subscription callbacks */
 export interface SubscriptionCallbacks {
-  onevent?: (event: NostrEvent) => void
+  onevent?: (event: AnyEvent) => void
   oneose?: () => void
   onclose?: (reason: string) => void
 }
@@ -208,18 +213,20 @@ export class Relay {
    * @param timeout - Publish timeout in ms (default: 10000)
    * @returns Promise resolving to OK reason or rejecting on error
    */
-  async publish(event: NostrEvent, timeout = 10000): Promise<string> {
+  async publish(event: AnyEvent, timeout = 10000): Promise<string> {
     if (!this.ws || this.status !== "connected") {
       throw new Error("Not connected to relay")
     }
 
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        this.pendingPublishes.delete(event.id)
+        const id = getEventId(event)
+        this.pendingPublishes.delete(id)
         reject(new Error(`Publish timeout to ${this.url}`))
       }, timeout)
 
-      this.pendingPublishes.set(event.id, {
+      const id = getEventId(event)
+      this.pendingPublishes.set(id, {
         resolve: (reason) => {
           clearTimeout(timeoutId)
           resolve(reason)
@@ -290,20 +297,21 @@ export class Relay {
       switch (type) {
         case "EVENT": {
           const subId = msg[1] as string
-          const event = msg[2] as NostrEvent
+          const event = msg[2] as AnyEvent
           const sub = this.subscriptions.get(subId)
 
           if (sub) {
             // Verify signature if enabled
-            if (this.verifyEvents && !verifyEvent(event)) {
+            if (this.verifyEvents && !verifyEvent(event as PureEvent)) {
               return
             }
 
             // Deduplicate
-            if (this.seenEvents.has(event.id)) {
+            const id = getEventId(event)
+            if (this.seenEvents.has(id)) {
               return
             }
-            this.seenEvents.add(event.id)
+            this.seenEvents.add(id)
 
             // Limit dedup set size
             if (this.seenEvents.size > 5000) {
@@ -385,6 +393,11 @@ function normalizeURL(url: string): string {
 
 function generateSubId(): string {
   return Math.random().toString(36).substring(2, 15)
+}
+
+function getEventId(event: AnyEvent): string {
+  // CoreEvent uses a branded string type for id; coerce to plain string for maps
+  return (event as any).id as string
 }
 
 /**
