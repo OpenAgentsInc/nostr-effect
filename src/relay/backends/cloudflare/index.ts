@@ -13,3 +13,6 @@ export { NostrRelayDO, type Env } from "./NostrRelayDO.js"
 
 // Worker entrypoint (re-export default)
 export { default as worker } from "./worker.js"
+
+// Mount helper
+export { handleRelayRequest, type MountOptions } from "./mount.js"
