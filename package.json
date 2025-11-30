@@ -1,6 +1,6 @@
 {
   "name": "nostr-effect",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A type-safe, composable Nostr library built with Effect",
   "author": "Christopher David <chris@openagents.com>",
   "license": "CC0-1.0",
@@ -27,7 +27,7 @@
     "./relay/backends/cloudflare/mount": "./src/relay/backends/cloudflare/mount.ts",
     "./pure": "./src/wrappers/pure.ts",
     "./pool": "./src/wrappers/pool.ts",
-    "./relay": "./src/wrappers/relay.ts",
+    "./relay": "./src/relay/index.ts",
     "./kinds": "./src/wrappers/kinds.ts",
     "./utils": "./src/wrappers/utils.ts",
     "./nip04": "./src/wrappers/nip04.ts",
@@ -87,8 +87,7 @@
     "./fakejson": "./src/wrappers/fakejson.ts",
     "./client": "./src/client/index.ts",
     "./services": "./src/services/index.ts",
-    "./core": "./src/core/index.ts",
-    "./relay-server": "./src/relay/index.ts"
+    "./core": "./src/core/index.ts"
   },
   "scripts": {
     "prepare": "effect-language-service patch && bun run setup:hooks",
