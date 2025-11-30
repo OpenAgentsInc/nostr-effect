@@ -48,7 +48,7 @@ Keep this file up to date whenever adding or removing support.
 | 37 | Draft wraps | `~/code/nips/37.md` | `src/wrappers/nip37.ts` | `src/wrappers/nip37.test.ts` |
 | 38 | User statuses | `~/code/nips/38.md` | `src/client/Nip38Service.ts` | `src/client/Nip38Service.test.ts` |
 | 39 | External identities | `~/code/nips/39.md` | `src/client/Nip39Service.ts` | `src/client/Nip39Service.test.ts` |
-| 40 | Expiration timestamp | `~/code/nips/40.md` | (handled by relay policies) | `src/core/Nip40.test.ts` |
+| 40 | Expiration timestamp | `~/code/nips/40.md` | `src/relay/core/nip/modules/Nip40Module.ts`, `src/relay/backends/bun/BunSqliteStore.ts` | `src/relay/Nip40Expiration.test.ts`, `src/core/Nip40.test.ts` |
 | 42 | Client authentication | `~/code/nips/42.md` | `src/relay/core/nip/modules/Nip42Module.ts` | `src/core/Nip42.test.ts`, `src/relay/core/nip/modules/Nip42Module.test.ts` |
 | 43 | Relay access metadata/requests | `~/code/nips/43.md` | `src/wrappers/nip43.ts` | `src/wrappers/nip43.test.ts` |
 | 44 | Versioned encryption | `~/code/nips/44.md` | `src/services/Nip44Service.ts` | `src/services/Nip44Service.test.ts` |

@@ -234,9 +234,19 @@ const makeSqliteStore = (db: Database): EventStore => ({
         }
 
         // OR logic between filters
-        const matched = events.filter((event) =>
-          filters.some((filter) => matchesFilter(event, filter))
-        )
+        const matched = events
+          // Exclude expired events (NIP-40)
+          .filter((event) => {
+            try {
+              const tag = event.tags.find((t) => t[0] === "expiration")
+              if (!tag || !tag[1]) return true
+              const ts = Number(tag[1])
+              return Number.isFinite(ts) ? Date.now() / 1000 <= ts : true
+            } catch {
+              return true
+            }
+          })
+          .filter((event) => filters.some((filter) => matchesFilter(event, filter)))
 
         // Apply limit from first filter if specified
         const limit = filters[0]?.limit
