@@ -40,4 +40,15 @@ describe("NIP-84 Highlights", () => {
     expect(evt.created_at).toBeLessThanOrEqual(after)
     expect(verifyEvent(evt)).toBe(true)
   })
+
+  test("highlight with only URL reference defaults empty content", () => {
+    const sk = generateSecretKey()
+    const evt = signHighlight({ url: "https://example.org/article" }, sk)
+    const r = evt.tags.find((t) => t[0] === "r")
+    const e = evt.tags.find((t) => t[0] === "e")
+    expect(r?.[1]).toBe("https://example.org/article")
+    expect(e).toBeUndefined()
+    expect(evt.content).toBe("")
+    expect(verifyEvent(evt)).toBe(true)
+  })
 })
