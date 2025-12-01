@@ -40,6 +40,27 @@ describe("NIP-24 metadata helpers", () => {
     expect((out as any).username).toBeUndefined()
     expect((out as any).displayName).toBeUndefined()
   })
+
+  test("stringifyMetadata preserves core order and keeps extra fields", () => {
+    const json = stringifyMetadata({
+      website: "https://example",
+      picture: "https://img/p.png",
+      name: "alice",
+      display_name: "Alice",
+      banner: "https://img/b.png",
+      about: "hi",
+      // extra fields should be preserved but sorted
+      zzz_extra: "z",
+      aaa_extra: "a",
+    })
+    const obj = JSON.parse(json)
+    const keys = Object.keys(obj)
+    // Core fields should come first in the defined order
+    const core = ["name","about","picture","display_name","website","banner","bot","birthday"].filter((k)=>k in obj)
+    expect(keys.slice(0, core.length)).toEqual(core)
+    expect(obj.aaa_extra).toBe("a")
+    expect(obj.zzz_extra).toBe("z")
+  })
 })
 
 describe("NIP-24 tag helpers", () => {
@@ -63,4 +84,3 @@ describe("NIP-24 tag helpers", () => {
     expect(techCount).toBe(1)
   })
 })
-
