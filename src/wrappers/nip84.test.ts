@@ -36,6 +36,7 @@ describe("NIP-84 Highlights", () => {
     const after = Math.floor(Date.now() / 1000)
     const e = evt.tags.find((t) => t[0] === "e")
     expect(e?.[1]).toBe("f".repeat(64))
+    expect(evt.content).toBe("")
     expect(evt.created_at).toBeGreaterThanOrEqual(before)
     expect(evt.created_at).toBeLessThanOrEqual(after)
     expect(verifyEvent(evt)).toBe(true)
