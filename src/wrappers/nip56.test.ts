@@ -37,6 +37,30 @@ describe("NIP-56 Reporting", () => {
     expect(verifyEvent(evt)).toBe(true)
   })
 
+  test("note report without pubkey preserves custom metadata + extra tags", () => {
+    const sk = generateSecretKey()
+    const eventId = "f".repeat(64)
+    const createdAt = 1_700_000_000
+    const extraTags: string[][] = [
+      ["t", "spam"],
+      ["reference", "deadbeef"],
+    ]
+    const tmpl = buildNoteReportTemplate({
+      kind: 1984,
+      eventId,
+      report: "spam",
+      created_at: createdAt,
+      content: "manual review requested",
+      extraTags,
+    })
+    const evt = signReport(tmpl, sk)
+    expect(evt.created_at).toBe(createdAt)
+    expect(evt.content).toBe("manual review requested")
+    expect(evt.tags.map((t) => t[0])).not.toContain("p")
+    expect(evt.tags).toEqual([["e", eventId, "spam"], ...extraTags])
+    expect(verifyEvent(evt)).toBe(true)
+  })
+
   test("blob report includes x + e + server tags as applicable", () => {
     const sk = generateSecretKey()
     const blobHash = "a".repeat(64)
