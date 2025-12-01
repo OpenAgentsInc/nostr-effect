@@ -48,6 +48,7 @@ describe("NIP-84 Highlights", () => {
     const e = evt.tags.find((t) => t[0] === "e")
     expect(r?.[1]).toBe("https://example.org/article")
     expect(e).toBeUndefined()
+    expect(evt.tags.length).toBe(1)
     expect(evt.content).toBe("")
     expect(verifyEvent(evt)).toBe(true)
   })
