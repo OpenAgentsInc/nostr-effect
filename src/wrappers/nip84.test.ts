@@ -18,4 +18,14 @@ describe("NIP-84 Highlights", () => {
     expect(l).toEqual(["fav", "quote"])
     expect(verifyEvent(evt)).toBe(true)
   })
+
+  test("highlight without references keeps tags empty and respects created_at override", () => {
+    const sk = generateSecretKey()
+    const createdAt = 1_700_000_000
+    const evt = signHighlight({ content: "context-only", created_at: createdAt, labels: [] }, sk)
+    expect(evt.tags.length).toBe(0)
+    expect(evt.content).toBe("context-only")
+    expect(evt.created_at).toBe(createdAt)
+    expect(verifyEvent(evt)).toBe(true)
+  })
 })
