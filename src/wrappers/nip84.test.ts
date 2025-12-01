@@ -28,4 +28,16 @@ describe("NIP-84 Highlights", () => {
     expect(evt.created_at).toBe(createdAt)
     expect(verifyEvent(evt)).toBe(true)
   })
+
+  test("highlight defaults created_at near now when not provided", () => {
+    const sk = generateSecretKey()
+    const before = Math.floor(Date.now() / 1000)
+    const evt = signHighlight({ eventId: "f".repeat(64) }, sk)
+    const after = Math.floor(Date.now() / 1000)
+    const e = evt.tags.find((t) => t[0] === "e")
+    expect(e?.[1]).toBe("f".repeat(64))
+    expect(evt.created_at).toBeGreaterThanOrEqual(before)
+    expect(evt.created_at).toBeLessThanOrEqual(after)
+    expect(verifyEvent(evt)).toBe(true)
+  })
 })
