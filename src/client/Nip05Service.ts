@@ -184,8 +184,10 @@ const make = Effect.sync(() => {
 
   const isValid: Nip05Service["isValid"] = (pubkey, nip05) =>
     Effect.gen(function* () {
-      const result = yield* queryProfile(nip05)
-      return result ? result.pubkey === pubkey : false
+      return yield* queryProfile(nip05).pipe(
+        Effect.map(result => result?.pubkey === pubkey),
+        Effect.catchAll(() => Effect.succeed(false))
+      )
     })
 
   return {
