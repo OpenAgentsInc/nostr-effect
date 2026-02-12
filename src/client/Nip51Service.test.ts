@@ -9,6 +9,8 @@ import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { Nip44ServiceLive } from "../services/Nip44Service.js"
+import type { NostrEvent } from "../core/Schema.js"
+import { parsePublicItems } from "../wrappers/nip51.js"
 
 describe("Nip51Service (NIP-51)", () => {
   let relay: RelayHandle
@@ -47,7 +49,6 @@ describe("Nip51Service (NIP-51)", () => {
       const sk = yield* crypto.generatePrivateKey()
       const author = yield* crypto.getPublicKey(sk)
 
-      // Public items: one URL and one a-pointer; Private items: a tag array
       const publicTags: string[][] = [
         ["r", "https://example.com"],
       ]
@@ -60,8 +61,8 @@ describe("Nip51Service (NIP-51)", () => {
 
       const latest = yield* svc.getLatestList({ author, kind: 10003, limit: 1, timeoutMs: 1500 })
       expect(latest?.kind as number).toBe(10003)
-      // Content should be non-empty (encrypted private data)
       expect((latest?.content?.length ?? 0) > 0).toBe(true)
+      expect(parsePublicItems(latest! as any)).toContainEqual(publicTags[0])
 
       const decrypted = yield* svc.decryptPrivateItems({ event: latest!, authorPrivateKey: sk })
       expect(decrypted?.[0]?.[0]).toBe("e")
@@ -84,7 +85,7 @@ describe("Nip51Service (NIP-51)", () => {
       const author = yield* crypto.getPublicKey(sk)
 
       const d = "my-set"
-      const publicTags: string[][] = [["d", d], ["t", "nostr"]]
+      const publicTags: string[][] = [ ["t", "nostr"] ]
       const pub = yield* svc.publishList({ kind: 30003, d, publicTags }, sk)
       expect(pub.accepted).toBe(true)
 
@@ -92,10 +93,100 @@ describe("Nip51Service (NIP-51)", () => {
       expect(latest?.kind as number).toBe(30003)
       const dTag = latest?.tags.find((t) => t[0] === "d")?.[1]
       expect(dTag).toBe(d)
+      expect(parsePublicItems(latest! as any)).toContainEqual(["t", "nostr"])
 
       yield* relayService.disconnect()
     })
     await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
   })
-})
 
+  test("publish list without private items", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const svc = yield* Nip51Service
+      const crypto = yield* CryptoService
+
+      yield* relayService.connect()
+
+      const sk = yield* crypto.generatePrivateKey()
+      const author = yield* crypto.getPublicKey(sk)
+
+      const publicTags = [["p", "npub1..."]]
+      const pub = yield* svc.publishList({ kind: 10000, publicTags }, sk)
+      expect(pub.accepted).toBe(true)
+
+      const latest = yield* svc.getLatestList({ author, kind: 10000, limit: 1, timeoutMs: 1500 })
+      expect(latest?.content).toBe("")
+      expect(parsePublicItems(latest! as any)).toContainEqual(publicTags[0])
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
+
+  test("getLatestList times out returns null", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const svc = yield* Nip51Service
+      yield* relayService.connect()
+
+      const latest = yield* svc.getLatestList({
+        author: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        kind: 10003,
+        timeoutMs: 100,
+      })
+      expect(latest).toBeNull()
+
+      yield* relayService.disconnect()
+    }).pipe(Effect.provide(makeTestLayers()))
+
+    await Effect.runPromise(program)
+  })
+
+  test("publishList parameterized without d fails", async () => {
+    const program = Effect.gen(function* () {
+      const svc = yield* Nip51Service
+      const crypto = yield* CryptoService
+
+      const sk = yield* crypto.generatePrivateKey()
+
+      const result = yield* svc.publishList({ kind: 30003 }, sk).pipe(
+        Effect.matchEffect({
+          onFailure: (error) => Effect.succeed(error.message),
+          onSuccess: () => Effect.succeed("unexpected success")
+        })
+      )
+
+      return result
+    }).pipe(Effect.provide(makeTestLayers()))
+
+    const message = await Effect.runPromise(program)
+    expect(message).toMatch(/d is required/)
+  })
+
+  test("decryptPrivateItems empty content returns null", async () => {
+    const program = Effect.gen(function* () {
+      const svc = yield* Nip51Service
+      const crypto = yield* CryptoService
+
+      const sk = yield* crypto.generatePrivateKey()
+      const author = yield* crypto.getPublicKey(sk)
+
+      const emptyEvent = {
+        id: "fake",
+        sig: "fake",
+        kind: 10003 as any,
+        created_at: 1,
+        pubkey: author,
+        content: "",
+        tags: []
+      } as unknown as NostrEvent
+
+      const decrypted = yield* svc.decryptPrivateItems({ event: emptyEvent, authorPrivateKey: sk })
+      expect(decrypted).toBeNull()
+    }).pipe(Effect.provide(makeTestLayers()))
+
+    await Effect.runPromise(program)
+  })
+})
