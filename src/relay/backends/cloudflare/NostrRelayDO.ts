@@ -6,7 +6,7 @@
  */
 /// <reference types="@cloudflare/workers-types" />
 
-import { Effect, Layer, Runtime } from "effect"
+import { Effect, Layer, ManagedRuntime } from "effect"
 import { DoSqliteStoreLive, initDoSchema, type SqlStorage } from "./DoSqliteStore.js"
 import { MessageHandler, MessageHandlerWithRegistry } from "../../core/MessageHandler.js"
 import { SubscriptionManager, SubscriptionManagerLive } from "../../core/SubscriptionManager.js"
@@ -41,7 +41,7 @@ export class NostrRelayDO implements DurableObject {
   private relayInfo: RelayInfo | null = null
   private readonly nipRegistryLayer: Layer.Layer<NipRegistry>
   private readonly layers: Layer.Layer<MessageHandler | SubscriptionManager>
-  private runtime: Runtime.Runtime<MessageHandler | SubscriptionManager> | null = null
+  private runtime: ManagedRuntime.ManagedRuntime<MessageHandler | SubscriptionManager, never> | null = null
 
   // Connection counter for generating unique IDs
   private connectionCounter = 0
@@ -85,11 +85,9 @@ export class NostrRelayDO implements DurableObject {
   /**
    * Get or create the Effect runtime
    */
-  private getRuntime(): Runtime.Runtime<MessageHandler | SubscriptionManager> {
+  private getRuntime(): ManagedRuntime.ManagedRuntime<MessageHandler | SubscriptionManager, never> {
     if (!this.runtime) {
-      this.runtime = Effect.runSync(
-        Layer.toRuntime(this.layers).pipe(Effect.scoped)
-      )
+      this.runtime = ManagedRuntime.make(this.layers)
     }
     return this.runtime
   }
@@ -208,12 +206,12 @@ export class NostrRelayDO implements DurableObject {
 
     try {
       const runtime = this.getRuntime()
-      const result = await Runtime.runPromise(runtime)(
+      const result = await runtime.runPromise(
         Effect.gen(function* () {
           const handler = yield* MessageHandler
           return yield* handler.handleRaw(connectionId, raw)
         }).pipe(
-          Effect.catchAll((error) =>
+          Effect.catch((error) =>
             Effect.succeed({
               responses: [["NOTICE", `error: ${error.message}`] as RelayMessage],
               broadcasts: [] as readonly BroadcastMessage[],
@@ -249,7 +247,7 @@ export class NostrRelayDO implements DurableObject {
     // Clean up subscriptions
     try {
       const runtime = this.getRuntime()
-      await Runtime.runPromise(runtime)(
+      await runtime.runPromise(
         Effect.gen(function* () {
           const subManager = yield* SubscriptionManager
           yield* subManager.removeConnection(connectionId)

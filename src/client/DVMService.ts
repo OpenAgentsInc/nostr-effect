@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/90.md
  */
 import { Context, Effect, Layer, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { CryptoService } from "../services/CryptoService.js"
@@ -160,7 +160,7 @@ export interface DVMService {
 // Service Tag
 // =============================================================================
 
-export const DVMService = Context.GenericTag<DVMService>("DVMService")
+export const DVMService = Context.Service<DVMService>("DVMService")
 
 // =============================================================================
 // Helper Functions

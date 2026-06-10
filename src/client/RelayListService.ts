@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/65.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { CryptoService } from "../services/CryptoService.js"
@@ -105,7 +105,7 @@ export interface RelayListService {
 // Service Tag
 // =============================================================================
 
-export const RelayListService = Context.GenericTag<RelayListService>("RelayListService")
+export const RelayListService = Context.Service<RelayListService>("RelayListService")
 
 // =============================================================================
 // Helper Functions
@@ -180,7 +180,7 @@ const make = Effect.gen(function* () {
           Stream.runHead // Get just the first event (returns Option)
         ),
         Effect.sleep(500).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
       yield* sub.unsubscribe()
 

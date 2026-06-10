@@ -6,7 +6,7 @@
  * - Live Chat Message (kind 1311): linked via a-tag to 30311
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -65,7 +65,7 @@ export interface Nip53Service {
   publishLiveChat(options: PublishLiveChatOptions, privateKey: PrivateKey): Effect.Effect<PublishResult, RelayError>
 }
 
-export const Nip53Service = Context.GenericTag<Nip53Service>("Nip53Service")
+export const Nip53Service = Context.Service<Nip53Service>("Nip53Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -107,7 +107,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(600).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))

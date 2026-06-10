@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test"
 import { Effect, Layer } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventService, EventServiceLive } from "./EventService"
 import { CryptoService, CryptoServiceLive } from "./CryptoService"
 import { EventKind, Tag, type NostrEvent, type UnixTimestamp } from "../core/Schema"

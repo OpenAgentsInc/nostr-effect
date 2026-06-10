@@ -5,7 +5,7 @@
  * automatic reconnection, and subscription tracking.
  */
 import { Context, Effect, Layer, Queue, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import {
   ConnectionError,
   TimeoutError,
@@ -145,7 +145,7 @@ export interface RelayService {
 // Service Tag
 // =============================================================================
 
-export const RelayService = Context.GenericTag<RelayService>("RelayService")
+export const RelayService = Context.Service<RelayService>("RelayService")
 
 // =============================================================================
 // Service Implementation
@@ -201,8 +201,8 @@ const make = (config: RelayConnectionConfig) =>
             const [, eventId, accepted, message] = decodeResult
             const pending = pendingOks.get(eventId)
             if (pending) {
-              pending.resolve({ accepted, message })
               pendingOks.delete(eventId)
+              pending.resolve({ accepted, message })
             }
             break
           }
@@ -227,8 +227,8 @@ const make = (config: RelayConnectionConfig) =>
             const [, reqId, payload] = decodeResult as any
             const pending = pendingCounts.get(reqId)
             if (pending) {
-              pending.resolve(payload as { count: number; approximate?: boolean })
               pendingCounts.delete(reqId)
+              pending.resolve(payload as { count: number; approximate?: boolean })
             }
             break
           }
@@ -265,7 +265,7 @@ const make = (config: RelayConnectionConfig) =>
         }
         ws.send(JSON.stringify(message))
       }).pipe(
-        Effect.catchAllDefect((error) =>
+        Effect.catchDefect((error) =>
           Effect.fail(
             new ConnectionError({
               message: error instanceof Error ? error.message : "Send failed",
@@ -301,7 +301,7 @@ const make = (config: RelayConnectionConfig) =>
                 }
               })
             ),
-            Effect.catchAll(() =>
+            Effect.catch(() =>
               Effect.sync(() => {
                 scheduleReconnect()
               })
@@ -313,7 +313,7 @@ const make = (config: RelayConnectionConfig) =>
 
     // Connect to WebSocket
     const connectWs = (): Effect.Effect<void, ConnectionError> =>
-      Effect.async<void, ConnectionError>((resume) => {
+      Effect.callback<void, ConnectionError>((resume) => {
         try {
           const socket = new WebSocket(config.url)
 
@@ -399,13 +399,68 @@ const make = (config: RelayConnectionConfig) =>
       })
 
     const publish: RelayService["publish"] = (event) =>
-      Effect.gen(function* () {
-        yield* sendMessage(["EVENT", event])
-        return yield* waitForOk(event.id, 10000)
+      Effect.callback<PublishResult, TimeoutError | ConnectionError>((resume) => {
+        const timeoutMs = 10000
+        const timeoutHandle = setTimeout(() => {
+          pendingOks.delete(event.id)
+          resume(
+            Effect.fail(
+              new TimeoutError({
+                message: `Timeout waiting for OK for event ${event.id}`,
+                durationMs: timeoutMs,
+              })
+            )
+          )
+        }, timeoutMs)
+
+        const pending = {
+          resolve: (result: PublishResult) => {
+            clearTimeout(timeoutHandle)
+            resume(Effect.succeed(result))
+          },
+          reject: (error: Error) => {
+            clearTimeout(timeoutHandle)
+            resume(
+              Effect.fail(
+                new TimeoutError({
+                  message: error.message,
+                  durationMs: timeoutMs,
+                })
+              )
+            )
+          },
+        }
+        pendingOks.set(event.id, pending)
+
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          clearTimeout(timeoutHandle)
+          pendingOks.delete(event.id)
+          resume(Effect.fail(new ConnectionError({ message: "Not connected", url: config.url })))
+          return Effect.void
+        }
+
+        queueMicrotask(() => {
+          try {
+            ws?.send(JSON.stringify(["EVENT", event]))
+          } catch (error) {
+            clearTimeout(timeoutHandle)
+            pendingOks.delete(event.id)
+            resume(
+              Effect.fail(
+                new ConnectionError({
+                  message: error instanceof Error ? error.message : "Send failed",
+                  url: config.url,
+                })
+              )
+            )
+          }
+        })
+
+        return undefined
       })
 
     const waitForOk: RelayService["waitForOk"] = (eventId, timeoutMs = 10000) =>
-      Effect.async<PublishResult, TimeoutError>((resume) => {
+      Effect.callback<PublishResult, TimeoutError>((resume) => {
         const timeoutHandle = setTimeout(() => {
           pendingOks.delete(eventId)
           resume(
@@ -418,12 +473,12 @@ const make = (config: RelayConnectionConfig) =>
           )
         }, timeoutMs)
 
-        pendingOks.set(eventId, {
-          resolve: (result) => {
+        const pending = {
+          resolve: (result: PublishResult) => {
             clearTimeout(timeoutHandle)
             resume(Effect.succeed(result))
           },
-          reject: (error) => {
+          reject: (error: Error) => {
             clearTimeout(timeoutHandle)
             resume(
               Effect.fail(
@@ -434,13 +489,10 @@ const make = (config: RelayConnectionConfig) =>
               )
             )
           },
-        })
+        }
+        pendingOks.set(eventId, pending)
 
-        // Cleanup on interrupt
-        return Effect.sync(() => {
-          clearTimeout(timeoutHandle)
-          pendingOks.delete(eventId)
-        })
+        return undefined
       })
 
     const subscribe: RelayService["subscribe"] = (filters, subscriptionId) =>
@@ -468,8 +520,8 @@ const make = (config: RelayConnectionConfig) =>
         yield* sendMessage(["REQ", subId, ...filters])
 
         // Create event stream from queue
-        const events = Stream.fromQueue(queue).pipe(
-          Stream.catchAll(() =>
+        const events = Stream.fromEffectRepeat(Queue.take(queue)).pipe(
+          Stream.catch(() =>
             Stream.fail(
               new SubscriptionError({
                 message: "Subscription closed",
@@ -511,11 +563,7 @@ const make = (config: RelayConnectionConfig) =>
         }
 
         const id = (requestId ?? generateSubId()) as SubscriptionId
-        // Send COUNT
-        yield* sendMessage(["COUNT", id, ...filters])
-
-        // Wait for COUNT response
-        return yield* Effect.async<{ count: number; approximate?: boolean }, TimeoutError>((resume) => {
+        return yield* Effect.callback<{ count: number; approximate?: boolean }, TimeoutError | ConnectionError>((resume) => {
           const timeoutHandle = setTimeout(() => {
             pendingCounts.delete(id)
             resume(
@@ -528,12 +576,12 @@ const make = (config: RelayConnectionConfig) =>
             )
           }, timeoutMs)
 
-          pendingCounts.set(id, {
-            resolve: (result) => {
+          const pending = {
+            resolve: (result: { count: number; approximate?: boolean }) => {
               clearTimeout(timeoutHandle)
               resume(Effect.succeed(result))
             },
-            reject: (error) => {
+            reject: (error: Error) => {
               clearTimeout(timeoutHandle)
               resume(
                 Effect.fail(
@@ -544,12 +592,34 @@ const make = (config: RelayConnectionConfig) =>
                 )
               )
             },
-          })
+          }
+          pendingCounts.set(id, pending)
 
-          return Effect.sync(() => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) {
             clearTimeout(timeoutHandle)
             pendingCounts.delete(id)
+            resume(Effect.fail(new ConnectionError({ message: "Not connected", url: config.url })))
+            return Effect.void
+          }
+
+          queueMicrotask(() => {
+            try {
+              ws?.send(JSON.stringify(["COUNT", id, ...filters]))
+            } catch (error) {
+              clearTimeout(timeoutHandle)
+              pendingCounts.delete(id)
+              resume(
+                Effect.fail(
+                  new ConnectionError({
+                    message: error instanceof Error ? error.message : "Send failed",
+                    url: config.url,
+                  })
+                )
+              )
+            }
           })
+
+          return undefined
         })
       })
 
@@ -568,8 +638,8 @@ const make = (config: RelayConnectionConfig) =>
         // send NEG-OPEN
         yield* sendMessage(["NEG-OPEN", id, filter, initialHex])
 
-        const messages = Stream.fromQueue(q).pipe(
-          Stream.catchAll(() =>
+        const messages = Stream.fromEffectRepeat(Queue.take(q)).pipe(
+          Stream.catch(() =>
             Stream.fail(
               new SubscriptionError({
                 message: "Negentropy session closed",

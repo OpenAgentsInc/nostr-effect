@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/17.md
  */
 import { Context, Effect, Layer, Stream, Chunk } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import type { EventKind, PublicKey, PrivateKey, NostrEvent } from "../core/Schema.js"
 import { Filter } from "../core/Schema.js"
 import { unwrapEvent, wrapManyEvents, type Rumor, type GiftWrappedEvent, type UnsignedEvent } from "../core/Nip59.js"
@@ -131,7 +131,7 @@ export interface Nip17Service {
 // Service Tag
 // =============================================================================
 
-export const Nip17Service = Context.GenericTag<Nip17Service>("Nip17Service")
+export const Nip17Service = Context.Service<Nip17Service>("Nip17Service")
 
 // =============================================================================
 // Service Implementation
@@ -304,12 +304,12 @@ const make = Effect.gen(function* () {
       // Collect the first event (most recent)
       const chunk = yield* Stream.runCollect(
         sub.events.pipe(Stream.take(1), Stream.timeout("5 seconds"))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Chunk.empty()))) // Handle timeout
+      ).pipe(Effect.catch(() => Effect.succeed(Chunk.empty()))) // Handle timeout
 
       yield* sub.unsubscribe()
 
       // Convert Chunk to array
-      const events = Chunk.toReadonlyArray(chunk)
+      const events = Array.isArray(chunk) ? chunk : Chunk.toReadonlyArray(chunk)
 
       // Extract relay URLs from the event tags
       const relays: string[] = []

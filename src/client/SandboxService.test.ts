@@ -3,7 +3,7 @@
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import {
   SandboxService,
   SandboxServiceLive,

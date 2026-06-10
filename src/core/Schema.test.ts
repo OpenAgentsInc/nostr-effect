@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import {
   EventId,
   PublicKey,

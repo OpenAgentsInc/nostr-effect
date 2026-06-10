@@ -108,7 +108,7 @@ export interface Nip58Service {
   readonly validateProfileBadgesEvent: (event: NostrEvent) => boolean
 }
 
-export const Nip58Service = Context.GenericTag<Nip58Service>("Nip58Service")
+export const Nip58Service = Context.Service<Nip58Service>("Nip58Service")
 
 /**
  * Create the Nip58Service implementation

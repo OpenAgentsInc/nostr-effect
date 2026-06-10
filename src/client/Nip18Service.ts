@@ -48,7 +48,7 @@ export interface Nip18Service {
   ) => Effect.Effect<NostrEvent | undefined, Error>
 }
 
-export const Nip18Service = Context.GenericTag<Nip18Service>("Nip18Service")
+export const Nip18Service = Context.Service<Nip18Service>("Nip18Service")
 
 /**
  * Get pointer to the reposted event from a repost (pure function)

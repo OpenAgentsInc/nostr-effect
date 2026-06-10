@@ -6,7 +6,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/87.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -115,7 +115,7 @@ export interface MintDiscoverabilityService {
 // Service Tag
 // =============================================================================
 
-export const MintDiscoverabilityService = Context.GenericTag<MintDiscoverabilityService>(
+export const MintDiscoverabilityService = Context.Service<MintDiscoverabilityService>(
   "MintDiscoverabilityService"
 )
 
@@ -278,7 +278,7 @@ const make = Effect.gen(function* () {
       const maybeEvent = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(600).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
       yield* sub.unsubscribe()
       return Option.isSome(maybeEvent) ? maybeEvent.value : null
@@ -309,7 +309,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(300).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
         if (Option.isSome(next)) {
           const parsed = parseRecommendation(next.value)

@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
 import { Context, Effect, Layer, Deferred, Option } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { bytesToHex } from "@noble/hashes/utils"
 import type { PublicKey, NostrEvent, EventKind } from "../core/Schema.js"
 import { NostrEvent as NostrEventSchema } from "../core/Schema.js"
@@ -104,17 +104,17 @@ interface PendingRequest {
 // Errors
 // =============================================================================
 
-export class Nip46Error extends Schema.TaggedError<Nip46Error>()(
+export class Nip46Error extends Schema.TaggedErrorClass<Nip46Error>()(
   "Nip46Error",
   { message: Schema.String }
 ) {}
 
-export class Nip46ParseError extends Schema.TaggedError<Nip46ParseError>()(
+export class Nip46ParseError extends Schema.TaggedErrorClass<Nip46ParseError>()(
   "Nip46ParseError",
   { message: Schema.String, input: Schema.String }
 ) {}
 
-export class Nip46MethodError extends Schema.TaggedError<Nip46MethodError>()(
+export class Nip46MethodError extends Schema.TaggedErrorClass<Nip46MethodError>()(
   "Nip46MethodError",
   { message: Schema.String, method: Schema.String }
 ) {}
@@ -442,7 +442,7 @@ export interface Nip46Service {
 // Service Tag
 // =============================================================================
 
-export const Nip46Service = Context.GenericTag<Nip46Service>("Nip46Service")
+export const Nip46Service = Context.Service<Nip46Service>("Nip46Service")
 
 // =============================================================================
 // Service Implementation

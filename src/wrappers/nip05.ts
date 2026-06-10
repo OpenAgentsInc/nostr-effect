@@ -22,7 +22,7 @@
  * ```
  */
 
-import { Effect, Exit } from "effect"
+import { Cause, Effect, Exit } from "effect"
 import {
   Nip05Service,
   Nip05ServiceLive,
@@ -65,12 +65,12 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   const exit = await Effect.runPromiseExit(program)
 
   if (Exit.isFailure(exit)) {
-    const error = exit.cause
-    if (error._tag === "Fail") {
-      const e = error.error
-      if ("message" in e) {
-        throw new Error(e.message as string)
-      }
+    const e = Cause.squash(exit.cause)
+    if (e instanceof Error) {
+      throw e
+    }
+    if (typeof e === "object" && e !== null && "message" in e) {
+      throw new Error(String(e.message))
     }
     throw new Error("NIP-05 lookup failed")
   }
@@ -105,12 +105,12 @@ export async function searchDomain(
   const exit = await Effect.runPromiseExit(program)
 
   if (Exit.isFailure(exit)) {
-    const error = exit.cause
-    if (error._tag === "Fail") {
-      const e = error.error
-      if ("message" in e) {
-        throw new Error(e.message as string)
-      }
+    const e = Cause.squash(exit.cause)
+    if (e instanceof Error) {
+      throw e
+    }
+    if (typeof e === "object" && e !== null && "message" in e) {
+      throw new Error(String(e.message))
     }
     throw new Error("NIP-05 search failed")
   }

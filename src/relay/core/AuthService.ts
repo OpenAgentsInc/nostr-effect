@@ -68,7 +68,7 @@ export interface AuthService {
 // Service Tag
 // =============================================================================
 
-export const AuthService = Context.GenericTag<AuthService>("AuthService")
+export const AuthService = Context.Service<AuthService>("AuthService")
 
 // =============================================================================
 // Service Implementation

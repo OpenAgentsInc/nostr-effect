@@ -113,7 +113,7 @@ export interface BlossomService {
 // Service Tag
 // =============================================================================
 
-export const BlossomService = Context.GenericTag<BlossomService>("BlossomService")
+export const BlossomService = Context.Service<BlossomService>("BlossomService")
 
 // =============================================================================
 // Helper Functions

@@ -7,7 +7,7 @@ import { startTestRelay, type RelayHandle } from "./index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { makeRelayService, RelayService } from "../client/RelayService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind } from "../core/Schema.js"
 
 const decodeKind = Schema.decodeSync(EventKind)

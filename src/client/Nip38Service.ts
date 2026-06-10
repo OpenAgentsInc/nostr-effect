@@ -4,7 +4,7 @@
  * NIP-38: User Statuses (kind 30315 addressable via d-tag)
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -38,7 +38,7 @@ export interface Nip38Service {
   clearStatus(type: string, privateKey: PrivateKey): Effect.Effect<PublishResult, RelayError>
 }
 
-export const Nip38Service = Context.GenericTag<Nip38Service>("Nip38Service")
+export const Nip38Service = Context.Service<Nip38Service>("Nip38Service")
 
 const KIND_STATUS = 30315
 
@@ -69,7 +69,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))

@@ -5,7 +5,7 @@
  * and RelayService NEG session primitives.
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type NegentropySessionHandle } from "./RelayService.js"
 import { RelayError } from "../core/Errors.js"
 import { Filter } from "../core/Schema.js"
@@ -42,7 +42,7 @@ export interface Nip77Service {
   ): Effect.Effect<ReconcileResult, RelayError>
 }
 
-export const Nip77Service = Context.GenericTag<Nip77Service>("Nip77Service")
+export const Nip77Service = Context.Service<Nip77Service>("Nip77Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -67,7 +67,7 @@ const make = Effect.gen(function* () {
       const first = yield* Effect.race(
         sess.messages.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<string>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<string>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<string>())))
       yield* sess.close().pipe(Effect.ignore)
 
       const diffHex = Option.isSome(first) ? first.value : ""

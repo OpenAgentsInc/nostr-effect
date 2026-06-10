@@ -242,7 +242,7 @@ export interface Nip44Service {
 // Service Tag
 // =============================================================================
 
-export const Nip44Service = Context.GenericTag<Nip44Service>("Nip44Service")
+export const Nip44Service = Context.Service<Nip44Service>("Nip44Service")
 
 // =============================================================================
 // Service Implementation

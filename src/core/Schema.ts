@@ -4,7 +4,7 @@
  * Type-safe Nostr event types using Effect Schema.
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 
 // =============================================================================
 // Branded Primitive Types
@@ -12,60 +12,56 @@ import { Schema } from "@effect/schema"
 
 /** 64-character lowercase hex string (sha256 hash) */
 export const EventId = Schema.String.pipe(
-  Schema.pattern(/^[a-f0-9]{64}$/),
+  Schema.check(Schema.isPattern(/^[a-f0-9]{64}$/)),
   Schema.brand("EventId")
 )
 export type EventId = typeof EventId.Type
 
 /** 64-character lowercase hex string (secp256k1 public key) */
 export const PublicKey = Schema.String.pipe(
-  Schema.pattern(/^[a-f0-9]{64}$/),
+  Schema.check(Schema.isPattern(/^[a-f0-9]{64}$/)),
   Schema.brand("PublicKey")
 )
 export type PublicKey = typeof PublicKey.Type
 
 /** 64-character lowercase hex string (secp256k1 private key) */
 export const PrivateKey = Schema.String.pipe(
-  Schema.pattern(/^[a-f0-9]{64}$/),
+  Schema.check(Schema.isPattern(/^[a-f0-9]{64}$/)),
   Schema.brand("PrivateKey")
 )
 export type PrivateKey = typeof PrivateKey.Type
 
 /** 128-character lowercase hex string (schnorr signature) */
 export const Signature = Schema.String.pipe(
-  Schema.pattern(/^[a-f0-9]{128}$/),
+  Schema.check(Schema.isPattern(/^[a-f0-9]{128}$/)),
   Schema.brand("Signature")
 )
 export type Signature = typeof Signature.Type
 
 /** Unix timestamp in seconds (can be 0) */
-export const UnixTimestamp = Schema.Number.pipe(
-  Schema.int(),
-  Schema.greaterThanOrEqualTo(0),
+export const UnixTimestamp = Schema.Int.pipe(
+  Schema.check(Schema.isGreaterThanOrEqualTo(0)),
   Schema.brand("UnixTimestamp")
 )
 export type UnixTimestamp = typeof UnixTimestamp.Type
 
 /** Event kind (0-65535) */
-export const EventKind = Schema.Number.pipe(
-  Schema.int(),
-  Schema.greaterThanOrEqualTo(0),
-  Schema.lessThanOrEqualTo(65535),
+export const EventKind = Schema.Int.pipe(
+  Schema.check(Schema.isBetween({ minimum: 0, maximum: 65535 })),
   Schema.brand("EventKind")
 )
 export type EventKind = typeof EventKind.Type
 
 /** Tag array (at least one element) */
 export const Tag = Schema.Array(Schema.String).pipe(
-  Schema.minItems(1),
+  Schema.check(Schema.isMinLength(1)),
   Schema.brand("Tag")
 )
 export type Tag = typeof Tag.Type
 
 /** Subscription ID (1-64 characters) */
 export const SubscriptionId = Schema.String.pipe(
-  Schema.minLength(1),
-  Schema.maxLength(64),
+  Schema.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
   Schema.brand("SubscriptionId")
 )
 export type SubscriptionId = typeof SubscriptionId.Type
@@ -115,7 +111,7 @@ export const Filter = Schema.Struct({
   kinds: Schema.optional(Schema.Array(EventKind)),
   since: Schema.optional(UnixTimestamp),
   until: Schema.optional(UnixTimestamp),
-  limit: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  limit: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   // NIP-50 search capability
   search: Schema.optional(Schema.String),
   // Tag filters (#e, #p, #a, #d, #t, etc.)
@@ -133,63 +129,54 @@ export type Filter = typeof Filter.Type
 
 /** EVENT message: publish an event */
 export const ClientEventMessage = Schema.Tuple(
-  Schema.Literal("EVENT"),
-  NostrEvent
+  [Schema.Literal("EVENT"), NostrEvent]
 )
 export type ClientEventMessage = typeof ClientEventMessage.Type
 
 /** REQ message: subscribe with filters (variadic: ["REQ", subId, filter, filter, ...]) */
-export const ClientReqMessage = Schema.Tuple(
-  [Schema.Literal("REQ"), SubscriptionId],
-  Filter
+export const ClientReqMessage = Schema.TupleWithRest(
+  Schema.Tuple([Schema.Literal("REQ"), SubscriptionId]),
+  [Filter]
 )
 export type ClientReqMessage = typeof ClientReqMessage.Type
 
 /** CLOSE message: close subscription */
 export const ClientCloseMessage = Schema.Tuple(
-  Schema.Literal("CLOSE"),
-  SubscriptionId
+  [Schema.Literal("CLOSE"), SubscriptionId]
 )
 export type ClientCloseMessage = typeof ClientCloseMessage.Type
 
 /** AUTH message: client authentication (NIP-42) */
 export const ClientAuthMessage = Schema.Tuple(
-  Schema.Literal("AUTH"),
-  NostrEvent // kind 22242 signed event
+  [Schema.Literal("AUTH"), NostrEvent] // kind 22242 signed event
 )
 export type ClientAuthMessage = typeof ClientAuthMessage.Type
 
 /** All client message types */
 /** COUNT message (NIP-45): request event counts */
-export const ClientCountMessage = Schema.Tuple(
-  [Schema.Literal("COUNT"), SubscriptionId],
-  Filter
+export const ClientCountMessage = Schema.TupleWithRest(
+  Schema.Tuple([Schema.Literal("COUNT"), SubscriptionId]),
+  [Filter]
 )
 export type ClientCountMessage = typeof ClientCountMessage.Type
 
 // NIP-77: Negentropy messages (client side)
 export const ClientNegOpenMessage = Schema.Tuple(
-  Schema.Literal("NEG-OPEN"),
-  SubscriptionId,
-  Filter,
-  Schema.String
+  [Schema.Literal("NEG-OPEN"), SubscriptionId, Filter, Schema.String]
 )
 export type ClientNegOpenMessage = typeof ClientNegOpenMessage.Type
 
 export const ClientNegMsgMessage = Schema.Tuple(
-  Schema.Literal("NEG-MSG"),
-  SubscriptionId,
-  Schema.String
+  [Schema.Literal("NEG-MSG"), SubscriptionId, Schema.String]
 )
 export type ClientNegMsgMessage = typeof ClientNegMsgMessage.Type
 
 export const ClientNegCloseMessage = Schema.Tuple(
-  Schema.Literal("NEG-CLOSE"),
-  SubscriptionId
+  [Schema.Literal("NEG-CLOSE"), SubscriptionId]
 )
 export type ClientNegCloseMessage = typeof ClientNegCloseMessage.Type
 
-export const ClientMessage = Schema.Union(
+export const ClientMessage = Schema.Union([
   ClientEventMessage,
   ClientReqMessage,
   ClientCloseMessage,
@@ -198,7 +185,7 @@ export const ClientMessage = Schema.Union(
   ClientNegOpenMessage,
   ClientNegMsgMessage,
   ClientNegCloseMessage
-)
+])
 export type ClientMessage = typeof ClientMessage.Type
 
 // =============================================================================
@@ -207,63 +194,55 @@ export type ClientMessage = typeof ClientMessage.Type
 
 /** EVENT message: relay sends matching event */
 export const RelayEventMessage = Schema.Tuple(
-  Schema.Literal("EVENT"),
-  SubscriptionId,
-  NostrEvent
+  [Schema.Literal("EVENT"), SubscriptionId, NostrEvent]
 )
 export type RelayEventMessage = typeof RelayEventMessage.Type
 
 /** OK message: event accepted/rejected */
 export const RelayOkMessage = Schema.Tuple(
-  Schema.Literal("OK"),
-  EventId,
-  Schema.Boolean,
-  Schema.String // reason
+  [Schema.Literal("OK"), EventId, Schema.Boolean, Schema.String] // reason
 )
 export type RelayOkMessage = typeof RelayOkMessage.Type
 
 /** EOSE message: end of stored events */
 export const RelayEoseMessage = Schema.Tuple(
-  Schema.Literal("EOSE"),
-  SubscriptionId
+  [Schema.Literal("EOSE"), SubscriptionId]
 )
 export type RelayEoseMessage = typeof RelayEoseMessage.Type
 
 /** CLOSED message: subscription closed by relay */
 export const RelayClosedMessage = Schema.Tuple(
-  Schema.Literal("CLOSED"),
-  SubscriptionId,
-  Schema.String // reason
+  [Schema.Literal("CLOSED"), SubscriptionId, Schema.String] // reason
 )
 export type RelayClosedMessage = typeof RelayClosedMessage.Type
 
 /** NOTICE message: human-readable message */
 export const RelayNoticeMessage = Schema.Tuple(
-  Schema.Literal("NOTICE"),
-  Schema.String
+  [Schema.Literal("NOTICE"), Schema.String]
 )
 export type RelayNoticeMessage = typeof RelayNoticeMessage.Type
 
 /** AUTH message: authentication challenge (NIP-42) */
 export const RelayAuthMessage = Schema.Tuple(
-  Schema.Literal("AUTH"),
-  Schema.String // challenge string
+  [Schema.Literal("AUTH"), Schema.String] // challenge string
 )
 export type RelayAuthMessage = typeof RelayAuthMessage.Type
 
 /** All relay message types */
 /** COUNT response (NIP-45): relay returns count for a query id */
 export const RelayCountMessage = Schema.Tuple(
-  Schema.Literal("COUNT"),
-  SubscriptionId,
-  Schema.Struct({
-    count: Schema.Number,
-    approximate: Schema.optional(Schema.Boolean),
-  })
+  [
+    Schema.Literal("COUNT"),
+    SubscriptionId,
+    Schema.Struct({
+      count: Schema.Number,
+      approximate: Schema.optional(Schema.Boolean),
+    }),
+  ]
 )
 export type RelayCountMessage = typeof RelayCountMessage.Type
 
-export const RelayMessage = Schema.Union(
+export const RelayMessage = Schema.Union([
   RelayEventMessage,
   RelayOkMessage,
   RelayEoseMessage,
@@ -272,9 +251,9 @@ export const RelayMessage = Schema.Union(
   RelayAuthMessage,
   RelayCountMessage,
   // NIP-77
-  Schema.Tuple(Schema.Literal("NEG-MSG"), SubscriptionId, Schema.String),
-  Schema.Tuple(Schema.Literal("NEG-ERR"), SubscriptionId, Schema.String)
-)
+  Schema.Tuple([Schema.Literal("NEG-MSG"), SubscriptionId, Schema.String]),
+  Schema.Tuple([Schema.Literal("NEG-ERR"), SubscriptionId, Schema.String]),
+])
 export type RelayMessage = typeof RelayMessage.Type
 
 // =============================================================================

@@ -5,7 +5,7 @@
  * Build/publish snippet events with rich tags and query helpers.
  */
 import { Context, Effect, Layer, Stream, Option } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -49,7 +49,7 @@ export interface NipC0Service {
   listByAuthor(params: QueryByAuthorParams): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const NipC0Service = Context.GenericTag<NipC0Service>("NipC0Service")
+export const NipC0Service = Context.Service<NipC0Service>("NipC0Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -95,7 +95,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 600).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) results.push(next.value)
       })
       const n = limit ?? 1

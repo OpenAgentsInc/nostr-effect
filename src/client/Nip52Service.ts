@@ -6,7 +6,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/52.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -86,7 +86,7 @@ export interface Nip52Service {
   getByD(kind: 31922 | 31923 | 31924 | 31925, author: PublicKey, d: string): Effect.Effect<NostrEvent | null, RelayError>
 }
 
-export const Nip52Service = Context.GenericTag<Nip52Service>("Nip52Service")
+export const Nip52Service = Context.Service<Nip52Service>("Nip52Service")
 
 // =============================================================================
 // Helpers
@@ -179,7 +179,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(600).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))

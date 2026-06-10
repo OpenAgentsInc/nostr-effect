@@ -5,7 +5,7 @@
  * Returns relay messages for the client and broadcasts.
  */
 import { Context, Effect, Layer, Option } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventStore } from "../storage/EventStore.js"
 import { SubscriptionManager, type Subscription } from "./SubscriptionManager.js"
 import { PolicyPipeline } from "./policy/index.js"
@@ -67,7 +67,7 @@ export interface MessageHandler {
 // Service Tag
 // =============================================================================
 
-export const MessageHandler = Context.GenericTag<MessageHandler>("MessageHandler")
+export const MessageHandler = Context.Service<MessageHandler>("MessageHandler")
 
 // =============================================================================
 // Message Building Helpers
@@ -452,7 +452,7 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
       })
 
       // Decode as ClientMessage
-      const decoded = yield* Schema.decodeUnknown(ClientMessage)(parsed).pipe(
+      const decoded = yield* Schema.decodeUnknownEffect(ClientMessage)(parsed).pipe(
         Effect.mapError(
           () => new MessageParseError({ message: "Invalid message format", raw })
         )

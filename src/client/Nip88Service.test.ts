@@ -8,7 +8,7 @@ import { RelayService, makeRelayService } from "./RelayService.js"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind, Filter, type NostrEvent } from "../core/Schema.js"
 
 const decodeKind = Schema.decodeSync(EventKind)
@@ -72,7 +72,7 @@ describe("Nip88Service (NIP-88)", () => {
       const maybePoll = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(400).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       const pollEvent = Option.isSome(maybePoll) ? maybePoll.value : null
       expect(pollEvent?.kind as number).toBe(1068)
       const pollId = pollEvent!.id
@@ -134,7 +134,7 @@ describe("Nip88Service (NIP-88)", () => {
       const maybePoll = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(400).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       const pollEvent = Option.isSome(maybePoll) ? maybePoll.value : null
       expect(pollEvent?.kind as number).toBe(1068)
       const pollId = pollEvent!.id

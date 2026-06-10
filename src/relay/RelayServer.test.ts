@@ -1,6 +1,6 @@
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { startTestRelay, type RelayHandle } from "./index"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService"
 import { EventService, EventServiceLive } from "../services/EventService"

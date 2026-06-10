@@ -1,30 +1,30 @@
 /**
  * Typed Error Classes
  *
- * All errors extend Schema.TaggedError for serialization support.
+ * All errors extend Schema.TaggedErrorClass for serialization support.
  */
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 
 // =============================================================================
 // Validation Errors
 // =============================================================================
 
-export class InvalidEventId extends Schema.TaggedError<InvalidEventId>()(
+export class InvalidEventId extends Schema.TaggedErrorClass<InvalidEventId>()(
   "InvalidEventId",
   { message: Schema.String }
 ) {}
 
-export class InvalidSignature extends Schema.TaggedError<InvalidSignature>()(
+export class InvalidSignature extends Schema.TaggedErrorClass<InvalidSignature>()(
   "InvalidSignature",
   { message: Schema.String }
 ) {}
 
-export class InvalidEventFormat extends Schema.TaggedError<InvalidEventFormat>()(
+export class InvalidEventFormat extends Schema.TaggedErrorClass<InvalidEventFormat>()(
   "InvalidEventFormat",
   { message: Schema.String }
 ) {}
 
-export class EventValidationError extends Schema.TaggedError<EventValidationError>()(
+export class EventValidationError extends Schema.TaggedErrorClass<EventValidationError>()(
   "EventValidationError",
   { message: Schema.String }
 ) {}
@@ -33,11 +33,11 @@ export class EventValidationError extends Schema.TaggedError<EventValidationErro
 // Crypto Errors
 // =============================================================================
 
-export class CryptoError extends Schema.TaggedError<CryptoError>()(
+export class CryptoError extends Schema.TaggedErrorClass<CryptoError>()(
   "CryptoError",
   {
     message: Schema.String,
-    operation: Schema.Literal(
+    operation: Schema.Literals([
       "sign",
       "verify",
       "hash",
@@ -45,17 +45,17 @@ export class CryptoError extends Schema.TaggedError<CryptoError>()(
       "encrypt",
       "decrypt",
       "getConversationKey",
-      "encryptWithNonce"
-    ),
+      "encryptWithNonce",
+    ]),
   }
 ) {}
 
-export class InvalidPrivateKey extends Schema.TaggedError<InvalidPrivateKey>()(
+export class InvalidPrivateKey extends Schema.TaggedErrorClass<InvalidPrivateKey>()(
   "InvalidPrivateKey",
   { message: Schema.String }
 ) {}
 
-export class InvalidPublicKey extends Schema.TaggedError<InvalidPublicKey>()(
+export class InvalidPublicKey extends Schema.TaggedErrorClass<InvalidPublicKey>()(
   "InvalidPublicKey",
   { message: Schema.String }
 ) {}
@@ -64,12 +64,12 @@ export class InvalidPublicKey extends Schema.TaggedError<InvalidPublicKey>()(
 // Encoding Errors
 // =============================================================================
 
-export class EncodingError extends Schema.TaggedError<EncodingError>()(
+export class EncodingError extends Schema.TaggedErrorClass<EncodingError>()(
   "EncodingError",
   { message: Schema.String }
 ) {}
 
-export class DecodingError extends Schema.TaggedError<DecodingError>()(
+export class DecodingError extends Schema.TaggedErrorClass<DecodingError>()(
   "DecodingError",
   { message: Schema.String }
 ) {}
@@ -78,7 +78,7 @@ export class DecodingError extends Schema.TaggedError<DecodingError>()(
 // Connection Errors
 // =============================================================================
 
-export class ConnectionError extends Schema.TaggedError<ConnectionError>()(
+export class ConnectionError extends Schema.TaggedErrorClass<ConnectionError>()(
   "ConnectionError",
   {
     message: Schema.String,
@@ -86,7 +86,7 @@ export class ConnectionError extends Schema.TaggedError<ConnectionError>()(
   }
 ) {}
 
-export class ConnectionClosed extends Schema.TaggedError<ConnectionClosed>()(
+export class ConnectionClosed extends Schema.TaggedErrorClass<ConnectionClosed>()(
   "ConnectionClosed",
   {
     message: Schema.String,
@@ -95,12 +95,12 @@ export class ConnectionClosed extends Schema.TaggedError<ConnectionClosed>()(
   }
 ) {}
 
-export class MessageSendError extends Schema.TaggedError<MessageSendError>()(
+export class MessageSendError extends Schema.TaggedErrorClass<MessageSendError>()(
   "MessageSendError",
   { message: Schema.String }
 ) {}
 
-export class TimeoutError extends Schema.TaggedError<TimeoutError>()(
+export class TimeoutError extends Schema.TaggedErrorClass<TimeoutError>()(
   "TimeoutError",
   {
     message: Schema.String,
@@ -112,7 +112,7 @@ export class TimeoutError extends Schema.TaggedError<TimeoutError>()(
 // Relay Errors
 // =============================================================================
 
-export class RelayError extends Schema.TaggedError<RelayError>()(
+export class RelayError extends Schema.TaggedErrorClass<RelayError>()(
   "RelayError",
   {
     message: Schema.String,
@@ -120,7 +120,7 @@ export class RelayError extends Schema.TaggedError<RelayError>()(
   }
 ) {}
 
-export class RelayNotice extends Schema.TaggedError<RelayNotice>()(
+export class RelayNotice extends Schema.TaggedErrorClass<RelayNotice>()(
   "RelayNotice",
   {
     message: Schema.String,
@@ -128,7 +128,7 @@ export class RelayNotice extends Schema.TaggedError<RelayNotice>()(
   }
 ) {}
 
-export class SubscriptionError extends Schema.TaggedError<SubscriptionError>()(
+export class SubscriptionError extends Schema.TaggedErrorClass<SubscriptionError>()(
   "SubscriptionError",
   {
     message: Schema.String,
@@ -136,7 +136,7 @@ export class SubscriptionError extends Schema.TaggedError<SubscriptionError>()(
   }
 ) {}
 
-export class SubscriptionClosed extends Schema.TaggedError<SubscriptionClosed>()(
+export class SubscriptionClosed extends Schema.TaggedErrorClass<SubscriptionClosed>()(
   "SubscriptionClosed",
   {
     subscriptionId: Schema.String,
@@ -148,22 +148,22 @@ export class SubscriptionClosed extends Schema.TaggedError<SubscriptionClosed>()
 // Storage Errors (Relay)
 // =============================================================================
 
-export class StorageError extends Schema.TaggedError<StorageError>()(
+export class StorageError extends Schema.TaggedErrorClass<StorageError>()(
   "StorageError",
   {
     message: Schema.String,
-    operation: Schema.Literal("insert", "query", "delete", "init", "upsert"),
+    operation: Schema.Literals(["insert", "query", "delete", "init", "upsert"]),
   }
 ) {}
 
-export class DuplicateEvent extends Schema.TaggedError<DuplicateEvent>()(
+export class DuplicateEvent extends Schema.TaggedErrorClass<DuplicateEvent>()(
   "DuplicateEvent",
   {
     eventId: Schema.String,
   }
 ) {}
 
-export class MessageParseError extends Schema.TaggedError<MessageParseError>()(
+export class MessageParseError extends Schema.TaggedErrorClass<MessageParseError>()(
   "MessageParseError",
   {
     message: Schema.String,

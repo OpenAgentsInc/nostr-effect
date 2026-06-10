@@ -42,7 +42,7 @@ export interface Nip86AdminService {
   listBlockedIps(): Effect.Effect<readonly IpEntry[]>
 }
 
-export const Nip86AdminService = Context.GenericTag<Nip86AdminService>("Nip86AdminService")
+export const Nip86AdminService = Context.Service<Nip86AdminService>("Nip86AdminService")
 
 export const Nip86AdminServiceLive = (initialInfo: Partial<RelayInfo> = {}) =>
   Layer.effect(

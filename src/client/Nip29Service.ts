@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/29.md
  */
 import { Context, Effect, Layer, Stream, Option } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { makeRelayServiceScoped } from "./RelayService.js"
 import { ConnectionError, SubscriptionError } from "../core/Errors.js"
 import {
@@ -162,7 +162,7 @@ export interface Nip29Service {
 // Service Tag
 // =============================================================================
 
-export const Nip29Service = Context.GenericTag<Nip29Service>("Nip29Service")
+export const Nip29Service = Context.Service<Nip29Service>("Nip29Service")
 
 // =============================================================================
 // Helper Functions
@@ -279,7 +279,7 @@ const make = Effect.gen(function* () {
       const maybeEvent = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(3000).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
       yield* sub.unsubscribe()
       yield* relay.disconnect()

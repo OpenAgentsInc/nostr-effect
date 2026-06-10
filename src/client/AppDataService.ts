@@ -6,7 +6,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/78.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -73,7 +73,7 @@ export interface AppDataService {
   listKeys(options: ListKeysOptions): Effect.Effect<readonly string[], RelayError>
 }
 
-export const AppDataService = Context.GenericTag<AppDataService>("AppDataService")
+export const AppDataService = Context.Service<AppDataService>("AppDataService")
 
 // =============================================================================
 // Implementation
@@ -120,7 +120,7 @@ const make = Effect.gen(function* () {
       const maybeEvent = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(600).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybeEvent) ? maybeEvent.value : null
     }).pipe(
@@ -143,7 +143,7 @@ const make = Effect.gen(function* () {
           const next = yield* Effect.race(
             sub.events.pipe(Stream.runHead),
             Effect.sleep(50).pipe(Effect.as(Option.none<NostrEvent>()))
-          ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+          ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
           if (Option.isNone(next)) break
           const event = next.value
           const d = event.tags.find((t) => t[0] === "d")?.[1]

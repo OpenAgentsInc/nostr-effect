@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/89.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { CryptoService } from "../services/CryptoService.js"
@@ -142,7 +142,7 @@ export interface HandlerService {
 // Service Tag
 // =============================================================================
 
-export const HandlerService = Context.GenericTag<HandlerService>("HandlerService")
+export const HandlerService = Context.Service<HandlerService>("HandlerService")
 
 // =============================================================================
 // Helper Functions
@@ -415,7 +415,7 @@ const make = Effect.gen(function* () {
       const maybeEventOption = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(500).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
       yield* sub.unsubscribe()
 

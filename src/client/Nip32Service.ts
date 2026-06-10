@@ -5,7 +5,7 @@
  * Allows publishing labels for targets (events, pubkeys, relays, topics, addresses) using L/l tags.
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -51,7 +51,7 @@ export interface Nip32Service {
   queryLabels(options?: QueryLabelsOptions): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const Nip32Service = Context.GenericTag<Nip32Service>("Nip32Service")
+export const Nip32Service = Context.Service<Nip32Service>("Nip32Service")
 
 const targetToTag = (t: LabelTarget): string[] => {
   switch (t.type) {
@@ -109,7 +109,7 @@ const make = Effect.gen(function* () {
           const next = yield* Effect.race(
             sub.events.pipe(Stream.runHead),
             Effect.sleep(60).pipe(Effect.as(Option.none<NostrEvent>()))
-          ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+          ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
           if (Option.isNone(next)) break
           results.push(next.value)
           count++

@@ -6,7 +6,7 @@
  *
  * @see https://github.com/OpenAgentsInc/openagents.com/blob/main/docs/mechacoder/NIP-SB.md
  */
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind } from "./Schema.js"
 
 // =============================================================================
@@ -44,8 +44,7 @@ export const SANDBOX_FEEDBACK_KIND = 7000 as EventKind // Standard NIP-90 feedba
 
 /** Sandbox identifier (e.g., "sb_abc123") */
 export const SandboxId = Schema.String.pipe(
-  Schema.minLength(1),
-  Schema.maxLength(64),
+  Schema.check(Schema.isMinLength(1), Schema.isMaxLength(64)),
   Schema.brand("SandboxId")
 )
 export type SandboxId = typeof SandboxId.Type
@@ -55,35 +54,35 @@ export type SandboxId = typeof SandboxId.Type
 // =============================================================================
 
 /** Sandbox status values */
-export const SandboxStatus = Schema.Union(
-  Schema.Literal("pending"),
-  Schema.Literal("creating"),
-  Schema.Literal("running"),
-  Schema.Literal("stopped"),
-  Schema.Literal("error"),
-  Schema.Literal("deleted")
-)
+export const SandboxStatus = Schema.Literals([
+  "pending",
+  "creating",
+  "running",
+  "stopped",
+  "error",
+  "deleted",
+])
 export type SandboxStatus = typeof SandboxStatus.Type
 
 /** Control actions */
-export const SandboxControlAction = Schema.Union(
-  Schema.Literal("start"),
-  Schema.Literal("stop"),
-  Schema.Literal("restart"),
-  Schema.Literal("delete"),
-  Schema.Literal("snapshot")
-)
+export const SandboxControlAction = Schema.Literals([
+  "start",
+  "stop",
+  "restart",
+  "delete",
+  "snapshot",
+])
 export type SandboxControlAction = typeof SandboxControlAction.Type
 
 /** Supported languages */
-export const SandboxLanguage = Schema.Union(
-  Schema.Literal("typescript"),
-  Schema.Literal("javascript"),
-  Schema.Literal("python"),
-  Schema.Literal("rust"),
-  Schema.Literal("go"),
-  Schema.Literal("java")
-)
+export const SandboxLanguage = Schema.Literals([
+  "typescript",
+  "javascript",
+  "python",
+  "rust",
+  "go",
+  "java",
+])
 export type SandboxLanguage = typeof SandboxLanguage.Type
 
 // =============================================================================
@@ -95,17 +94,17 @@ export const SandboxCreateConfig = Schema.Struct({
   /** Base image (optional) */
   image: Schema.optional(Schema.String),
   /** CPU cores (default: 1) */
-  cpu: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  cpu: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   /** Memory in MB (default: 1024) */
-  memory: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  memory: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   /** Disk in MB (default: 10240) */
-  disk: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  disk: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   /** Primary language */
   language: Schema.optional(SandboxLanguage),
   /** Max lifetime in seconds */
-  timeout: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  timeout: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   /** Environment variables */
-  env: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.String })),
+  env: Schema.optional(Schema.Record(Schema.String, Schema.String)),
 })
 export type SandboxCreateConfig = typeof SandboxCreateConfig.Type
 
@@ -114,7 +113,7 @@ export const SandboxExecuteOptions = Schema.Struct({
   /** Working directory */
   cwd: Schema.optional(Schema.String),
   /** Command timeout in seconds */
-  timeout: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  timeout: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   /** Stream output via feedback events */
   stream: Schema.optional(Schema.Boolean),
   /** Shell to use (bash, sh, zsh) */
@@ -129,14 +128,14 @@ export const SandboxGitCloneOptions = Schema.Struct({
   /** Clone destination (default: /workspace) */
   path: Schema.optional(Schema.String),
   /** Shallow clone depth */
-  depth: Schema.optional(Schema.Number.pipe(Schema.int(), Schema.positive())),
+  depth: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
 })
 export type SandboxGitCloneOptions = typeof SandboxGitCloneOptions.Type
 
 /** Options for uploading a file (kind 5702) */
 export const SandboxUploadOptions = Schema.Struct({
   /** Content encoding (base64, utf8) */
-  encoding: Schema.optional(Schema.Union(Schema.Literal("base64"), Schema.Literal("utf8"))),
+  encoding: Schema.optional(Schema.Literals(["base64", "utf8"])),
   /** Unix permissions (default: 644) */
   permissions: Schema.optional(Schema.String),
 })
@@ -145,14 +144,14 @@ export type SandboxUploadOptions = typeof SandboxUploadOptions.Type
 /** Options for downloading a file (kind 5703) */
 export const SandboxDownloadOptions = Schema.Struct({
   /** Response format (base64, blossom) */
-  format: Schema.optional(Schema.Union(Schema.Literal("base64"), Schema.Literal("blossom"))),
+  format: Schema.optional(Schema.Literals(["base64", "blossom"])),
 })
 export type SandboxDownloadOptions = typeof SandboxDownloadOptions.Type
 
 /** Options for port forwarding (kind 5707) */
 export const SandboxPortForwardOptions = Schema.Struct({
   /** Protocol (http, tcp) */
-  protocol: Schema.optional(Schema.Union(Schema.Literal("http"), Schema.Literal("tcp"))),
+  protocol: Schema.optional(Schema.Literals(["http", "tcp"])),
   /** Public access (default: false) */
   public: Schema.optional(Schema.Boolean),
 })
@@ -180,7 +179,7 @@ export type SandboxCreateResult = typeof SandboxCreateResult.Type
 export const SandboxExecuteResult = Schema.Struct({
   stdout: Schema.String,
   stderr: Schema.String,
-  exitCode: Schema.Number.pipe(Schema.int()),
+  exitCode: Schema.Int,
   duration: Schema.optional(Schema.Number), // milliseconds
 })
 export type SandboxExecuteResult = typeof SandboxExecuteResult.Type
@@ -188,7 +187,7 @@ export type SandboxExecuteResult = typeof SandboxExecuteResult.Type
 /** Result from file upload (kind 6702) */
 export const SandboxUploadResult = Schema.Struct({
   path: Schema.String,
-  size: Schema.Number.pipe(Schema.int()),
+  size: Schema.Int,
   sha256: Schema.optional(Schema.String),
 })
 export type SandboxUploadResult = typeof SandboxUploadResult.Type
@@ -197,7 +196,7 @@ export type SandboxUploadResult = typeof SandboxUploadResult.Type
 export const SandboxDownloadResult = Schema.Struct({
   content: Schema.optional(Schema.String), // base64 for small files
   blossom: Schema.optional(Schema.String), // blossom hash for large files
-  size: Schema.Number.pipe(Schema.int()),
+  size: Schema.Int,
   sha256: Schema.optional(Schema.String),
   url: Schema.optional(Schema.String), // download URL for large files
 })
@@ -229,14 +228,14 @@ export type SandboxStatusResult = typeof SandboxStatusResult.Type
 export const SandboxGitCloneResult = Schema.Struct({
   commit: Schema.String,
   branch: Schema.String,
-  files: Schema.Number.pipe(Schema.int()),
+  files: Schema.Int,
 })
 export type SandboxGitCloneResult = typeof SandboxGitCloneResult.Type
 
 /** Result from port forward (kind 6707) */
 export const SandboxPortForwardResult = Schema.Struct({
-  internal: Schema.Number.pipe(Schema.int()),
-  external: Schema.optional(Schema.Number.pipe(Schema.int())),
+  internal: Schema.Int,
+  external: Schema.optional(Schema.Int),
   url: Schema.String,
 })
 export type SandboxPortForwardResult = typeof SandboxPortForwardResult.Type
@@ -251,7 +250,7 @@ export const SandboxState = Schema.Struct({
   ports: Schema.optional(
     Schema.Array(
       Schema.Struct({
-        internal: Schema.Number.pipe(Schema.int()),
+        internal: Schema.Int,
         url: Schema.String,
       })
     )
@@ -271,15 +270,15 @@ export type SandboxState = typeof SandboxState.Type
 // =============================================================================
 
 /** Sandbox-specific feedback statuses */
-export const SandboxFeedbackStatus = Schema.Union(
-  Schema.Literal("payment-required"),
-  Schema.Literal("creating"),
-  Schema.Literal("ready"),
-  Schema.Literal("processing"),
-  Schema.Literal("streaming"),
-  Schema.Literal("error"),
-  Schema.Literal("success")
-)
+export const SandboxFeedbackStatus = Schema.Literals([
+  "payment-required",
+  "creating",
+  "ready",
+  "processing",
+  "streaming",
+  "error",
+  "success",
+])
 export type SandboxFeedbackStatus = typeof SandboxFeedbackStatus.Type
 
 // =============================================================================

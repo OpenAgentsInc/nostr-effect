@@ -6,7 +6,7 @@
  * - Replies MUST use NIP-22 (kind 1111) comments pointing to the root
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -48,7 +48,7 @@ export interface Nip7DService {
   listThreadsByAuthor(params: ListByAuthorParams): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const Nip7DService = Context.GenericTag<Nip7DService>("Nip7DService")
+export const Nip7DService = Context.Service<Nip7DService>("Nip7DService")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -110,7 +110,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 600).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) results.push(next.value)
       })
       const n = limit ?? 1

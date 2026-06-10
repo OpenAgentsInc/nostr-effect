@@ -6,7 +6,7 @@ import { Effect, Layer, Option, Stream } from "effect"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind, Filter } from "../core/Schema.js"
 import { makeRelayService, RelayService } from "./RelayService.js"
 import { Nip77Service, Nip77ServiceLive } from "./Nip77Service.js"
@@ -129,7 +129,7 @@ describe("Nip77Service (client)", () => {
       const first = yield* Effect.race(
         sess.messages.pipe(Stream.runHead),
         Effect.sleep(800).pipe(Effect.as(Option.none<string>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<string>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<string>())))
       const diff1Hex = Option.isSome(first) ? first.value : ""
       const diff1 = decodeIdListMessage(diff1Hex).ids
       expect(diff1).toContain(ev2.id)
@@ -196,7 +196,7 @@ describe("Nip77Service (client)", () => {
         const maybe = yield* Effect.race(
           sess.messages.pipe(Stream.runHead),
           Effect.sleep(800).pipe(Effect.as(Option.none<string>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<string>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<string>())))
 
         if (Option.isNone(maybe)) break
         const diffIds = decodeIdListMessage(maybe.value).ids

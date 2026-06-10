@@ -51,7 +51,7 @@ export interface NipBEService {
   decompress(data: Uint8Array): Effect.Effect<Uint8Array, Error>
 }
 
-export const NipBEService = Context.GenericTag<NipBEService>("NipBEService")
+export const NipBEService = Context.Service<NipBEService>("NipBEService")
 
 // =============================================================================
 // Implementation

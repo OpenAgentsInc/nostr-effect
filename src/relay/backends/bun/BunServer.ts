@@ -4,7 +4,7 @@
  * WebSocket server using Bun.serve for NIP-01 relay protocol.
  * Wires together EventStore, SubscriptionManager, and MessageHandler.
  */
-import { Context, Effect, Layer, Runtime } from "effect"
+import { Context, Effect, Layer } from "effect"
 import { MessageHandler, type BroadcastMessage } from "../../core/MessageHandler.js"
 import { SubscriptionManager } from "../../core/SubscriptionManager.js"
 import type { RelayMessage } from "../../../core/Schema.js"
@@ -55,7 +55,7 @@ export interface RelayHandle {
 // Service Tag
 // =============================================================================
 
-export const RelayServer = Context.GenericTag<RelayServer>("RelayServer")
+export const RelayServer = Context.Service<RelayServer>("RelayServer")
 
 // =============================================================================
 // Service Implementation
@@ -96,9 +96,6 @@ const make = Effect.gen(function* () {
 
   const start: RelayServer["start"] = (config) =>
     Effect.gen(function* () {
-      const runtime = yield* Effect.runtime<never>()
-      const runSync = Runtime.runSync(runtime)
-
       // Build relay info from config
       const relayInfo = config.relayInfo
         ? mergeRelayInfo(config.relayInfo)
@@ -321,9 +318,9 @@ const make = Effect.gen(function* () {
             const raw = typeof message === "string" ? message : message.toString()
 
             // Handle message using Effect runtime
-            const result = runSync(
+            const result = Effect.runSync(
               messageHandler.handleRaw(data.connectionId, raw).pipe(
-                Effect.catchAll((error) =>
+                Effect.catch((error) =>
                   Effect.succeed({
                     responses: [["NOTICE", `error: ${error.message}`] as RelayMessage],
                     broadcasts: [],
@@ -345,7 +342,7 @@ const make = Effect.gen(function* () {
             const data = ws.data as ConnectionData
 
             // Clean up subscriptions
-            runSync(subscriptionManager.removeConnection(data.connectionId))
+            Effect.runSync(subscriptionManager.removeConnection(data.connectionId))
 
             // Remove from connection map
             connections.delete(data.connectionId)

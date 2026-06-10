@@ -5,7 +5,7 @@
  * Parameterized replaceable by d-tag (URL without scheme).
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -47,7 +47,7 @@ export interface NipB0Service {
   listByTopic(topic: string, params?: QueryParams): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const NipB0Service = Context.GenericTag<NipB0Service>("NipB0Service")
+export const NipB0Service = Context.Service<NipB0Service>("NipB0Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -82,7 +82,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))
@@ -99,7 +99,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 500).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) results.push(next.value)
       })
       const n = limit ?? 1

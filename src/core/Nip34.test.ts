@@ -55,7 +55,7 @@ import {
 } from "./Nip34.js"
 import { NostrEvent as NostrEventSchema } from "./Schema.js"
 import type { NostrEvent, EventKind } from "./Schema.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 
 // Helper to create a properly typed mock event using Schema decode
 function createMockEvent(

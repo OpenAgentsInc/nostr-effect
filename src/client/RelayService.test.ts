@@ -3,7 +3,7 @@
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, makeRelayService } from "./RelayService.js"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
@@ -96,11 +96,11 @@ describe("RelayService", () => {
       const result = await Effect.runPromise(
         program.pipe(
           Effect.provide(RelayLayer),
-          Effect.either
+          Effect.result
         )
       )
 
-      expect(result._tag).toBe("Left")
+      expect(result._tag).toBe("Failure")
     })
   })
 

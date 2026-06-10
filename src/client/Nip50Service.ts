@@ -5,7 +5,7 @@
  * Provides convenience functions to query events by search string.
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -32,7 +32,7 @@ export interface Nip50Service {
   getOne(params: Omit<SearchParams, "limit">): Effect.Effect<NostrEvent | null, RelayError>
 }
 
-export const Nip50Service = Context.GenericTag<Nip50Service>("Nip50Service")
+export const Nip50Service = Context.Service<Nip50Service>("Nip50Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -56,7 +56,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 500).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) results.push(next.value)
       })
 

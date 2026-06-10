@@ -93,8 +93,8 @@ describe("Nip44Service", () => {
           const sec1 = v.sec1 as PrivateKey
           const pub2 = v.pub2 as PublicKey
 
-          const result = yield* nip44.getConversationKey(sec1, pub2).pipe(Effect.either)
-          expect(result._tag).toBe("Left")
+          const result = yield* nip44.getConversationKey(sec1, pub2).pipe(Effect.result)
+          expect(result._tag).toBe("Failure")
         }
       })
 
@@ -269,9 +269,9 @@ describe("Nip44Service", () => {
         const tampered = (encrypted.slice(0, -1) +
           (encrypted.slice(-1) === "A" ? "B" : "A")) as EncryptedPayload
 
-        const result = yield* nip44.decrypt(tampered, convKey).pipe(Effect.either)
+        const result = yield* nip44.decrypt(tampered, convKey).pipe(Effect.result)
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
       })
 
       await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
@@ -293,9 +293,9 @@ describe("Nip44Service", () => {
         const encrypted = yield* nip44.encrypt("test message", convKey1)
 
         // Try to decrypt with wrong key
-        const result = yield* nip44.decrypt(encrypted, convKey2).pipe(Effect.either)
+        const result = yield* nip44.decrypt(encrypted, convKey2).pipe(Effect.result)
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
       })
 
       await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
@@ -313,9 +313,9 @@ describe("Nip44Service", () => {
 
         const result = yield* nip44
           .decrypt("" as EncryptedPayload, convKey)
-          .pipe(Effect.either)
+          .pipe(Effect.result)
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
       })
 
       await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
@@ -334,9 +334,9 @@ describe("Nip44Service", () => {
         // Payload starting with # indicates unsupported version
         const result = yield* nip44
           .decrypt("#invalid" as unknown as EncryptedPayload, convKey)
-          .pipe(Effect.either)
+          .pipe(Effect.result)
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
       })
 
       await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
@@ -351,8 +351,8 @@ describe("Nip44Service", () => {
           const convKey = v.conversation_key as ConversationKey
           const payload = v.payload as EncryptedPayload
 
-          const result = yield* nip44.decrypt(payload, convKey).pipe(Effect.either)
-          expect(result._tag).toBe("Left")
+          const result = yield* nip44.decrypt(payload, convKey).pipe(Effect.result)
+          expect(result._tag).toBe("Failure")
         }
       })
 

@@ -77,7 +77,7 @@ export interface NipRegistry {
 // Service Tag
 // =============================================================================
 
-export const NipRegistry = Context.GenericTag<NipRegistry>("NipRegistry")
+export const NipRegistry = Context.Service<NipRegistry>("NipRegistry")
 
 // =============================================================================
 // Service Implementation

@@ -7,7 +7,7 @@
  * - Welcome event (kind 444) wrapped via NIP-59 gift wrap (unsinged rumor)
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -61,7 +61,7 @@ export interface NipEEService {
   getLatestKeyPackage(author: string, timeoutMs?: number): Effect.Effect<NostrEvent | null, RelayError>
 }
 
-export const NipEEService = Context.GenericTag<NipEEService>("NipEEService")
+export const NipEEService = Context.Service<NipEEService>("NipEEService")
 
 // =============================================================================
 // Implementation
@@ -145,7 +145,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))

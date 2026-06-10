@@ -56,7 +56,7 @@ export interface Nip39Service {
   ) => readonly string[]
 }
 
-export const Nip39Service = Context.GenericTag<Nip39Service>("Nip39Service")
+export const Nip39Service = Context.Service<Nip39Service>("Nip39Service")
 
 /**
  * Create the Nip39Service implementation

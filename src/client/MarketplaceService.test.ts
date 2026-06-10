@@ -8,7 +8,7 @@ import { RelayService, makeRelayService } from "./RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { MarketplaceService, MarketplaceServiceLive } from "./MarketplaceService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind, Filter } from "../core/Schema.js"
 
 const decodeKind = Schema.decodeSync(EventKind)

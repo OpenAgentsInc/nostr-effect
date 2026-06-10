@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/28.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -192,7 +192,7 @@ export interface ChatService {
 // Service Tag
 // =============================================================================
 
-export const ChatService = Context.GenericTag<ChatService>("ChatService")
+export const ChatService = Context.Service<ChatService>("ChatService")
 
 // =============================================================================
 // Pure Helper Functions (exported for wrappers)
@@ -475,7 +475,7 @@ const make = Effect.gen(function* () {
       const maybeCreateEvent = yield* Effect.race(
         createSub.events.pipe(Stream.runHead),
         Effect.sleep(500).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* createSub.unsubscribe()
 
       if (Option.isNone(maybeCreateEvent)) {
@@ -497,7 +497,7 @@ const make = Effect.gen(function* () {
       const maybeMetaEvent = yield* Effect.race(
         metaSub.events.pipe(Stream.runHead),
         Effect.sleep(500).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* metaSub.unsubscribe()
 
       const latestMetadata = Option.isSome(maybeMetaEvent)
@@ -542,7 +542,7 @@ const make = Effect.gen(function* () {
       yield* Effect.race(
         collectEffect,
         Effect.sleep(1000)
-      ).pipe(Effect.catchAll(() => Effect.void))
+      ).pipe(Effect.catch(() => Effect.void))
 
       yield* sub.unsubscribe()
 

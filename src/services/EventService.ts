@@ -67,7 +67,7 @@ export interface EventService {
 // Service Tag
 // =============================================================================
 
-export const EventService = Context.GenericTag<EventService>("EventService")
+export const EventService = Context.Service<EventService>("EventService")
 
 // =============================================================================
 // Service Implementation

@@ -6,7 +6,7 @@
  * - Response event: kind 1018
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -65,7 +65,7 @@ export interface Nip88Service {
   countResults(options: CountResultsOptions): Effect.Effect<PollResult, never>
 }
 
-export const Nip88Service = Context.GenericTag<Nip88Service>("Nip88Service")
+export const Nip88Service = Context.Service<Nip88Service>("Nip88Service")
 
 const getPollType = (pollEvent: NostrEvent): PollType => {
   const t = pollEvent.tags.find((t) => t[0] === "polltype")?.[1]
@@ -137,7 +137,7 @@ const make = Effect.gen(function* () {
           const next = yield* Effect.race(
             sub.events.pipe(Stream.runHead),
             Effect.sleep(80).pipe(Effect.as(Option.none<NostrEvent>()))
-          ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+          ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
           if (Option.isNone(next)) break
           results.push(next.value)
           count++

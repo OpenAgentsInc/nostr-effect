@@ -6,7 +6,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/66.md
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -87,7 +87,7 @@ export interface RelayDiscoveryService {
   }): Effect.Effect<readonly RelayDiscoveryRecord[], RelayError>
 }
 
-export const RelayDiscoveryService = Context.GenericTag<RelayDiscoveryService>("RelayDiscoveryService")
+export const RelayDiscoveryService = Context.Service<RelayDiscoveryService>("RelayDiscoveryService")
 
 // =============================================================================
 // Helpers
@@ -203,7 +203,7 @@ const make = Effect.gen(function* () {
       const maybe = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(600).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybe) ? maybe.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))
@@ -224,7 +224,7 @@ const make = Effect.gen(function* () {
           const next = yield* Effect.race(
             sub.events.pipe(Stream.runHead),
             Effect.sleep(60).pipe(Effect.as(Option.none<NostrEvent>()))
-          ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+          ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
           if (Option.isNone(next)) break
 
           const parsed = parseDiscovery(next.value)

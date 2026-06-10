@@ -61,7 +61,7 @@ export interface CryptoService {
 // Service Tag
 // =============================================================================
 
-export const CryptoService = Context.GenericTag<CryptoService>("CryptoService")
+export const CryptoService = Context.Service<CryptoService>("CryptoService")
 
 // =============================================================================
 // Service Implementation

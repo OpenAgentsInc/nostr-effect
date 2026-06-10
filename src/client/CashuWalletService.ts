@@ -5,7 +5,7 @@
  * Stores wallet info (kind 17375), unspent proofs (kind 7375), and spending history (kind 7376).
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { CryptoService } from "../services/CryptoService.js"
@@ -78,7 +78,7 @@ export interface CashuWalletService {
   getHistory(author: string, limit?: number, timeoutMs?: number): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const CashuWalletService = Context.GenericTag<CashuWalletService>("CashuWalletService")
+export const CashuWalletService = Context.Service<CashuWalletService>("CashuWalletService")
 
 
 const make = Effect.gen(function* () {
@@ -173,7 +173,7 @@ const make = Effect.gen(function* () {
       const maybeEvent = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
       yield* sub.unsubscribe()
       return Option.isSome(maybeEvent) ? maybeEvent.value : null
     }).pipe(Effect.mapError((e) => new RelayError({ message: String(e), relay: relay.url })))
@@ -187,7 +187,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 200).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) out.push(next.value)
       })
       const n = limit ?? 1
@@ -208,7 +208,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 200).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) out.push(next.value)
       })
       const n = limit ?? 1

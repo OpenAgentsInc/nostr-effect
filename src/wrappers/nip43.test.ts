@@ -8,7 +8,7 @@ import { RelayService, makeRelayService } from "../client/RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { buildMembershipList, buildAddMember, buildRemoveMember, buildJoinRequest, buildLeaveRequest, MembershipListKind, AddMemberKind, RemoveMemberKind, JoinRequestKind, LeaveRequestKind } from "./nip43.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind, Tag } from "../core/Schema.js"
 
 describe("NIP-43 Relay Access", () => {

@@ -92,7 +92,7 @@ export interface Nip05Service {
 // Service Tag
 // =============================================================================
 
-export const Nip05Service = Context.GenericTag<Nip05Service>("Nip05Service")
+export const Nip05Service = Context.Service<Nip05Service>("Nip05Service")
 
 // =============================================================================
 // Service Implementation
@@ -186,7 +186,7 @@ const make = Effect.sync(() => {
     Effect.gen(function* () {
       return yield* queryProfile(nip05).pipe(
         Effect.map(result => result?.pubkey === pubkey),
-        Effect.catchAll(() => Effect.succeed(false))
+        Effect.catch(() => Effect.succeed(false))
       )
     })
 

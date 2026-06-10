@@ -6,7 +6,7 @@
  *
  * @see https://github.com/nostr-protocol/nips/blob/master/11.md
  */
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 
 // =============================================================================
 // Limitation Schema
@@ -79,7 +79,7 @@ export type RelayFees = Schema.Schema.Type<typeof RelayFees>
 export const RetentionSpec = Schema.Struct({
   /** Kind numbers or ranges [start, end] */
   kinds: Schema.optional(
-    Schema.Array(Schema.Union(Schema.Number, Schema.Tuple(Schema.Number, Schema.Number)))
+    Schema.Array(Schema.Union([Schema.Number, Schema.Tuple([Schema.Number, Schema.Number])]))
   ),
   /** Time in seconds to retain (null = infinity) */
   time: Schema.optional(Schema.NullOr(Schema.Number)),

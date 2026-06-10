@@ -34,7 +34,7 @@ export interface PolicyPipeline {
 // Service Tag
 // =============================================================================
 
-export const PolicyPipeline = Context.GenericTag<PolicyPipeline>("PolicyPipeline")
+export const PolicyPipeline = Context.Service<PolicyPipeline>("PolicyPipeline")
 
 // =============================================================================
 // Default Policy Configuration

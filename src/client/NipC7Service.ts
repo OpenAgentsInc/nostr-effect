@@ -4,7 +4,7 @@
  * NIP-C7: Chats (kind 9) with quote-reply via q tag.
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -40,7 +40,7 @@ export interface NipC7Service {
   listByAuthor(params: QueryParams): Effect.Effect<readonly NostrEvent[], RelayError>
 }
 
-export const NipC7Service = Context.GenericTag<NipC7Service>("NipC7Service")
+export const NipC7Service = Context.Service<NipC7Service>("NipC7Service")
 
 const make = Effect.gen(function* () {
   const relay = yield* RelayService
@@ -90,7 +90,7 @@ const make = Effect.gen(function* () {
         const next = yield* Effect.race(
           sub.events.pipe(Stream.runHead),
           Effect.sleep(timeoutMs ?? 600).pipe(Effect.as(Option.none<NostrEvent>()))
-        ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+        ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
         if (Option.isSome(next)) results.push(next.value)
       })
       const n = limit ?? 1

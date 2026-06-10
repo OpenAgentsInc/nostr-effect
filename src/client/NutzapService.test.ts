@@ -10,7 +10,7 @@ import { EventServiceLive } from "../services/EventService.js"
 import { Nip44ServiceLive } from "../services/Nip44Service.js"
 import { NutzapService, NutzapServiceLive } from "./NutzapService.js"
 import { CashuWalletService, CashuWalletServiceLive } from "./CashuWalletService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind, Filter } from "../core/Schema.js"
 
 const decodeKind = Schema.decodeSync(EventKind)

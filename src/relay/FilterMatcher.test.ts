@@ -19,7 +19,7 @@ import { Schema } from "effect"
 
 // Helper to decode branded types
 const decodeTag = Schema.decodeSync(
-  Schema.Tuple(Schema.String, Schema.String).pipe(Schema.brand("Tag"))
+  Schema.Tuple([Schema.String, Schema.String]).pipe(Schema.brand("Tag"))
 ) as (input: [string, string]) => Tag
 
 // Helper to build test events (similar to nostr-tools test-helpers.ts buildEvent)

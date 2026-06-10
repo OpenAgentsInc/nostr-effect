@@ -64,7 +64,7 @@ export interface SubscriptionManager {
 // Service Tag
 // =============================================================================
 
-export const SubscriptionManager = Context.GenericTag<SubscriptionManager>("SubscriptionManager")
+export const SubscriptionManager = Context.Service<SubscriptionManager>("SubscriptionManager")
 
 /**
  * Check if an event matches a subscription's filters

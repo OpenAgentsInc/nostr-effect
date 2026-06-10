@@ -11,7 +11,7 @@
  * bitrate and duration.
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { RelayError } from "../core/Errors.js"
@@ -98,7 +98,7 @@ export interface Nip71Service {
   listVideos(options?: ListVideosOptions): Effect.Effect<readonly ParsedVideoEvent[], RelayError>
 }
 
-export const Nip71Service = Context.GenericTag<Nip71Service>("Nip71Service")
+export const Nip71Service = Context.Service<Nip71Service>("Nip71Service")
 
 const buildImetaTag = (v: ImetaVariant): string[] => {
   const parts: string[] = ["imeta"]
@@ -247,7 +247,7 @@ const make = Effect.gen(function* () {
           const next = yield* Effect.race(
             sub.events.pipe(Stream.runHead),
             Effect.sleep(60).pipe(Effect.as(Option.none<NostrEvent>()))
-          ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+          ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
           if (Option.isNone(next)) break
           results.push(parseVideoEvent(next.value))
           count++

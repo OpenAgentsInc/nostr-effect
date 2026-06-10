@@ -7,7 +7,7 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/57.md
  */
 import { Context, Effect, Layer } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { bech32 } from "@scure/base"
 import { EventService } from "../services/EventService.js"
 import { CryptoError, InvalidPrivateKey, InvalidPublicKey } from "../core/Errors.js"
@@ -141,7 +141,7 @@ export interface ZapService {
 // Service Tag
 // =============================================================================
 
-export const ZapService = Context.GenericTag<ZapService>("ZapService")
+export const ZapService = Context.Service<ZapService>("ZapService")
 
 // =============================================================================
 // Pure Functions (exported for wrappers)

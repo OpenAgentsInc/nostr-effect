@@ -3,7 +3,7 @@
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import {
   DVMService,
   DVMServiceLive,
@@ -168,9 +168,9 @@ describe("DVMService", () => {
 
         const result = yield* dvmService
           .createJobRequest(config, privateKey)
-          .pipe(Effect.either)
+          .pipe(Effect.result)
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
 
         yield* relayService.disconnect()
       })

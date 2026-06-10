@@ -97,7 +97,7 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "verify": "bun run typecheck && bun test",
-    "build:check": "bun build src/index.ts --outdir /dev/null --target node 2>&1 | head -100",
+    "build:check": "rm -rf /tmp/nostr-effect-build-check && bun build src/index.ts --outdir /tmp/nostr-effect-build-check --target node",
     "build": "bun build src/index.ts --outdir dist --target node",
     "build:cloudflare": "bun build src/relay/backends/cloudflare/worker.ts --outdir dist/cloudflare --target browser --minify --external @cloudflare/workers-types",
     "deploy:cloudflare": "bun run build:cloudflare && bunx wrangler deploy",
@@ -127,21 +127,19 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20241127.0",
-    "@effect/language-service": "0.57.0",
+    "@effect/language-service": "0.86.2",
     "@types/bun": "1.1.14",
-    "typescript": "5.7.2",
+    "typescript": "6.0.3",
     "wrangler": "4.51.0"
   },
   "dependencies": {
-    "@effect/platform": "0.93.5",
-    "@effect/schema": "0.75.5",
     "@noble/ciphers": "1.2.1",
     "@noble/curves": "1.8.1",
     "@noble/hashes": "1.7.1",
     "@scure/base": "1.2.4",
     "@scure/bip32": "1.6.2",
     "@scure/bip39": "1.5.4",
-    "effect": "3.19.8",
+    "effect": "4.0.0-beta.70",
     "pako": "2.1.0"
   }
 }

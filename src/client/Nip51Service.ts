@@ -7,7 +7,7 @@
  *   a conversation key derived from (author's private key, author's public key)
  */
 import { Context, Effect, Layer, Option, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayService, type PublishResult } from "./RelayService.js"
 import { EventService } from "../services/EventService.js"
 import { Nip44Service } from "../services/Nip44Service.js"
@@ -61,7 +61,7 @@ export interface Nip51Service {
   decryptPrivateItems(options: DecryptListOptions): Effect.Effect<readonly string[][] | null, RelayError>
 }
 
-export const Nip51Service = Context.GenericTag<Nip51Service>("Nip51Service")
+export const Nip51Service = Context.Service<Nip51Service>("Nip51Service")
 
 const isParameterized = (kind: number): boolean => kind >= 30000 && kind < 40000
 
@@ -111,7 +111,7 @@ const make = Effect.gen(function* () {
       const maybeEvent = yield* Effect.race(
         sub.events.pipe(Stream.runHead),
         Effect.sleep(timeoutMs ?? 800).pipe(Effect.as(Option.none<NostrEvent>()))
-      ).pipe(Effect.catchAll(() => Effect.succeed(Option.none<NostrEvent>())))
+      ).pipe(Effect.catch(() => Effect.succeed(Option.none<NostrEvent>())))
 
       yield* sub.unsubscribe()
       return Option.isSome(maybeEvent) ? maybeEvent.value : null

@@ -7,7 +7,7 @@ import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { EventKind } from "../core/Schema.js"
 import { Nip50Service, Nip50ServiceLive } from "./Nip50Service.js"
 

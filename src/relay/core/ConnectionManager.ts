@@ -95,7 +95,7 @@ export interface ConnectionManager {
 // Service Tag
 // =============================================================================
 
-export const ConnectionManager = Context.GenericTag<ConnectionManager>("ConnectionManager")
+export const ConnectionManager = Context.Service<ConnectionManager>("ConnectionManager")
 
 // =============================================================================
 // In-Memory Implementation

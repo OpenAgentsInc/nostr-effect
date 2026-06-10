@@ -3,7 +3,7 @@
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer, Stream } from "effect"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { RelayPool, makeRelayPool } from "./RelayPool.js"
 import { startTestRelay, type RelayHandle } from "../relay/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
@@ -388,9 +388,9 @@ describe("RelayPool", () => {
         const pool = yield* RelayPool
 
         const filter = decodeFilter({ kinds: [1] })
-        const result = yield* Effect.either(pool.subscribe([filter]))
+        const result = yield* Effect.result(pool.subscribe([filter]))
 
-        expect(result._tag).toBe("Left")
+        expect(result._tag).toBe("Failure")
 
         yield* pool.close()
       })

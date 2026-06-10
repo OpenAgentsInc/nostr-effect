@@ -59,7 +59,7 @@ export interface Nip25Service {
 // Service Tag
 // =============================================================================
 
-export const Nip25Service = Context.GenericTag<Nip25Service>("Nip25Service")
+export const Nip25Service = Context.Service<Nip25Service>("Nip25Service")
 
 // =============================================================================
 // Pure Functions (exported for wrappers)

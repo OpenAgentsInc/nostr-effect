@@ -109,7 +109,7 @@ export interface RelayPool {
 // Service Tag
 // =============================================================================
 
-export const RelayPool = Context.GenericTag<RelayPool>("RelayPool")
+export const RelayPool = Context.Service<RelayPool>("RelayPool")
 
 // =============================================================================
 // Service Implementation
@@ -255,7 +255,7 @@ const make = (config: RelayPoolConfig = {}) =>
                 success: result.accepted,
                 message: result.message,
               })),
-              Effect.catchAll((error) =>
+              Effect.catch((error) =>
                 Effect.succeed({
                   url: entry.url,
                   success: false,
@@ -309,7 +309,7 @@ const make = (config: RelayPoolConfig = {}) =>
         const handles = yield* Effect.all(
           connected.map((entry) =>
             entry.service.subscribe(filters).pipe(
-              Effect.catchAll((_err) => {
+              Effect.catch((_err) => {
                 // Log error but don't fail if some relays can't subscribe
                 return Effect.succeed(null)
               })
@@ -338,15 +338,14 @@ const make = (config: RelayPoolConfig = {}) =>
         // Deduplicate events by ID if enabled
         const deduplicatedStream: Stream.Stream<NostrEvent, SubscriptionError> = config.deduplicateEvents !== false
           ? mergedStream.pipe(
-              Stream.mapAccum(new Set<EventId>(), (seen, event) => {
+              Stream.mapAccum(() => new Set<EventId>(), (seen, event) => {
                 if (seen.has(event.id)) {
-                  return [seen, null as NostrEvent | null] // Skip duplicate
+                  return [seen, []]
                 }
                 const newSeen = new Set(seen)
                 newSeen.add(event.id)
-                return [newSeen, event as NostrEvent | null]
-              }),
-              Stream.filter((event): event is NostrEvent => event !== null)
+                return [newSeen, [event]]
+              })
             )
           : mergedStream
 
