@@ -6,8 +6,11 @@ import {
   KIND_DATASET_ACCESS_REQUEST,
   KIND_DATASET_LISTING,
   KIND_DATASET_OFFER,
+  KIND_JOB_LABOR_CODE_TASK,
+  KIND_JOB_LABOR_REVIEW,
   KIND_RESULT_RLM_SUBQUERY,
   Nip90ProtocolError,
+  PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF,
   canonicalDatasetManifest,
   createJobFeedbackEvent,
   createJobRequestEvent,
@@ -27,11 +30,16 @@ import {
   isJobFeedbackKind,
   isJobRequestKind,
   isJobResultKind,
+  isLaborJobKind,
   jobFeedbackToTags,
   jobInput,
   jobParam,
   jobRequestToTags,
   jobResultToTags,
+  laborJobKindForType,
+  laborJobRequestToTags,
+  laborJobResultToTags,
+  laborJobTypeForKind,
   makeDatasetAccessRequest,
   makeDatasetAccessResult,
   makeDatasetListing,
@@ -39,6 +47,8 @@ import {
   makeJobFeedback,
   makeJobRequest,
   makeJobResult,
+  makeLaborJobRequest,
+  makeLaborJobResult,
   paramFromTag,
   paramToTag,
   parseDatasetListingEvent,
@@ -48,6 +58,8 @@ import {
   parseJobRequestEvent,
   parseJobResultEvent,
   parseJobStatus,
+  parseLaborJobRequestEvent,
+  parseLaborJobResultEvent,
   sha256Hex,
   verifyDatasetDeliveryDescriptorDigest,
   verifyDatasetDigest,
@@ -93,6 +105,9 @@ describe("Nip90 protocol", () => {
     expect(getResultKind(6000)).toBeUndefined()
     expect(getRequestKind(5000)).toBeUndefined()
     expect(KIND_RESULT_RLM_SUBQUERY).toBe(6940)
+    expect(isLaborJobKind(KIND_JOB_LABOR_CODE_TASK)).toBe(true)
+    expect(laborJobKindForType("review")).toBe(KIND_JOB_LABOR_REVIEW)
+    expect(laborJobTypeForKind(KIND_JOB_LABOR_CODE_TASK)).toBe("code_task")
   })
 
   test("parses input type and status aliases", () => {
@@ -246,6 +261,102 @@ describe("Nip90 protocol", () => {
       ["p", pubkey],
       ["amount", "-1"],
     ]))).toThrow(Nip90ProtocolError)
+  })
+
+  test("round-trips labor job requests with policy, input refs, and acceptance criteria", () => {
+    const request = makeLaborJobRequest({
+      jobType: "code_task",
+      inputRefs: ["work-order.public.issue-123", "repo.public.openagents"],
+      acceptanceCriteria: [
+        "tests pass",
+        "artifact refs are public-safe",
+      ],
+      expectedArtifacts: [
+        {
+          ref: "artifact.expected.patch",
+          artifactType: "patch",
+          mime: "text/x-diff",
+        },
+      ],
+      bid: 25_000,
+      relays: ["wss://relay.example.com"],
+      serviceProviders: [providerPubkey],
+      content: "Fix the scoped issue and return public artifact refs only.",
+    })
+
+    expect(request.kind as number).toBe(KIND_JOB_LABOR_CODE_TASK)
+    expect(request.policyRef).toBe(PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF)
+    expect(plainTags(laborJobRequestToTags(request))).toEqual([
+      ["i", "work-order.public.issue-123", "text", "", "input_ref"],
+      ["i", "repo.public.openagents", "text", "", "input_ref"],
+      ["output", "application/json"],
+      ["param", "labor_job_type", "code_task"],
+      ["param", "policy_ref", PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF],
+      ["param", "acceptance", "tests pass"],
+      ["param", "acceptance", "artifact refs are public-safe"],
+      [
+        "param",
+        "expected_artifact",
+        '{"ref":"artifact.expected.patch","artifactType":"patch","mime":"text/x-diff"}',
+      ],
+      ["bid", "25000"],
+      ["relays", "wss://relay.example.com"],
+      ["p", providerPubkey],
+    ])
+
+    const parsed = parseLaborJobRequestEvent(event(
+      KIND_JOB_LABOR_CODE_TASK,
+      laborJobRequestToTags(request),
+      request.request.content
+    ))
+    expect(parsed).toEqual(request)
+    expect(() => makeLaborJobRequest({
+      jobType: "review",
+      inputRefs: [],
+      acceptanceCriteria: ["review posted"],
+    })).toThrow(Nip90ProtocolError)
+    expect(() => parseLaborJobRequestEvent(event(KIND_JOB_TEXT_GENERATION, [
+      ["i", "not labor", "text"],
+    ]))).toThrow(Nip90ProtocolError)
+  })
+
+  test("round-trips labor job results with artifact refs and amount", () => {
+    const result = makeLaborJobResult({
+      jobType: "review",
+      requestId: "bb".repeat(32),
+      requestRelay: "wss://relay.example.com",
+      customerPubkey: pubkey,
+      artifactRefs: ["artifact.public.review-123", "receipt.public.acceptance-123"],
+      content: '{"summary":"public-safe review complete"}',
+      amount: 25_000,
+      bolt11: "lnbc250n1...",
+    })
+
+    expect(result.result.kind as number).toBe(6935)
+    expect(plainTags(laborJobResultToTags(result))).toEqual([
+      ["e", "bb".repeat(32), "wss://relay.example.com"],
+      ["p", pubkey],
+      ["amount", "25000", "lnbc250n1..."],
+      ["status", "success"],
+      ["labor_job_type", "review"],
+      ["policy_ref", PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF],
+      ["artifact", "artifact.public.review-123"],
+      ["artifact", "receipt.public.acceptance-123"],
+    ])
+
+    const parsed = parseLaborJobResultEvent(event(
+      6935,
+      laborJobResultToTags(result),
+      result.result.content
+    ))
+    expect(parsed).toEqual(result)
+    expect(() => makeLaborJobResult({
+      jobType: "review",
+      requestId: "bb".repeat(32),
+      customerPubkey: pubkey,
+      artifactRefs: [],
+      content: "{}",
+    })).toThrow(Nip90ProtocolError)
   })
 
   test("round-trips NIP-DS listing tags and validates required fields", () => {

@@ -33,6 +33,9 @@ export const KIND_JOB_SANDBOX_RUN = 5930
 export const KIND_JOB_REPO_INDEX = 5931
 export const KIND_JOB_PATCH_GEN = 5932
 export const KIND_JOB_CODE_REVIEW = 5933
+export const KIND_JOB_LABOR_CODE_TASK = 5934
+export const KIND_JOB_LABOR_REVIEW = 5935
+export const KIND_JOB_LABOR_DOCUMENT_WORK = 5936
 export const KIND_JOB_RLM_SUBQUERY = 5940
 export const KIND_DATASET_LISTING = 30404
 export const KIND_DATASET_OFFER = 30406
@@ -54,6 +57,11 @@ export const isDvmKind = (kind: number): boolean =>
 export const isDatasetListingKind = (kind: number): boolean => kind === KIND_DATASET_LISTING
 
 export const isDatasetOfferKind = (kind: number): boolean => kind === KIND_DATASET_OFFER
+
+export const isLaborJobKind = (kind: number): boolean =>
+  kind === KIND_JOB_LABOR_CODE_TASK ||
+  kind === KIND_JOB_LABOR_REVIEW ||
+  kind === KIND_JOB_LABOR_DOCUMENT_WORK
 
 export const getResultKind = (requestKind: number): number | undefined =>
   isJobRequestKind(requestKind) ? requestKind + 1000 : undefined
@@ -82,8 +90,34 @@ export const JobFeedbackKind = EventKind.pipe(
 )
 export type JobFeedbackKind = typeof JobFeedbackKind.Type
 
+export const LaborJobKind = EventKind.pipe(
+  Schema.check(Schema.makeFilter((kind) => isLaborJobKind(kind)))
+)
+export type LaborJobKind = typeof LaborJobKind.Type
+
 export const InputTypeSchema = Schema.Literals(["url", "event", "job", "text"])
 export type InputType = typeof InputTypeSchema.Type
+
+export const LaborJobTypeSchema = Schema.Literals(["code_task", "review", "document_work"])
+export type LaborJobType = typeof LaborJobTypeSchema.Type
+
+export const LaborArtifactTypeSchema = Schema.Literals([
+  "patch",
+  "review",
+  "document",
+  "report",
+  "receipt",
+  "other",
+])
+export type LaborArtifactType = typeof LaborArtifactTypeSchema.Type
+
+export const LaborJobArtifactSchema = Schema.Struct({
+  ref: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  artifactType: LaborArtifactTypeSchema,
+  mime: Schema.optional(Schema.String),
+  digest: Schema.optional(Schema.String),
+})
+export type LaborJobArtifact = typeof LaborJobArtifactSchema.Type
 
 export const JobStatusSchema = Schema.Literals([
   "payment-required",
@@ -146,6 +180,31 @@ export const JobFeedbackSchema = Schema.Struct({
   bolt11: Schema.optional(Schema.String),
 })
 export type JobFeedback = typeof JobFeedbackSchema.Type
+
+export const LaborJobRequestSchema = Schema.Struct({
+  kind: LaborJobKind,
+  jobType: LaborJobTypeSchema,
+  inputRefs: Schema.Array(Schema.String.pipe(Schema.check(Schema.isMinLength(1)))).pipe(
+    Schema.check(Schema.isMinLength(1))
+  ),
+  acceptanceCriteria: Schema.Array(Schema.String.pipe(Schema.check(Schema.isMinLength(1)))).pipe(
+    Schema.check(Schema.isMinLength(1))
+  ),
+  expectedArtifacts: Schema.Array(LaborJobArtifactSchema),
+  policyRef: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  request: JobRequestSchema,
+})
+export type LaborJobRequest = typeof LaborJobRequestSchema.Type
+
+export const LaborJobResultSchema = Schema.Struct({
+  jobType: LaborJobTypeSchema,
+  artifactRefs: Schema.Array(Schema.String.pipe(Schema.check(Schema.isMinLength(1)))).pipe(
+    Schema.check(Schema.isMinLength(1))
+  ),
+  policyRef: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  result: JobResultSchema,
+})
+export type LaborJobResult = typeof LaborJobResultSchema.Type
 
 export const JobRequestEventSchema = NostrEvent.pipe(
   Schema.check(Schema.makeFilter((event) => isJobRequestKind(event.kind)))
@@ -376,6 +435,33 @@ export const jobInput = {
 
 export const jobParam = (key: string, value: string): JobParam => ({ key, value })
 
+export const PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF =
+  "provider.compliant_usage_labor.v1"
+
+export const laborJobKindForType = (jobType: LaborJobType): number => {
+  switch (jobType) {
+    case "code_task":
+      return KIND_JOB_LABOR_CODE_TASK
+    case "review":
+      return KIND_JOB_LABOR_REVIEW
+    case "document_work":
+      return KIND_JOB_LABOR_DOCUMENT_WORK
+  }
+}
+
+export const laborJobTypeForKind = (kind: number): LaborJobType => {
+  switch (kind) {
+    case KIND_JOB_LABOR_CODE_TASK:
+      return "code_task"
+    case KIND_JOB_LABOR_REVIEW:
+      return "review"
+    case KIND_JOB_LABOR_DOCUMENT_WORK:
+      return "document_work"
+    default:
+      throw protocolError("invalid_kind", `invalid labor job kind: ${kind}`)
+  }
+}
+
 export const inputToTag = (input: JobInput): typeof Tag.Type => {
   const tag = ["i", input.data, input.inputType]
   if (input.relay !== undefined || input.marker !== undefined) {
@@ -484,6 +570,116 @@ export const parseJobRequestEvent = (input: unknown): JobRequest => {
   })
 }
 
+const parseLaborJobType = (value: string): LaborJobType => {
+  if (value === "code_task" || value === "review" || value === "document_work") {
+    return value
+  }
+  throw protocolError("invalid_event", `invalid labor job type: ${value}`)
+}
+
+const laborArtifactParamValue = (artifact: LaborJobArtifact): string =>
+  JSON.stringify({
+    ref: artifact.ref,
+    artifactType: artifact.artifactType,
+    ...(artifact.mime === undefined ? {} : { mime: artifact.mime }),
+    ...(artifact.digest === undefined ? {} : { digest: artifact.digest }),
+  })
+
+const parseLaborArtifactParam = (value: string): LaborJobArtifact => {
+  try {
+    return Schema.decodeUnknownSync(LaborJobArtifactSchema)(JSON.parse(value))
+  } catch {
+    throw protocolError("invalid_event", "invalid labor artifact descriptor")
+  }
+}
+
+const paramValues = (request: JobRequest, key: string): ReadonlyArray<string> =>
+  request.params.filter((param) => param.key === key).map((param) => param.value)
+
+export interface LaborJobRequestOptions {
+  readonly jobType: LaborJobType
+  readonly inputRefs: readonly string[]
+  readonly acceptanceCriteria: readonly string[]
+  readonly expectedArtifacts?: readonly LaborJobArtifact[]
+  readonly bid?: number
+  readonly relays?: readonly string[]
+  readonly serviceProviders?: readonly string[]
+  readonly output?: string
+  readonly content?: string
+  readonly policyRef?: string
+  readonly params?: readonly JobParam[]
+}
+
+export const makeLaborJobRequest = (options: LaborJobRequestOptions): LaborJobRequest => {
+  const policyRef = options.policyRef ?? PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF
+  const request = makeJobRequest({
+    kind: laborJobKindForType(options.jobType),
+    inputs: options.inputRefs.map((ref) => jobInput.withMarker(jobInput.text(ref), "input_ref")),
+    output: options.output ?? "application/json",
+    ...(options.bid === undefined ? {} : { bid: options.bid }),
+    ...(options.relays === undefined ? {} : { relays: options.relays }),
+    ...(options.serviceProviders === undefined ? {} : { serviceProviders: options.serviceProviders }),
+    params: [
+      jobParam("labor_job_type", options.jobType),
+      jobParam("policy_ref", policyRef),
+      ...options.acceptanceCriteria.map((criterion) => jobParam("acceptance", criterion)),
+      ...(options.expectedArtifacts ?? []).map((artifact) =>
+        jobParam("expected_artifact", laborArtifactParamValue(artifact))
+      ),
+      ...(options.params ?? []),
+    ],
+    content: options.content ?? "",
+  })
+
+  try {
+    return Schema.decodeSync(LaborJobRequestSchema)({
+      kind: request.kind,
+      jobType: options.jobType,
+      inputRefs: options.inputRefs,
+      acceptanceCriteria: options.acceptanceCriteria,
+      expectedArtifacts: options.expectedArtifacts ?? [],
+      policyRef,
+      request,
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid labor job request")
+  }
+}
+
+export const laborJobRequestToTags = (labor: LaborJobRequest): ReadonlyArray<typeof Tag.Type> =>
+  jobRequestToTags(labor.request)
+
+export const parseLaborJobRequestEvent = (input: unknown): LaborJobRequest => {
+  const request = parseJobRequestEvent(input)
+  if (!isLaborJobKind(request.kind)) {
+    throw protocolError("invalid_kind", `invalid labor job kind: ${request.kind}`)
+  }
+  const kindJobType = laborJobTypeForKind(request.kind)
+  const taggedJobType = paramValues(request, "labor_job_type")[0]
+  const jobType = taggedJobType === undefined ? kindJobType : parseLaborJobType(taggedJobType)
+  if (jobType !== kindJobType) {
+    throw protocolError("invalid_event", "labor job type does not match labor job kind")
+  }
+
+  try {
+    return Schema.decodeSync(LaborJobRequestSchema)({
+      kind: request.kind,
+      jobType,
+      inputRefs: request.inputs
+        .filter((input) => input.marker === "input_ref")
+        .map((input) => input.data),
+      acceptanceCriteria: paramValues(request, "acceptance"),
+      expectedArtifacts: paramValues(request, "expected_artifact").map(parseLaborArtifactParam),
+      policyRef: paramValues(request, "policy_ref")[0] ?? PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF,
+      request,
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid labor job request")
+  }
+}
+
 export interface JobResultOptions {
   readonly requestKind: number
   readonly requestId: string
@@ -571,6 +767,81 @@ export const parseJobResultEvent = (input: unknown): JobResult => {
     bolt11: amountTag?.[2] ?? bolt11Tag?.[1],
     encrypted: findTags(event.tags, "encrypted").length > 0,
   })
+}
+
+export interface LaborJobResultOptions {
+  readonly jobType: LaborJobType
+  readonly requestId: string
+  readonly customerPubkey: string
+  readonly artifactRefs: readonly string[]
+  readonly content: string
+  readonly request?: string
+  readonly requestRelay?: string
+  readonly amount?: number
+  readonly bolt11?: string
+  readonly policyRef?: string
+}
+
+export const makeLaborJobResult = (options: LaborJobResultOptions): LaborJobResult => {
+  const policyRef = options.policyRef ?? PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF
+  const result = makeJobResult({
+    requestKind: laborJobKindForType(options.jobType),
+    requestId: options.requestId,
+    customerPubkey: options.customerPubkey,
+    content: options.content,
+    ...(options.request === undefined ? {} : { request: options.request }),
+    ...(options.requestRelay === undefined ? {} : { requestRelay: options.requestRelay }),
+    ...(options.amount === undefined ? {} : { amount: options.amount }),
+    ...(options.bolt11 === undefined ? {} : { bolt11: options.bolt11 }),
+  })
+
+  try {
+    return Schema.decodeSync(LaborJobResultSchema)({
+      jobType: options.jobType,
+      artifactRefs: options.artifactRefs,
+      policyRef,
+      result,
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid labor job result")
+  }
+}
+
+export const laborJobResultToTags = (labor: LaborJobResult): ReadonlyArray<typeof Tag.Type> => [
+  ...jobResultToTags(labor.result),
+  decodeTag(["labor_job_type", labor.jobType]),
+  decodeTag(["policy_ref", labor.policyRef]),
+  ...labor.artifactRefs.map((ref) => decodeTag(["artifact", ref])),
+]
+
+export const parseLaborJobResultEvent = (input: unknown): LaborJobResult => {
+  const event = decodeNostrEvent(input)
+  const result = parseJobResultEvent(event)
+  const requestKind = getRequestKind(result.kind)
+  if (requestKind === undefined || !isLaborJobKind(requestKind)) {
+    throw protocolError("invalid_kind", `invalid labor job result kind: ${result.kind}`)
+  }
+  const kindJobType = laborJobTypeForKind(requestKind)
+  const taggedJobType = firstTagValue(event.tags, "labor_job_type")
+  const jobType = taggedJobType === undefined ? kindJobType : parseLaborJobType(taggedJobType)
+  if (jobType !== kindJobType) {
+    throw protocolError("invalid_event", "labor result job type does not match result kind")
+  }
+
+  try {
+    return Schema.decodeSync(LaborJobResultSchema)({
+      jobType,
+      artifactRefs: findTags(event.tags, "artifact").flatMap((tag) =>
+        tag[1] === undefined ? [] : [tag[1]]
+      ),
+      policyRef: firstTagValue(event.tags, "policy_ref") ?? PROVIDER_COMPLIANT_USAGE_LABOR_POLICY_REF,
+      result,
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid labor job result")
+  }
 }
 
 export interface JobFeedbackOptions {
