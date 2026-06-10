@@ -3,11 +3,21 @@ import type { NostrEvent } from "./Schema.js"
 import {
   KIND_JOB_FEEDBACK,
   KIND_JOB_TEXT_GENERATION,
+  KIND_DATASET_ACCESS_REQUEST,
+  KIND_DATASET_LISTING,
+  KIND_DATASET_OFFER,
   KIND_RESULT_RLM_SUBQUERY,
   Nip90ProtocolError,
+  canonicalDatasetManifest,
   createJobFeedbackEvent,
   createJobRequestEvent,
   createJobResultEvent,
+  datasetAccessRequestToTags,
+  datasetAccessResultToTags,
+  datasetAddress,
+  datasetOfferAddress,
+  datasetListingToTags,
+  datasetOfferToTags,
   eventMatchesRequest,
   getRequestKind,
   getResultKind,
@@ -22,16 +32,25 @@ import {
   jobParam,
   jobRequestToTags,
   jobResultToTags,
+  makeDatasetAccessRequest,
+  makeDatasetAccessResult,
+  makeDatasetListing,
+  makeDatasetOffer,
   makeJobFeedback,
   makeJobRequest,
   makeJobResult,
   paramFromTag,
   paramToTag,
+  parseDatasetListingEvent,
+  parseDatasetOfferEvent,
   parseInputType,
   parseJobFeedbackEvent,
   parseJobRequestEvent,
   parseJobResultEvent,
   parseJobStatus,
+  sha256Hex,
+  verifyDatasetDeliveryDescriptorDigest,
+  verifyDatasetDigest,
 } from "./Nip90.js"
 
 const pubkey = "11".repeat(32)
@@ -227,5 +246,146 @@ describe("Nip90 protocol", () => {
       ["p", pubkey],
       ["amount", "-1"],
     ]))).toThrow(Nip90ProtocolError)
+  })
+
+  test("round-trips NIP-DS listing tags and validates required fields", () => {
+    const payload = "redacted conversation bundle\n"
+    const digest = sha256Hex(payload)
+    const listing = makeDatasetListing({
+      d: "redacted-conversation-bundle",
+      title: "Redacted Conversation Bundle",
+      x: digest,
+      publishedAt: 1_781_000_000,
+      content: "Redacted public-safe transcript bundle.",
+      summary: "Public-safe metadata and redacted turns.",
+      datasetKind: "conversation_bundle",
+      mime: "application/json",
+      size: payload.length,
+      records: 12,
+      license: "seller-license-v1",
+      access: "paid",
+      delivery: ["nip90", "download"],
+      topics: ["dataset", "conversation"],
+    })
+
+    expect(plainTags(datasetListingToTags(listing))).toContainEqual(["x", digest])
+    expect(verifyDatasetDigest(payload, listing.x)).toBe(true)
+    expect(verifyDatasetDigest("different", listing.x)).toBe(false)
+
+    const parsed = parseDatasetListingEvent(event(
+      KIND_DATASET_LISTING,
+      datasetListingToTags(listing),
+      listing.content
+    ))
+    expect(parsed).toEqual(listing)
+    expect(() => parseDatasetListingEvent(event(KIND_DATASET_LISTING, [
+      ["d", "missing-digest"],
+      ["title", "Missing Digest"],
+      ["published_at", "1781000000"],
+    ]))).toThrow(Nip90ProtocolError)
+    expect(() => makeDatasetListing({
+      d: "bad",
+      title: "Bad",
+      x: "not-a-digest",
+      publishedAt: 1,
+    })).toThrow(Nip90ProtocolError)
+  })
+
+  test("round-trips NIP-DS offers and rejects malformed offers", () => {
+    const listingAddress = datasetAddress(pubkey, "redacted-conversation-bundle")
+    const buyer = "44".repeat(32)
+    const offer = makeDatasetOffer({
+      d: "small-sats-offer",
+      listing: listingAddress,
+      status: "active",
+      delivery: ["nip90"],
+      content: "Small sats NIP-90 delivery offer.",
+      policy: "targeted_request",
+      price: ["50", "SAT"],
+      payments: [["ln"], ["cashu", "https://mint.example"]],
+      buyers: [buyer],
+      license: "seller-license-v1",
+      topics: ["dataset"],
+    })
+
+    expect(plainTags(datasetOfferToTags(offer))).toContainEqual(["a", listingAddress])
+    expect(plainTags(datasetOfferToTags(offer))).toContainEqual(["delivery", "nip90"])
+
+    const parsed = parseDatasetOfferEvent(event(
+      KIND_DATASET_OFFER,
+      datasetOfferToTags(offer),
+      offer.content
+    ))
+    expect(parsed).toEqual(offer)
+    expect(() => parseDatasetOfferEvent(event(KIND_DATASET_OFFER, [
+      ["d", "bad"],
+      ["a", listingAddress],
+      ["status", "active"],
+    ]))).toThrow(Nip90ProtocolError)
+    expect(() => makeDatasetOffer({
+      d: "bad",
+      listing: "not-an-address",
+      status: "active",
+      delivery: ["nip90"],
+    })).toThrow(Nip90ProtocolError)
+  })
+
+  test("builds NIP-DS DVM request/result tags and verifies delivery digest", () => {
+    const payload = JSON.stringify({ redacted: true, records: [1, 2, 3] })
+    const digest = sha256Hex(payload)
+    const listing = datasetAddress(providerPubkey, "redacted-conversation-bundle")
+    const offer = datasetOfferAddress(providerPubkey, "small-sats-offer")
+    const request = makeDatasetAccessRequest({
+      listing,
+      offer,
+      sellerPubkey: providerPubkey,
+      bid: 50_000,
+      delivery: "download",
+      preview: "metadata_only",
+      licenseAck: "seller-license-v1",
+      relays: ["wss://relay.example.com"],
+    })
+    const descriptor = {
+      dataset: listing,
+      offer,
+      delivery: "download" as const,
+      ref: "https://download.example/receipt/public-redacted",
+      mime: "application/json",
+      x: digest,
+      license: "seller-license-v1",
+    }
+    const result = makeDatasetAccessResult({
+      requestId: "aa".repeat(32),
+      customerPubkey: pubkey,
+      listing,
+      offer,
+      descriptor,
+    })
+
+    expect(request.kind as number).toBe(KIND_DATASET_ACCESS_REQUEST)
+    expect(plainTags(datasetAccessRequestToTags(request, { listing, offer }))).toContainEqual([
+      "a",
+      listing,
+    ])
+    expect(result.kind as number).toBe(6960)
+    expect(plainTags(datasetAccessResultToTags(result, { listing, offer, descriptor }))).toContainEqual([
+      "x",
+      digest,
+    ])
+    expect(verifyDatasetDeliveryDescriptorDigest(descriptor, payload)).toBe(true)
+  })
+
+  test("canonicalizes multi-file dataset manifests deterministically", () => {
+    const left = canonicalDatasetManifest([
+      { path: "b.json", size: 2, mime: "application/json", x: sha256Hex("b") },
+      { path: "a.json", size: 1, mime: "application/json", x: sha256Hex("a") },
+    ])
+    const right = canonicalDatasetManifest([
+      { path: "a.json", size: 1, mime: "application/json", x: sha256Hex("a") },
+      { path: "b.json", size: 2, mime: "application/json", x: sha256Hex("b") },
+    ])
+
+    expect(left).toBe(right)
+    expect(sha256Hex(left)).toMatch(/^[a-f0-9]{64}$/)
   })
 })

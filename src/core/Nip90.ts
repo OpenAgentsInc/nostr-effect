@@ -3,6 +3,8 @@
  *
  * Protocol-only helpers for job request, result, and feedback events.
  */
+import { sha256 } from "@noble/hashes/sha256"
+import { bytesToHex } from "@noble/hashes/utils"
 import { Schema } from "effect"
 import {
   EventKind,
@@ -32,6 +34,10 @@ export const KIND_JOB_REPO_INDEX = 5931
 export const KIND_JOB_PATCH_GEN = 5932
 export const KIND_JOB_CODE_REVIEW = 5933
 export const KIND_JOB_RLM_SUBQUERY = 5940
+export const KIND_DATASET_LISTING = 30404
+export const KIND_DATASET_OFFER = 30406
+export const KIND_DATASET_ACCESS_REQUEST = 5960
+export const KIND_DATASET_ACCESS_RESULT = 6960
 export const KIND_RESULT_RLM_SUBQUERY = 6940
 
 export const isJobRequestKind = (kind: number): boolean =>
@@ -44,6 +50,10 @@ export const isJobFeedbackKind = (kind: number): boolean => kind === KIND_JOB_FE
 
 export const isDvmKind = (kind: number): boolean =>
   isJobRequestKind(kind) || isJobResultKind(kind) || isJobFeedbackKind(kind)
+
+export const isDatasetListingKind = (kind: number): boolean => kind === KIND_DATASET_LISTING
+
+export const isDatasetOfferKind = (kind: number): boolean => kind === KIND_DATASET_OFFER
 
 export const getResultKind = (requestKind: number): number | undefined =>
   isJobRequestKind(requestKind) ? requestKind + 1000 : undefined
@@ -147,11 +157,147 @@ export const JobFeedbackEventSchema = NostrEvent.pipe(
   Schema.check(Schema.makeFilter((event) => event.kind === KIND_JOB_FEEDBACK))
 )
 
+export const DatasetListingEventSchema = NostrEvent.pipe(
+  Schema.check(Schema.makeFilter((event) => event.kind === KIND_DATASET_LISTING))
+)
+export const DatasetOfferEventSchema = NostrEvent.pipe(
+  Schema.check(Schema.makeFilter((event) => event.kind === KIND_DATASET_OFFER))
+)
+
+export const DatasetDigest = Schema.String.pipe(
+  Schema.check(Schema.isPattern(/^[a-f0-9]{64}$/)),
+  Schema.brand("DatasetDigest")
+)
+export type DatasetDigest = typeof DatasetDigest.Type
+
+export const DatasetAddress = Schema.String.pipe(
+  Schema.check(Schema.isPattern(/^30404:[a-f0-9]{64}:.+$/)),
+  Schema.brand("DatasetAddress")
+)
+export type DatasetAddress = typeof DatasetAddress.Type
+
+export const DatasetOfferAddress = Schema.String.pipe(
+  Schema.check(Schema.isPattern(/^30406:[a-f0-9]{64}:.+$/)),
+  Schema.brand("DatasetOfferAddress")
+)
+export type DatasetOfferAddress = typeof DatasetOfferAddress.Type
+
+export const DatasetKindSchema = Schema.Literals([
+  "table",
+  "corpus",
+  "image_collection",
+  "audio_corpus",
+  "video_corpus",
+  "conversation_bundle",
+  "embedding_set",
+  "eval_bundle",
+  "mixed",
+])
+export type DatasetKind = typeof DatasetKindSchema.Type
+
+export const DatasetAccessSchema = Schema.Literals([
+  "open",
+  "paid",
+  "quote",
+  "targeted",
+  "subscription",
+  "negotiated",
+])
+export type DatasetAccess = typeof DatasetAccessSchema.Type
+
+export const DatasetDeliveryModeSchema = Schema.Literals([
+  "download",
+  "nip90",
+  "nip94",
+  "blossom",
+  "giftwrap",
+  "dm",
+  "torrent",
+  "manual",
+])
+export type DatasetDeliveryMode = typeof DatasetDeliveryModeSchema.Type
+
+export const DatasetOfferStatusSchema = Schema.Literals([
+  "active",
+  "inactive",
+  "revoked",
+  "expired",
+])
+export type DatasetOfferStatus = typeof DatasetOfferStatusSchema.Type
+
+export const DatasetPaymentRailSchema = Schema.Literals([
+  "zap",
+  "ln",
+  "cashu",
+  "fedimint",
+  "manual",
+])
+export type DatasetPaymentRail = typeof DatasetPaymentRailSchema.Type
+
+export const DatasetManifestMemberSchema = Schema.Struct({
+  path: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  size: Schema.Int.pipe(Schema.check(Schema.isGreaterThanOrEqualTo(0))),
+  mime: Schema.String,
+  x: DatasetDigest,
+})
+export type DatasetManifestMember = typeof DatasetManifestMemberSchema.Type
+
+export const DatasetListingSchema = Schema.Struct({
+  d: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  title: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  x: DatasetDigest,
+  publishedAt: UnixTimestamp,
+  content: Schema.String,
+  summary: Schema.optional(Schema.String),
+  version: Schema.optional(Schema.String),
+  datasetKind: Schema.optional(DatasetKindSchema),
+  mime: Schema.optional(Schema.String),
+  size: Schema.optional(Schema.Int.pipe(Schema.check(Schema.isGreaterThanOrEqualTo(0)))),
+  records: Schema.optional(Schema.Int.pipe(Schema.check(Schema.isGreaterThanOrEqualTo(0)))),
+  license: Schema.optional(Schema.String),
+  access: Schema.optional(DatasetAccessSchema),
+  delivery: Schema.Array(DatasetDeliveryModeSchema),
+  topics: Schema.Array(Schema.String),
+  refs: Schema.Array(Tag),
+})
+export type DatasetListing = typeof DatasetListingSchema.Type
+
+export const DatasetOfferSchema = Schema.Struct({
+  d: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  listing: DatasetAddress,
+  status: DatasetOfferStatusSchema,
+  delivery: Schema.Array(DatasetDeliveryModeSchema).pipe(Schema.check(Schema.isMinLength(1))),
+  content: Schema.String,
+  policy: Schema.optional(Schema.String),
+  price: Schema.optional(Schema.Tuple([Schema.String, Schema.String])),
+  payments: Schema.Array(Schema.TupleWithRest(Schema.Tuple([DatasetPaymentRailSchema]), [Schema.String])),
+  buyers: Schema.Array(PublicKey),
+  expiration: Schema.optional(Schema.String),
+  license: Schema.optional(Schema.String),
+  topics: Schema.Array(Schema.String),
+})
+export type DatasetOffer = typeof DatasetOfferSchema.Type
+
+export const DatasetDeliveryDescriptorSchema = Schema.Struct({
+  dataset: DatasetAddress,
+  delivery: DatasetDeliveryModeSchema,
+  ref: Schema.String,
+  mime: Schema.optional(Schema.String),
+  x: DatasetDigest,
+  offer: Schema.optional(DatasetOfferAddress),
+  expires_at: Schema.optional(UnixTimestamp),
+  license: Schema.optional(Schema.String),
+})
+export type DatasetDeliveryDescriptor = typeof DatasetDeliveryDescriptorSchema.Type
+
 export type Nip90ErrorReason =
   | "invalid_kind"
+  | "invalid_address"
+  | "invalid_digest"
   | "missing_tag"
   | "invalid_input_type"
   | "invalid_status"
+  | "invalid_delivery"
   | "invalid_amount"
   | "invalid_pubkey"
   | "invalid_event"
@@ -507,6 +653,411 @@ export const parseJobFeedbackEvent = (input: unknown): JobFeedback => {
     ...(bolt11 === undefined ? {} : { bolt11 }),
   })
 }
+
+const textEncoder = new TextEncoder()
+
+const parseDatasetDigest = (value: string): DatasetDigest => {
+  try {
+    return Schema.decodeSync(DatasetDigest)(value)
+  } catch {
+    throw protocolError("invalid_digest", `invalid dataset digest: ${value}`)
+  }
+}
+
+const parseDatasetAddress = (value: string): DatasetAddress => {
+  try {
+    return Schema.decodeSync(DatasetAddress)(value)
+  } catch {
+    throw protocolError("invalid_address", `invalid dataset address: ${value}`)
+  }
+}
+
+const parseDatasetOfferAddress = (value: string): DatasetOfferAddress => {
+  try {
+    return Schema.decodeSync(DatasetOfferAddress)(value)
+  } catch {
+    throw protocolError("invalid_address", `invalid dataset offer address: ${value}`)
+  }
+}
+
+const parseDeliveryMode = (value: string): DatasetDeliveryMode => {
+  if (
+    value === "download" ||
+    value === "nip90" ||
+    value === "nip94" ||
+    value === "blossom" ||
+    value === "giftwrap" ||
+    value === "dm" ||
+    value === "torrent" ||
+    value === "manual"
+  ) {
+    return value
+  }
+  throw protocolError("invalid_delivery", `invalid dataset delivery mode: ${value}`)
+}
+
+const parseOfferStatus = (value: string): DatasetOfferStatus => {
+  if (
+    value === "active" ||
+    value === "inactive" ||
+    value === "revoked" ||
+    value === "expired"
+  ) {
+    return value
+  }
+  throw protocolError("invalid_status", `invalid dataset offer status: ${value}`)
+}
+
+const parsePaymentRail = (value: string): DatasetPaymentRail => {
+  if (
+    value === "zap" ||
+    value === "ln" ||
+    value === "cashu" ||
+    value === "fedimint" ||
+    value === "manual"
+  ) {
+    return value
+  }
+  throw protocolError("invalid_event", `invalid dataset payment rail: ${value}`)
+}
+
+const parseOptionalIntegerTag = (
+  tag: readonly string[] | undefined,
+  tagName: string
+): number | undefined =>
+  tag?.[1] === undefined ? undefined : parseNonNegativeInteger(tag[1], tagName)
+
+const firstTagValue = (
+  tags: ReadonlyArray<readonly string[]>,
+  tagName: string
+): string | undefined => findTags(tags, tagName)[0]?.[1]
+
+export const datasetAddress = (sellerPubkey: string, d: string): DatasetAddress =>
+  parseDatasetAddress(`${maybeDecodePublicKey(sellerPubkey)}:${d}`.replace(/^/, "30404:"))
+
+export const datasetOfferAddress = (sellerPubkey: string, d: string): DatasetOfferAddress =>
+  parseDatasetOfferAddress(`${maybeDecodePublicKey(sellerPubkey)}:${d}`.replace(/^/, "30406:"))
+
+export const datasetScopeId = (
+  sellerPubkey: string,
+  d: string,
+  digest: string
+): string => `${datasetAddress(sellerPubkey, d)}:${parseDatasetDigest(digest)}`
+
+export const sha256Hex = (input: string | Uint8Array): DatasetDigest =>
+  parseDatasetDigest(
+    bytesToHex(sha256(typeof input === "string" ? textEncoder.encode(input) : input))
+  )
+
+export const canonicalDatasetManifest = (
+  members: ReadonlyArray<DatasetManifestMember>
+): string => {
+  const parsedMembers = Schema.decodeSync(Schema.Array(DatasetManifestMemberSchema))(
+    members.map((member) => ({
+      path: member.path,
+      size: member.size,
+      mime: member.mime,
+      x: member.x,
+    }))
+  )
+  const sortedMembers = [...parsedMembers].sort((left, right) =>
+    left.path.localeCompare(right.path)
+  )
+
+  return JSON.stringify({ members: sortedMembers })
+}
+
+export const verifyDatasetDigest = (
+  payload: string | Uint8Array,
+  expectedDigest: string
+): boolean => sha256Hex(payload) === parseDatasetDigest(expectedDigest)
+
+export const verifyDatasetDeliveryDescriptorDigest = (
+  descriptor: DatasetDeliveryDescriptor,
+  payload: string | Uint8Array
+): boolean => verifyDatasetDigest(payload, descriptor.x)
+
+export interface DatasetListingOptions {
+  readonly d: string
+  readonly title: string
+  readonly x: string
+  readonly publishedAt: number
+  readonly content?: string
+  readonly summary?: string
+  readonly version?: string
+  readonly datasetKind?: DatasetKind
+  readonly mime?: string
+  readonly size?: number
+  readonly records?: number
+  readonly license?: string
+  readonly access?: DatasetAccess
+  readonly delivery?: readonly DatasetDeliveryMode[]
+  readonly topics?: readonly string[]
+  readonly refs?: readonly (typeof Tag.Type)[]
+}
+
+export const makeDatasetListing = (options: DatasetListingOptions): DatasetListing => {
+  try {
+    return Schema.decodeSync(DatasetListingSchema)({
+      d: options.d,
+      title: options.title,
+      x: parseDatasetDigest(options.x),
+      publishedAt: decodeTimestamp(options.publishedAt),
+      content: options.content ?? "",
+      ...(options.summary === undefined ? {} : { summary: options.summary }),
+      ...(options.version === undefined ? {} : { version: options.version }),
+      ...(options.datasetKind === undefined ? {} : { datasetKind: options.datasetKind }),
+      ...(options.mime === undefined ? {} : { mime: options.mime }),
+      ...(options.size === undefined ? {} : { size: options.size }),
+      ...(options.records === undefined ? {} : { records: options.records }),
+      ...(options.license === undefined ? {} : { license: options.license }),
+      ...(options.access === undefined ? {} : { access: options.access }),
+      delivery: options.delivery ?? [],
+      topics: options.topics ?? ["dataset"],
+      refs: options.refs ?? [],
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid dataset listing")
+  }
+}
+
+export const datasetListingToTags = (listing: DatasetListing): ReadonlyArray<typeof Tag.Type> => {
+  const tags: Array<typeof Tag.Type> = [
+    decodeTag(["d", listing.d]),
+    decodeTag(["title", listing.title]),
+    decodeTag(["x", listing.x]),
+    decodeTag(["published_at", String(listing.publishedAt)]),
+  ]
+  if (listing.summary !== undefined) tags.push(decodeTag(["summary", listing.summary]))
+  if (listing.version !== undefined) tags.push(decodeTag(["version", listing.version]))
+  if (listing.datasetKind !== undefined) tags.push(decodeTag(["dataset_kind", listing.datasetKind]))
+  if (listing.mime !== undefined) tags.push(decodeTag(["m", listing.mime]))
+  if (listing.size !== undefined) tags.push(decodeTag(["size", String(listing.size)]))
+  if (listing.records !== undefined) tags.push(decodeTag(["records", String(listing.records)]))
+  if (listing.license !== undefined) tags.push(decodeTag(["license", listing.license]))
+  if (listing.access !== undefined) tags.push(decodeTag(["access", listing.access]))
+  for (const delivery of listing.delivery) tags.push(decodeTag(["delivery", delivery]))
+  for (const topic of listing.topics) tags.push(decodeTag(["t", topic]))
+  tags.push(...listing.refs)
+  return tags
+}
+
+export const parseDatasetListingEvent = (input: unknown): DatasetListing => {
+  const event = decodeNostrEvent(input)
+  if (!isDatasetListingKind(event.kind)) {
+    throw protocolError("invalid_kind", `invalid kind: ${event.kind} (expected ${KIND_DATASET_LISTING})`)
+  }
+  const d = firstTagValue(event.tags, "d")
+  const title = firstTagValue(event.tags, "title")
+  const digest = firstTagValue(event.tags, "x")
+  const publishedAt = firstTagValue(event.tags, "published_at")
+  if (d === undefined || d === "") throw protocolError("missing_tag", "missing required tag: d")
+  if (title === undefined || title === "") throw protocolError("missing_tag", "missing required tag: title")
+  if (digest === undefined || digest === "") throw protocolError("missing_tag", "missing required tag: x")
+  if (publishedAt === undefined || publishedAt === "") {
+    throw protocolError("missing_tag", "missing required tag: published_at")
+  }
+
+  const listingOptions: DatasetListingOptions = {
+    d,
+    title,
+    x: digest,
+    publishedAt: parseNonNegativeInteger(publishedAt, "published_at"),
+    content: event.content,
+    delivery: findTags(event.tags, "delivery").map((tag) => parseDeliveryMode(tag[1] ?? "")),
+    topics: findTags(event.tags, "t").flatMap((tag) => tag[1] === undefined ? [] : [tag[1]]),
+    refs: event.tags.filter((tag) => tag[0] === "e" || tag[0] === "a"),
+  }
+  const summary = firstTagValue(event.tags, "summary")
+  const version = firstTagValue(event.tags, "version")
+  const datasetKind = firstTagValue(event.tags, "dataset_kind")
+  const mime = firstTagValue(event.tags, "m")
+  const size = parseOptionalIntegerTag(findTags(event.tags, "size")[0], "size")
+  const records = parseOptionalIntegerTag(findTags(event.tags, "records")[0], "records")
+  const license = firstTagValue(event.tags, "license")
+  const access = firstTagValue(event.tags, "access")
+
+  return makeDatasetListing({
+    ...listingOptions,
+    ...(summary === undefined ? {} : { summary }),
+    ...(version === undefined ? {} : { version }),
+    ...(datasetKind === undefined ? {} : { datasetKind: datasetKind as DatasetKind }),
+    ...(mime === undefined ? {} : { mime }),
+    ...(size === undefined ? {} : { size }),
+    ...(records === undefined ? {} : { records }),
+    ...(license === undefined ? {} : { license }),
+    ...(access === undefined ? {} : { access: access as DatasetAccess }),
+  })
+}
+
+export interface DatasetOfferOptions {
+  readonly d: string
+  readonly listing: string
+  readonly status: DatasetOfferStatus
+  readonly delivery: readonly DatasetDeliveryMode[]
+  readonly content?: string
+  readonly policy?: string
+  readonly price?: readonly [string, string]
+  readonly payments?: readonly (readonly [DatasetPaymentRail, ...string[]])[]
+  readonly buyers?: readonly string[]
+  readonly expiration?: string
+  readonly license?: string
+  readonly topics?: readonly string[]
+}
+
+export const makeDatasetOffer = (options: DatasetOfferOptions): DatasetOffer => {
+  try {
+    return Schema.decodeSync(DatasetOfferSchema)({
+      d: options.d,
+      listing: parseDatasetAddress(options.listing),
+      status: options.status,
+      delivery: options.delivery,
+      content: options.content ?? "",
+      ...(options.policy === undefined ? {} : { policy: options.policy }),
+      ...(options.price === undefined ? {} : { price: options.price }),
+      payments: options.payments ?? [],
+      buyers: (options.buyers ?? []).map(maybeDecodePublicKey),
+      ...(options.expiration === undefined ? {} : { expiration: options.expiration }),
+      ...(options.license === undefined ? {} : { license: options.license }),
+      topics: options.topics ?? ["dataset"],
+    })
+  } catch (error) {
+    if (error instanceof Nip90ProtocolError) throw error
+    throw protocolError("invalid_event", "invalid dataset offer")
+  }
+}
+
+export const datasetOfferToTags = (offer: DatasetOffer): ReadonlyArray<typeof Tag.Type> => {
+  const tags: Array<typeof Tag.Type> = [
+    decodeTag(["d", offer.d]),
+    decodeTag(["a", offer.listing]),
+    decodeTag(["status", offer.status]),
+  ]
+  if (offer.policy !== undefined) tags.push(decodeTag(["policy", offer.policy]))
+  if (offer.price !== undefined) tags.push(decodeTag(["price", offer.price[0], offer.price[1]]))
+  for (const payment of offer.payments) tags.push(decodeTag(["payment", ...payment]))
+  for (const delivery of offer.delivery) tags.push(decodeTag(["delivery", delivery]))
+  for (const buyer of offer.buyers) tags.push(decodeTag(["p", buyer]))
+  if (offer.expiration !== undefined) tags.push(decodeTag(["expiration", offer.expiration]))
+  if (offer.license !== undefined) tags.push(decodeTag(["license", offer.license]))
+  for (const topic of offer.topics) tags.push(decodeTag(["t", topic]))
+  return tags
+}
+
+export const parseDatasetOfferEvent = (input: unknown): DatasetOffer => {
+  const event = decodeNostrEvent(input)
+  if (!isDatasetOfferKind(event.kind)) {
+    throw protocolError("invalid_kind", `invalid kind: ${event.kind} (expected ${KIND_DATASET_OFFER})`)
+  }
+  const d = firstTagValue(event.tags, "d")
+  const listing = firstTagValue(event.tags, "a")
+  const status = firstTagValue(event.tags, "status")
+  const delivery = findTags(event.tags, "delivery").map((tag) => parseDeliveryMode(tag[1] ?? ""))
+  if (d === undefined || d === "") throw protocolError("missing_tag", "missing required tag: d")
+  if (listing === undefined || listing === "") throw protocolError("missing_tag", "missing required tag: a")
+  if (status === undefined || status === "") throw protocolError("missing_tag", "missing required tag: status")
+  if (delivery.length === 0) throw protocolError("missing_tag", "missing required tag: delivery")
+  const priceTag = findTags(event.tags, "price")[0]
+  const policy = firstTagValue(event.tags, "policy")
+  const expiration = firstTagValue(event.tags, "expiration")
+  const license = firstTagValue(event.tags, "license")
+
+  return makeDatasetOffer({
+    d,
+    listing,
+    status: parseOfferStatus(status),
+    delivery,
+    content: event.content,
+    ...(policy === undefined ? {} : { policy }),
+    ...(priceTag?.[1] === undefined || priceTag[2] === undefined
+      ? {}
+      : { price: [priceTag[1], priceTag[2]] }),
+    payments: findTags(event.tags, "payment").map((tag) => [
+      parsePaymentRail(tag[1] ?? "manual"),
+      ...tag.slice(2),
+    ]),
+    buyers: findTags(event.tags, "p").flatMap((tag) => tag[1] === undefined ? [] : [tag[1]]),
+    ...(expiration === undefined ? {} : { expiration }),
+    ...(license === undefined ? {} : { license }),
+    topics: findTags(event.tags, "t").flatMap((tag) => tag[1] === undefined ? [] : [tag[1]]),
+  })
+}
+
+export interface DatasetAccessRequestOptions {
+  readonly listing: string
+  readonly offer?: string
+  readonly sellerPubkey?: string
+  readonly bid?: number
+  readonly relays?: readonly string[]
+  readonly delivery?: DatasetDeliveryMode
+  readonly preview?: string
+  readonly licenseAck?: string
+  readonly output?: string
+  readonly content?: string
+}
+
+export const makeDatasetAccessRequest = (
+  options: DatasetAccessRequestOptions
+): JobRequest =>
+  makeJobRequest({
+    kind: KIND_DATASET_ACCESS_REQUEST,
+    output: options.output ?? "application/json",
+    ...(options.bid === undefined ? {} : { bid: options.bid }),
+    ...(options.relays === undefined ? {} : { relays: options.relays }),
+    serviceProviders: options.sellerPubkey === undefined ? [] : [options.sellerPubkey],
+    params: [
+      ...(options.delivery === undefined ? [] : [jobParam("delivery", options.delivery)]),
+      ...(options.preview === undefined ? [] : [jobParam("preview", options.preview)]),
+      ...(options.licenseAck === undefined ? [] : [jobParam("license_ack", options.licenseAck)]),
+    ],
+    content: options.content ?? "",
+  })
+
+export const datasetAccessRequestToTags = (
+  request: JobRequest,
+  options: Pick<DatasetAccessRequestOptions, "listing" | "offer">
+): ReadonlyArray<typeof Tag.Type> => [
+  decodeTag(["a", parseDatasetAddress(options.listing)]),
+  ...(options.offer === undefined ? [] : [decodeTag(["a", parseDatasetOfferAddress(options.offer)])]),
+  ...jobRequestToTags(request),
+]
+
+export interface DatasetAccessResultOptions {
+  readonly requestId: string
+  readonly customerPubkey: string
+  readonly listing: string
+  readonly descriptor: DatasetDeliveryDescriptor
+  readonly offer?: string
+  readonly request?: string
+  readonly requestRelay?: string
+  readonly amount?: number
+  readonly bolt11?: string
+}
+
+export const makeDatasetAccessResult = (
+  options: DatasetAccessResultOptions
+): JobResult =>
+  makeJobResult({
+    requestKind: KIND_DATASET_ACCESS_REQUEST,
+    requestId: options.requestId,
+    customerPubkey: options.customerPubkey,
+    content: JSON.stringify(Schema.decodeSync(DatasetDeliveryDescriptorSchema)(options.descriptor)),
+    ...(options.request === undefined ? {} : { request: options.request }),
+    ...(options.requestRelay === undefined ? {} : { requestRelay: options.requestRelay }),
+    ...(options.amount === undefined ? {} : { amount: options.amount }),
+    ...(options.bolt11 === undefined ? {} : { bolt11: options.bolt11 }),
+  })
+
+export const datasetAccessResultToTags = (
+  result: JobResult,
+  options: Pick<DatasetAccessResultOptions, "listing" | "offer" | "descriptor">
+): ReadonlyArray<typeof Tag.Type> => [
+  ...jobResultToTags(result),
+  decodeTag(["a", parseDatasetAddress(options.listing)]),
+  ...(options.offer === undefined ? [] : [decodeTag(["a", parseDatasetOfferAddress(options.offer)])]),
+  decodeTag(["x", options.descriptor.x]),
+]
 
 const nowSeconds = (): typeof UnixTimestamp.Type => decodeTimestamp(Math.floor(Date.now() / 1000))
 
