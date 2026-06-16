@@ -606,11 +606,9 @@ export const decode = (bech32String: string): Effect.Effect<Nip19Data, DecodingE
         return { type: "naddr" as const, data }
       }
       default:
-        return yield* Effect.fail(
-          new DecodingError({
-            message: `Unknown NIP-19 prefix: '${prefix}'`,
-          })
-        )
+        return yield* new DecodingError({
+          message: `Unknown NIP-19 prefix: '${prefix}'`,
+        })
     }
   })
 
