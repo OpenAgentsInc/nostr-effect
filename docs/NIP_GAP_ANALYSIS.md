@@ -1,4 +1,4 @@
-# NIP Gap Analysis — Index
+# NIP Gap Analysis
 
 **Last updated:** 2026-07-20  
 **Upstream NIPs:** `/Users/christopherdavid/work/projects/repos/nips` @ `bdfa7e6`  
