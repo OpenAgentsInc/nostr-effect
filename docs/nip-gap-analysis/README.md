@@ -20,6 +20,7 @@ Folder layout for the full NIP compliance audit of `nostr-effect`.
 | [sequential/61-78.md](./sequential/61-78.md) | NIPs 61–78 (incl. missing 67) |
 | [sequential/84-99.md](./sequential/84-99.md) | NIPs 84–99 (incl. missing 85) |
 | [sequential/lettered.md](./sequential/lettered.md) | 5A, 7D, A0–F4 |
+| [draft-openagents.md](./draft-openagents.md) | OpenAgents drafts: SA, AC, SKL, LBR, DS, TRN |
 | [file-map.md](./file-map.md) | Code entry-point map |
 
 ---
@@ -51,6 +52,17 @@ Cross-cutting P0: `Filter` in `src/core/Schema.ts` only models `#e/#p/#a/#d/#t`.
 | A4 | Public Messages | P2 | Kind 24 |
 | F4 | Podcasts | P2 | Media clients |
 | CC | Geocaching Events | P3 | Needs open tag filters |
+
+## OpenAgents draft NIPs (not upstream)
+
+Six living drafts live at `~/work/openagents/docs/nips/` (SA, AC, SKL, LBR, DS, TRN).  
+Roadmap status: **postponed**. Full gap analysis: [draft-openagents.md](./draft-openagents.md).
+
+| Spec | Grade here | One-liner |
+| --- | --- | --- |
+| LBR | Partial | Labor kinds in `Nip90.ts` |
+| DS | Partial | Dataset kinds in `Nip90.ts` |
+| SKL / SA / AC / TRN | Missing | No dedicated services |
 
 ---
 
