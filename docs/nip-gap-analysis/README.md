@@ -108,7 +108,7 @@ Unrecommended but kept for interop: 03, 04, 06, 08, 15, 26, 28, 31, 72, 90, 96, 
 
 ## Related roadmaps
 
-- **OpenAgents #9092 sovereign identity** (BIP-39 Nostr + Spark): library NIP parity plan in [`docs/IDR_9092_NIP_PARITY_ROADMAP.md`](../IDR_9092_NIP_PARITY_ROADMAP.md) (NIP-06/19/44/46/98).
+- **OpenAgents #9092 sovereign identity** (BIP-39 Nostr + Spark): [IDR roadmap](../IDR_9092_NIP_PARITY_ROADMAP.md) + [Identity façade (Phase B)](../IDENTITY.md) (`nostr-effect/identity`).
 
 ## Next steps
 

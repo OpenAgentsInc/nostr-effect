@@ -46,6 +46,20 @@ export * as Nip98 from "./core/Nip98.js"
 export * as Nip99 from "./core/Nip99.js"
 export * as NipSB from "./core/NipSB.js"
 
+// Identity façade (OpenAgents #9092 Phase B)
+export {
+  IdentityKeys,
+  type IdentityKeysOptions,
+  type GenerateIdentityOptions,
+  type GeneratedIdentity,
+} from "./core/IdentityKeys.js"
+export {
+  LocalKeySigner,
+  type LocalSignerPort,
+  type PublicIdentityManifest,
+  type SignEventTemplate,
+} from "./core/LocalSigner.js"
+
 // Services
 export * from "./services/CryptoService.js"
 export * from "./services/EventService.js"

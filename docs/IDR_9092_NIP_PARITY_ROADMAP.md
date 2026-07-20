@@ -22,9 +22,9 @@ Out of scope for **this** repo (lives in OpenAgents packets #9093–#9103):
 - Desktop BOOT SEQUENCE UI  
 - Live owner secrets  
 
-## Implementation order (this roadmap)
+## Implementation order
 
-### Phase A — Identity crypto hard floor (do first) ✅ target of this PR
+### Phase A — Identity crypto hard floor ✅
 
 1. **NIP-06** perfect parity with NIP-06 test vectors + OpenAgents empty-passphrase path  
 2. **NIP-19** integration: nsec/npub from NIP-06 account (fixture-only)  
@@ -32,42 +32,54 @@ Out of scope for **this** repo (lives in OpenAgents packets #9093–#9103):
 4. **NIP-44** re-confirm vector suite still green (no API break)  
 5. **NIP-46** re-confirm method surface for connect/sign/nip44_*  
 
-### Phase B — Identity-friendly façade (optional follow-up)
+### Phase B — Identity-friendly façade ✅
 
-6. Thin `IdentityKeys` helper: `{ mnemonic → account, npub, nsec }` with **no** secret logging  
-7. Pure local signer port shape documented for OpenAgents `sovereign-identity` (signEvent, nip44Encrypt/Decrypt, getPublicKey)  
-8. Export mapping docs for OpenAgents consumers  
+6. Thin `IdentityKeys` helper: mnemonic → public identity + signer  
+7. `LocalSignerPort` + `LocalKeySigner` (sign, NIP-44, NIP-98; no key export on port)  
+8. Consumer docs: [`docs/IDENTITY.md`](./IDENTITY.md)  
 
 ### Phase C — Broader gap analysis (not #9092-blocking)
 
 Continues from `docs/nip-gap-analysis/`: open tag filters, NIP-58 badges, NIP-57, NIP-47, OpenAgents drafts (SA/AC/SKL/…), etc.  
 **Do not block IDR** on those.
 
-## Success criteria (Phase A)
+## Success criteria
+
+### Phase A
 
 - [x] Official NIP-06 mnemonic vectors match (pk, nsec, pubkey, npub)  
-- [x] Explicit constant `NIP06_ACCOUNT_PATH = "m/44'/1237'/0'/0/0"` (OpenAgents / Pylon shape)  
+- [x] Explicit constant `NIP06_ACCOUNT_PATH = "m/44'/1237'/0'/0/0"`  
 - [x] Empty passphrase default documented and tested  
 - [x] 12- and 24-word generation  
 - [x] NIP-98 rejects bad signatures  
 - [x] NIP-98 payload hash accepts `Uint8Array` / raw string body  
 - [x] NIP-44 + NIP-46 existing suites green  
-- [x] `bun run verify` green
+- [x] `bun run verify` green  
+
+### Phase B
+
+- [x] `IdentityKeys.fromOpenAgentsLegacyMnemonic` / `fromMnemonic` / `generate`  
+- [x] `asSigner(): LocalSignerPort` without export methods on the port object  
+- [x] `LocalKeySigner` NIP-44 + NIP-98 + public manifest  
+- [x] Secrets not present in `toJSON` / `toString`  
+- [x] `dispose()` zeros key material  
+- [x] Package export `nostr-effect/identity`  
+- [x] Docs in `docs/IDENTITY.md`  
 
 ## Status
 
 | Phase | Status |
 | --- | --- |
-| A | **Done in this PR** (NIP-06 + NIP-98 parity; 44/46 verified) |
-| B | Pending |
+| A | **Done** |
+| B | **Done** |
 | C | Separate from #9092 |
 
 ## Code touchpoints
 
-| NIP | Paths |
+| NIP / feature | Paths |
 | --- | --- |
-| 06 | `src/core/Nip06.ts`, `src/core/Nip06.test.ts`, `src/wrappers/nip06.ts` |
-| 98 | `src/core/Nip98.ts`, `src/core/Nip98.test.ts`, `src/wrappers/nip98.ts` |
-| 19 | used in NIP-06 tests via `npubEncodeSync` / `nsecEncodeSync` |
-| 44 | `src/services/Nip44Service.ts` (+ tests) |
-| 46 | `src/client/Nip46Service.ts` (+ tests) |
+| 06 | `src/core/Nip06.ts`, tests, `src/wrappers/nip06.ts` |
+| 98 | `src/core/Nip98.ts`, tests, `src/wrappers/nip98.ts` |
+| Identity façade | `src/core/IdentityKeys.ts`, `src/core/LocalSigner.ts` |
+| Exports | `src/wrappers/identity.ts` → `nostr-effect/identity` |
+| Docs | `docs/IDENTITY.md`, this file |

@@ -86,6 +86,7 @@
     "./nip99": "./src/wrappers/nip99.ts",
     "./references": "./src/wrappers/references.ts",
     "./signer": "./src/wrappers/signer.ts",
+    "./identity": "./src/wrappers/identity.ts",
     "./helpers": "./src/wrappers/helpers.ts",
     "./fakejson": "./src/wrappers/fakejson.ts",
     "./client": "./src/client/index.ts",
