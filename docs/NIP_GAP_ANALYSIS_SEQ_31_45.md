@@ -1,0 +1,162 @@
+# Sequential NIP Gap Analysis — Batch 3: NIPs 31–45
+
+**Date:** 2026-07-20  
+**Series:** Sequential full-repo scan  
+**Prior:** `NIP_GAP_ANALYSIS_SEQ_16_30.md`  
+**Note:** NIP-41 does not exist in upstream.
+
+## Batch summary
+
+| NIP | Title | Stance | Claimed | Grade | Top gap |
+| --- | --- | --- | --- | --- | --- |
+| 31 | Unknown kinds (`alt`) | unrecommended | yes | **Legacy OK** | Thin helpers |
+| 32 | Labeling | draft | yes | **Partial** | `#L`/`#l` filters stripped |
+| 33 | Addressable events | moved → 01 | yes | **Mostly OK** | Via Nip16Module |
+| 34 | Git collaboration | draft | yes | **Mostly OK** | Broad builders; depth optional |
+| 35 | Torrents | draft | yes | **Mostly OK** | Kinds 2003/2004 + magnet |
+| 36 | Content warning | draft | yes | **Mostly OK** | Complete for tag helpers |
+| 37 | Draft wraps | draft | yes | **Mostly OK** | Kind 31234 + private relays |
+| 38 | User statuses | draft | yes | **Mostly OK** | Kind 30315 d-type |
+| 39 | External identities | draft | yes | **Mostly OK** | Platform claim helpers |
+| 40 | Expiration | draft / relay | yes | **Mostly OK** | Query-path expired filter |
+| 42 | AUTH | draft / relay | yes | **Mostly OK** | Restricted REQ gating polish |
+| 43 | Relay access metadata | draft | yes | **Mostly OK** | Client builders; relay enforce optional |
+| 44 | Versioned encryption | optional | yes | **Strong** | Spec vectors tested |
+| 45 | Event counts | draft / relay | yes | **Mostly OK** | Naive full-scan count |
+
+---
+
+## NIP-31 — Unknown event kinds (`alt`)
+
+Unrecommended / bloated. Helpers `withAltTag` / `getAltTag`. **Legacy OK.**
+
+---
+
+## NIP-32 — Labeling
+
+**Code:** `Nip32Service.ts`  
+**P0:** `queryLabels` uses `#L`/`#l` which Filter schema **strips** (verified). Publish path OK. See reputation thematic.
+
+**Grade: Partial**
+
+---
+
+## NIP-33 — Parameterized / addressable events
+
+Spec renamed to addressable; ranges in NIP-01. Implemented in `Nip16Module` replace-by-`d`. **Mostly OK** pending ephemeral fix (16).
+
+---
+
+## NIP-34 — Git collaboration
+
+**Code:** `src/core/Nip34.ts` — large surface:
+
+- Repo 30617, state 30618, patch 1617, PR 1618/1619, issue 1621, status 1630–1633, GRASP list 10317.
+- Generate/parse for major structures.
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Spec completeness vs latest 34.md | **P2** | Spot-check new tags/kinds if upstream grew. |
+| Effect service / relay workflows | **P3** | Core builders only. |
+
+**Grade: Mostly OK**
+
+---
+
+## NIP-35 — Torrents
+
+Kind 2003 torrent + 2004 comment; magnet helper. **Mostly OK.**
+
+---
+
+## NIP-36 — Content warning
+
+`content-warning` tag + optional NIP-32 labels. **Mostly OK.**
+
+---
+
+## NIP-37 — Draft wraps
+
+Kind 31234 encrypted drafts; kind 10013 private relays; encrypt/decrypt for author. **Mostly OK.** Preferred over 30024 for NIP-23 drafts.
+
+---
+
+## NIP-38 — User statuses
+
+Kind 30315 addressable by `d` (status type); publish/get.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Expiration / link tags | **P2** | Spec may define optional `expiration`, `r`/`p`/`e` links — confirm full tag set. |
+| Emoji (NIP-30) on 30315 | **P3** | Spec lists 30315 as emoji-eligible. |
+
+**Grade: Mostly OK**
+
+---
+
+## NIP-39 — External identities
+
+Identity claims (github/twitter/mastodon/telegram) with verification fetch helpers. **Mostly OK.**
+
+---
+
+## NIP-40 — Expiration
+
+Helpers + module reject expired on write. **P2:** ensure query path never returns expired. **Mostly OK.**
+
+---
+
+## NIP-42 — AUTH
+
+Challenge, verify, protected-event gate. **Mostly OK.**
+
+---
+
+## NIP-43 — Relay access metadata/requests
+
+Kinds 13534 membership, 8000/8001 add/remove, 28934–28936 join/invite/leave builders.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Relay-side enforcement | **P2** | Client builders + tests publish OK; hosting policy not full NIP-29-style. |
+
+**Grade: Mostly OK (client)**
+
+---
+
+## NIP-44 — Versioned encryption
+
+**Code:** `Nip44Service.ts` — v2 encrypt/decrypt, conversation key, padding; **matches official test vectors**. **Strong.**
+
+---
+
+## NIP-45 — Event counts
+
+Relay `COUNT` in MessageHandler; client `Nip45Service.count`.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Implementation cost | **P2** | Counts by materializing query results — fine small-scale; may need index path for production. |
+| Approximate flag | **P3** | Always `approximate: false` today. |
+
+**Grade: Mostly OK**
+
+---
+
+## Batch 3 backlog
+
+1. **P0** NIP-32 filter fix (depends NIP-01).  
+2. **P2** NIP-45 efficient count; NIP-40 query filter; NIP-38 optional tags.  
+3. **P2** NIP-34 re-diff vs latest git NIP.
+
+## Next
+
+**Batch 4:** NIPs 46–60.
