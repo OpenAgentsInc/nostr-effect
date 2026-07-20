@@ -1,0 +1,146 @@
+# Sequential NIP Gap Analysis — Batch 5: NIPs 61–78
+
+**Date:** 2026-07-20  
+**Series:** Sequential full-repo scan  
+**Note:** Upstream has no 63, 74, 76. NIP-67 exists and is **unclaimed**.
+
+## Batch summary
+
+| NIP | Title | Claimed | Grade | Top gap |
+| --- | --- | --- | --- | --- |
+| 61 | Nutzaps | yes | **Partial** | `#u` filter stripped; redeem encryption |
+| 62 | Request to Vanish | yes | **Mostly OK** | Kind 62 wipe by pubkey |
+| 64 | Chess (PGN) | yes | **Mostly OK** | Niche wrapper |
+| 65 | Relay list metadata | yes | **Mostly OK** | Kind 10002 read/write |
+| 66 | Relay discovery & liveness | yes | **Mostly OK** | 30166 / 10166 |
+| 67 | EOSE completeness hint | **no** | **Missing** | Optional 3rd EOSE element |
+| 68 | Picture-first feeds | yes | **Mostly OK** | Kind picture + imeta |
+| 69 | P2P orders | yes | **Mostly OK** | See payments; filter tags |
+| 70 | Protected events | yes | **Mostly OK** | Default reject `-` |
+| 71 | Video events | yes | **Mostly OK** | Kinds 21/22 + imeta |
+| 72 | Moderated communities | yes (unrec.) | **Legacy OK** | Prefer 29 |
+| 73 | External content IDs | yes | **Mostly OK** | `i`/`k` helpers |
+| 75 | Zap goals | yes | **Mostly OK** | Zap-goal helpers thin |
+| 77 | Negentropy syncing | yes | **Strong** | Client + relay IdList |
+| 78 | App data | yes | **Mostly OK** | Arbitrary app events |
+
+---
+
+## NIP-61 — Nutzaps
+
+**Partial** — payments doc. P0 `#u` filter; P1 redeem NIP-44.
+
+---
+
+## NIP-62 — Request to Vanish
+
+**Code:** MessageHandler kind 62 deletes all author events ≤ created_at; module + tests.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Spec nuances | **P2** | Re-read for relay tag / scope requirements from latest 62.md. |
+| Client helper | **P3** | Relay-side primary. |
+
+**Grade: Mostly OK**
+
+---
+
+## NIP-64 — Chess
+
+PGN note builder. **Mostly OK.**
+
+---
+
+## NIP-65 — Relay list metadata
+
+**Code:** `RelayListService` kind 10002 get/set/add. **Mostly OK.** Preferred over deprecated kind-3 relay JSON (NIP-24).
+
+---
+
+## NIP-66 — Relay discovery & liveness
+
+**Code:** `RelayDiscoveryService` 30166 discovery + 10166 monitor. **Mostly OK.**
+
+---
+
+## NIP-67 — EOSE completeness hint (**MISSING**)
+
+**Spec:** optional third element on EOSE: `["finish"]` / `["more"]`.  
+**Code:** schemas emit/accept only `["EOSE", subid]`.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Entire NIP | **P1** | High value for pagination correctness. |
+| Advertise 67 in supported_nips | **P1** | After implement. |
+
+**Grade: Missing**
+
+---
+
+## NIP-68 — Picture-first feeds
+
+Picture events with imeta. **Mostly OK.**
+
+---
+
+## NIP-69 — P2P orders
+
+Wrapper complete incl. expires_at. Queries need open tag filters. **Mostly OK** / filter **P0**.
+
+---
+
+## NIP-70 — Protected events
+
+Default reject; AUTH path. **Mostly OK.**
+
+---
+
+## NIP-71 — Video events
+
+Normal/short video with imeta variants. **Mostly OK.**
+
+---
+
+## NIP-72 — Moderated communities
+
+Unrecommended → 29. **Legacy OK.**
+
+---
+
+## NIP-73 — External content IDs
+
+Web/ISBN/podcast/hashtag/chain helpers. **Mostly OK.**
+
+---
+
+## NIP-75 — Zap goals
+
+Kind 9041 amount+relays. **Mostly OK**; compose with ZapService.
+
+---
+
+## NIP-77 — Negentropy
+
+Client `Nip77Service` + relay module + MessageHandler; IdList reconcile tests. **Strong.**
+
+---
+
+## NIP-78 — App data
+
+`AppDataService` arbitrary custom app events. **Mostly OK.**
+
+---
+
+## Batch 5 backlog
+
+1. **P1** Implement NIP-67 EOSE hints.  
+2. **P0** Filters for 61/69.  
+3. **P2** NIP-62 full re-diff.
+
+## Next
+
+**Batch 6:** NIPs 84–99.
