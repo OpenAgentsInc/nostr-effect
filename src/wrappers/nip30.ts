@@ -27,6 +27,7 @@ export {
   replaceAll,
   getEmojiUrl,
   createEmojiTag,
+  getEmojiSetAddress,
   type CustomEmoji,
   type CustomEmojiMatch,
 } from "../core/Nip30.js"

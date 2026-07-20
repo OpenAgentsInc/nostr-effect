@@ -99,14 +99,36 @@ export const GROUP_MEMBERS_KIND = 39002
 /** Supported roles advertisement */
 export const GROUP_ROLES_KIND = 39003
 
-/** Moderation: put-user (assign roles / add) */
+/** Moderation action kinds (NIP-29 table) */
 export const GROUP_PUT_USER_KIND = 9000
-/** Moderation: remove-user */
 export const GROUP_REMOVE_USER_KIND = 9001
-/** Moderation: edit-metadata */
 export const GROUP_EDIT_METADATA_KIND = 9002
+export const GROUP_DELETE_EVENT_KIND = 9005
+export const GROUP_CREATE_GROUP_KIND = 9007
+export const GROUP_DELETE_GROUP_KIND = 9008
+export const GROUP_CREATE_INVITE_KIND = 9009
+export const GROUP_UPDATE_PIN_LIST_KIND = 9010
 /** Join request */
 export const GROUP_JOIN_REQUEST_KIND = 9021
+
+/** LiveKit participants list */
+export const GROUP_LIVEKIT_PARTICIPANTS_KIND = 39004
+/** Group pinned events list */
+export const GROUP_PINNED_EVENTS_KIND = 39005
+
+/** Full moderation kind → action name map */
+export const GROUP_MODERATION_ACTIONS = {
+  9000: "put-user",
+  9001: "remove-user",
+  9002: "edit-metadata",
+  9005: "delete-event",
+  9007: "create-group",
+  9008: "delete-group",
+  9009: "create-invite",
+  9010: "update-pin-list",
+} as const
+
+export type GroupModerationKind = keyof typeof GROUP_MODERATION_ACTIONS
 
 /** NIP-11 Relay Information */
 export interface RelayInformation {
@@ -325,6 +347,166 @@ export function buildJoinRequestTags(
   if (options?.code) tags.push(["code", options.code])
   if (options?.reason) tags.push(["reason", options.reason])
   return tags
+}
+
+/** Common h-tag + optional reason content for moderation templates */
+export interface ModerationTemplate {
+  readonly kind: number
+  readonly tags: string[][]
+  readonly content: string
+}
+
+const moderationBase = (
+  kind: number,
+  groupId: string,
+  extraTags: string[][] = [],
+  reason = ""
+): ModerationTemplate => ({
+  kind,
+  tags: [["h", groupId], ...extraTags],
+  content: reason,
+})
+
+export function buildRemoveUserTemplate(
+  groupId: string,
+  pubkey: string,
+  reason = ""
+): ModerationTemplate {
+  return moderationBase(GROUP_REMOVE_USER_KIND, groupId, [["p", pubkey]], reason)
+}
+
+export function buildEditMetadataTemplate(
+  groupId: string,
+  metadataTags: string[][],
+  reason = ""
+): ModerationTemplate {
+  // metadata fields without d (h is group id); pass name/picture/about/private/etc.
+  return moderationBase(GROUP_EDIT_METADATA_KIND, groupId, metadataTags, reason)
+}
+
+export function buildDeleteEventTemplate(
+  groupId: string,
+  eventId: string,
+  reason = ""
+): ModerationTemplate {
+  return moderationBase(GROUP_DELETE_EVENT_KIND, groupId, [["e", eventId]], reason)
+}
+
+export function buildCreateGroupTemplate(groupId: string, reason = ""): ModerationTemplate {
+  return moderationBase(GROUP_CREATE_GROUP_KIND, groupId, [], reason)
+}
+
+export function buildDeleteGroupTemplate(groupId: string, reason = ""): ModerationTemplate {
+  return moderationBase(GROUP_DELETE_GROUP_KIND, groupId, [], reason)
+}
+
+export function buildCreateInviteTemplate(
+  groupId: string,
+  code: string,
+  reason = ""
+): ModerationTemplate {
+  return moderationBase(GROUP_CREATE_INVITE_KIND, groupId, [["code", code]], reason)
+}
+
+/**
+ * Full pin list replacement (kind 9010). Pass empty lists to clear pins.
+ * `e` for regular events, `a` for addressable.
+ */
+export function buildUpdatePinListTemplate(
+  groupId: string,
+  pins: readonly { readonly type: "e" | "a"; readonly value: string; readonly relay?: string }[],
+  reason = ""
+): ModerationTemplate {
+  const tags = pins.map((p) =>
+    p.relay ? [p.type, p.value, p.relay] : [p.type, p.value]
+  )
+  return moderationBase(GROUP_UPDATE_PIN_LIST_KIND, groupId, tags, reason)
+}
+
+export function buildPutUserTemplate(
+  groupId: string,
+  pubkey: string,
+  roles: readonly string[] = [],
+  reason = ""
+): ModerationTemplate {
+  return moderationBase(GROUP_PUT_USER_KIND, groupId, [["p", pubkey, ...roles]], reason)
+}
+
+/**
+ * Parse invite code from group naddr/identifier suffix `...?invite=<code>`
+ */
+export function parseGroupInviteCode(identifier: string): {
+  readonly id: string
+  readonly invite?: string
+} {
+  const q = identifier.indexOf("?")
+  if (q < 0) return { id: identifier }
+  const base = identifier.slice(0, q)
+  const params = new URLSearchParams(identifier.slice(q + 1))
+  const invite = params.get("invite")
+  return invite ? { id: base, invite } : { id: base }
+}
+
+/**
+ * LiveKit token endpoint path for a group on a relay HTTP origin.
+ * Client should NIP-98 auth GET/POST this URL.
+ */
+export function livekitTokenEndpoint(relayHttpOrigin: string, groupId: string): string {
+  const base = relayHttpOrigin.replace(/\/$/, "")
+  return `${base}/.well-known/nip29/livekit/${encodeURIComponent(groupId)}`
+}
+
+/** Capability probe URL (204 = LiveKit supported) */
+export function livekitCapabilityEndpoint(relayHttpOrigin: string): string {
+  const base = relayHttpOrigin.replace(/\/$/, "")
+  return `${base}/.well-known/nip29/livekit`
+}
+
+export function parsePinnedEvents(event: NostrEvent): readonly {
+  readonly type: "e" | "a"
+  readonly value: string
+  readonly relay?: string
+}[] {
+  const out: { type: "e" | "a"; value: string; relay?: string }[] = []
+  for (const t of event.tags) {
+    if ((t[0] === "e" || t[0] === "a") && t[1]) {
+      const item: { type: "e" | "a"; value: string; relay?: string } = {
+        type: t[0],
+        value: t[1],
+      }
+      if (t[2]) item.relay = t[2]
+      out.push(item)
+    }
+  }
+  return out
+}
+
+export function parseGroupRoles(event: NostrEvent): readonly {
+  readonly role: string
+  readonly description?: string
+}[] {
+  const roles: { role: string; description?: string }[] = []
+  for (const t of event.tags) {
+    if (t[0] === "role" && t[1]) {
+      const r: { role: string; description?: string } = { role: t[1] }
+      if (t[2]) r.description = t[2]
+      roles.push(r)
+    }
+  }
+  return roles
+}
+
+/** True if metadata event advertises LiveKit AV */
+export function hasLivekitSupport(metadata: GroupMetadata | NostrEvent): boolean {
+  if ("tags" in metadata && Array.isArray(metadata.tags)) {
+    return metadata.tags.some((t) => t[0] === "livekit")
+  }
+  // GroupMetadata doesn't carry livekit yet — check via tags on raw event preferred
+  return false
+}
+
+export function metadataHasLivekitTag(event: NostrEvent): boolean {
+  return event.tags.some((t) => t[0] === "livekit")
 }
 
 function parseAdminsFromEvent(event: NostrEvent): GroupAdmin[] {

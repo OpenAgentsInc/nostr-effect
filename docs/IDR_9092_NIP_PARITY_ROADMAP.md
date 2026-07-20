@@ -48,7 +48,7 @@ Not #9092-blocking. From `docs/nip-gap-analysis/` priority backlog:
 4. **NIP-09** — `a`-tag multi-version deletion up to `created_at`
 5. **NIP-67** — EOSE third element `finish` / `more`; `Nip67Module` in DefaultModules
 
-Later phases landed: NIP-85, NIP-47 NIP-44+hold, NIP-57 F/G, NIP-29 metadata/moderation helpers, NIP-25 a/k/17, NIP-50 search extensions, lettered A4/5A/F4/CC. OpenAgents drafts still postponed.
+**Parity backlog 100% complete** (2026-07-20): foundation + 85/47/57/29/25/50/lettered + NIP-11 align, NIP-50 ranking, NIP-18/30 polish, OpenAgents draft kind surfaces (`openagents-drafts`).
 
 ## Success criteria
 

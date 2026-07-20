@@ -72,8 +72,22 @@ export function getEmojiUrl(
 }
 
 /**
- * Create an emoji tag for an event
+ * Create an emoji tag for an event.
+ * Optional 4th param is the NIP-30 emoji set address (`30030:pubkey:d`).
  */
-export function createEmojiTag(name: string, url: string): readonly string[] {
+export function createEmojiTag(
+  name: string,
+  url: string,
+  setAddress?: string
+): readonly string[] {
+  if (setAddress) return ["emoji", name, url, setAddress] as const
   return ["emoji", name, url] as const
+}
+
+/**
+ * Parse optional set address (4th element) from an emoji tag.
+ */
+export function getEmojiSetAddress(tag: readonly string[]): string | undefined {
+  if (tag[0] !== "emoji") return undefined
+  return tag[3]
 }

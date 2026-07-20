@@ -16,6 +16,7 @@
 export {
   fetchRelayInformation,
   useFetchImplementation,
+  normalizeRelayInformation,
   type BasicRelayInformation,
   type Limitations,
   type RetentionDetails,

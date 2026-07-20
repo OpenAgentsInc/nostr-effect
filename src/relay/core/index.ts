@@ -38,7 +38,14 @@ export {
 } from "./AuthService.js"
 
 // Filter matching
-export { matchesFilter, matchesFilters } from "./FilterMatcher.js"
+export {
+  matchesFilter,
+  matchesFilters,
+  parseSearchQuery,
+  matchesSearch,
+  scoreSearchResult,
+  rankSearchResults,
+} from "./FilterMatcher.js"
 
 // NIP-11 Relay info
 export {

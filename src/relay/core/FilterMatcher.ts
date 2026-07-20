@@ -145,6 +145,53 @@ export const matchesSearch = (event: NostrEvent, search: string): boolean => {
 }
 
 /**
+ * NIP-50 quality score for ranking search results (higher = better).
+ * Heuristic: term hit counts in content + early-position bonus + recency.
+ */
+export const scoreSearchResult = (event: NostrEvent, search: string): number => {
+  const parsed = parseSearchQuery(search)
+  if (parsed.terms.length === 0) return 0
+  const content = event.content.toLowerCase()
+  let score = 0
+  for (const term of parsed.terms) {
+    const t = term.toLowerCase()
+    let idx = 0
+    let hits = 0
+    while (true) {
+      const found = content.indexOf(t, idx)
+      if (found < 0) break
+      hits++
+      // Earlier matches score higher
+      score += 10 + Math.max(0, 5 - Math.floor(found / 40))
+      idx = found + t.length
+    }
+    if (hits === 0) return -1
+    score += hits * 2
+  }
+  // Mild recency bias (created_at seconds)
+  score += Math.min(event.created_at / 1e12, 1)
+  return score
+}
+
+/**
+ * Sort matching events by NIP-50 search quality (desc), then created_at desc, then id asc.
+ */
+export const rankSearchResults = <E extends NostrEvent>(
+  events: readonly E[],
+  search: string
+): E[] => {
+  const scored = events
+    .map((e) => ({ e, s: scoreSearchResult(e, search) }))
+    .filter((x) => x.s >= 0)
+  scored.sort((a, b) => {
+    if (b.s !== a.s) return b.s - a.s
+    if (b.e.created_at !== a.e.created_at) return b.e.created_at - a.e.created_at
+    return a.e.id < b.e.id ? -1 : a.e.id > b.e.id ? 1 : 0
+  })
+  return scored.map((x) => x.e)
+}
+
+/**
  * Check if an event matches any filter (OR logic between filters)
  */
 export const matchesFilters = (event: NostrEvent, filters: readonly Filter[]): boolean => {

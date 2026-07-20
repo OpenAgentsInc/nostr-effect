@@ -68,6 +68,39 @@ export interface GetRepostedEventOptions {
 /**
  * Create a repost event for the given event
  */
+/**
+ * NIP-18 / NIP-21 quote tag: `["q", <event-id|address>, <relay-url>, <pubkey?>]`
+ */
+export function createQuoteTag(
+  idOrAddress: string,
+  relayUrl?: string,
+  pubkey?: string
+): string[] {
+  const tag = ["q", idOrAddress]
+  if (relayUrl) tag.push(relayUrl)
+  if (pubkey) tag.push(pubkey)
+  return tag
+}
+
+/**
+ * Finish a repost that also quotes another event via `q` tag (quote-repost pattern).
+ */
+export function finishQuoteRepostEvent(
+  t: RepostEventTemplate,
+  reposted: Event,
+  relayUrl: string,
+  privateKey: Uint8Array,
+  quote: { idOrAddress: string; relay?: string; pubkey?: string }
+): Event {
+  const q = createQuoteTag(quote.idOrAddress, quote.relay, quote.pubkey)
+  return finishRepostEvent(
+    { ...t, tags: [...(t.tags ?? []), q] },
+    reposted,
+    relayUrl,
+    privateKey
+  )
+}
+
 export function finishRepostEvent(
   t: RepostEventTemplate,
   reposted: Event,
@@ -76,6 +109,12 @@ export function finishRepostEvent(
 ): Event {
   let kind: typeof Repost | typeof GenericRepost
   const tags = [...(t.tags ?? []), ["e", reposted.id, relayUrl], ["p", reposted.pubkey]]
+
+  // Generic repost of addressable: include a tag (kind:pubkey:d)
+  if (reposted.kind >= 30000 && reposted.kind < 40000) {
+    const d = reposted.tags.find((x) => x[0] === "d")?.[1] ?? ""
+    tags.push(["a", `${reposted.kind}:${reposted.pubkey}:${d}`, relayUrl])
+  }
 
   if (reposted.kind === ShortTextNote) {
     kind = Repost

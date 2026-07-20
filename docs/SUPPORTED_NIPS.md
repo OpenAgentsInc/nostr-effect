@@ -19,14 +19,14 @@ Keep this file up to date whenever adding or removing support.
 | 07 | window.nostr capability | `~/code/nips/07.md` | `src/wrappers/nip07.ts` | `src/wrappers/nip07.test.ts` |
 | 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` (`e` + `a` tags) | `src/relay/Nip09Deletion.test.ts` |
 | 10 | Reply threading | `~/code/nips/10.md` | `src/client/Nip10Service.ts` | `src/client/Nip10Service.test.ts` |
-| 11 | Relay information | `~/code/nips/11.md` | `src/relay/core/nip/modules/Nip11Module.ts` | `src/core/Nip11.test.ts`, `src/relay/RelayInfo.test.ts` |
+| 11 | Relay information | `~/code/nips/11.md` | `src/relay/core/nip/modules/Nip11Module.ts`, `src/core/Nip11.ts` (banner/self/terms aligned) | `src/core/Nip11.test.ts`, `src/relay/RelayInfo.test.ts` |
 | 12 | Generic tag queries (moved to NIP-01) | `~/code/nips/12.md` | `src/core/Schema.ts`, `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts` |
 | 13 | Proof of Work | `~/code/nips/13.md` | `src/wrappers/nip13.ts` | `src/core/Nip13.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
 | 15 | Nostr Marketplace | `~/code/nips/15.md` | `src/client/MarketplaceService.ts` | `src/client/MarketplaceService.test.ts` |
 | 16 | Event treatment | `~/code/nips/16.md` | `src/relay/core/nip/modules/Nip16Module.ts` (ephemeral → broadcast, no store) | `src/relay/core/nip/NipRegistry.test.ts`, `src/relay/Nip16Ephemeral.test.ts` |
 | 17 | Private direct messages | `~/code/nips/17.md` | `src/client/Nip17Service.ts` | `src/core/Nip17.test.ts`, `src/client/Nip17Service.test.ts` |
-| 18 | Reposts | `~/code/nips/18.md` | `src/client/Nip18Service.ts` | `src/client/Nip18Service.test.ts` |
+| 18 | Reposts | `~/code/nips/18.md` | `src/client/Nip18Service.ts`, `src/wrappers/nip18.ts` (`q` quote, addressable `a`) | `src/client/Nip18Service.test.ts`, `src/parity-100.test.ts` |
 | 19 | bech32 encoding | `~/code/nips/19.md` | `src/core/Nip19.ts`, `src/wrappers/nip19.ts` | `src/core/Nip19.test.ts`, `src/wrappers/nip19.test.ts` |
 | 20 | Command results | `~/code/nips/20.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip20CommandResults.test.ts` |
 | 21 | nostr: URI scheme | `~/code/nips/21.md` | `src/core/Nip21.ts`, `src/wrappers/nip21.ts` | `src/core/Nip21.test.ts` |
@@ -37,8 +37,8 @@ Keep this file up to date whenever adding or removing support.
 | 26 | Delegated event signing | `~/code/nips/26.md` | `src/wrappers/nip26.ts` | `src/wrappers/nip26.test.ts` |
 | 27 | Content parsing | `~/code/nips/27.md` | `src/wrappers/nip27.ts` | `src/core/Nip27.test.ts` |
 | 28 | Public chat | `~/code/nips/28.md` | `src/client/ChatService.ts`, `src/relay/core/nip/modules/Nip28Module.ts` | `src/client/ChatService.test.ts` |
-| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` (private/closed/restricted/hidden, subgroups, moderation helpers) | `src/client/Nip29Service.test.ts`, `src/client/parity-batch-e.test.ts` |
-| 30 | Custom emoji | `~/code/nips/30.md` | `src/wrappers/nip30.ts` | `src/core/Nip30.test.ts` |
+| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts`, `src/relay/core/nip/modules/Nip29Module.ts` (full moderation matrix, LiveKit endpoints) | `src/client/Nip29Service.test.ts`, `src/parity-100.test.ts` |
+| 30 | Custom emoji | `~/code/nips/30.md` | `src/core/Nip30.ts`, `src/wrappers/nip30.ts` (set-address 4th param) | `src/core/Nip30.test.ts`, `src/parity-100.test.ts` |
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 32 | Labeling | `~/code/nips/32.md` | `src/client/Nip32Service.ts` | `src/client/Nip32Service.test.ts` |
 | 33 | Parameterized replaceable events | `~/code/nips/33.md` | `src/relay/core/nip/modules/Nip16Module.ts` | `src/relay/core/nip/NipRegistry.test.ts` |
@@ -57,7 +57,7 @@ Keep this file up to date whenever adding or removing support.
 | 47 | Nostr Wallet Connect | `~/code/nips/47.md` | `src/core/Nip47.ts` (NIP-44 default, hold invoices), `src/wrappers/nip47.ts` | `src/core/Nip47.test.ts` |
 | 48 | Proxy tags | `~/code/nips/48.md` | `src/wrappers/nip48.ts` | `src/wrappers/nip48.test.ts` |
 | 49 | Encrypted private keys | `~/code/nips/49.md` | `src/wrappers/nip49.ts` | `src/core/Nip49.test.ts` |
-| 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` (`parseSearchQuery`, extensions) | `src/client/Nip50Service.test.ts`, `src/client/parity-batch-e.test.ts` |
+| 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` (extensions + `rankSearchResults`) | `src/client/Nip50Service.test.ts`, `src/parity-100.test.ts` |
 | 51 | Lists | `~/code/nips/51.md` | `src/client/Nip51Service.ts` | `src/client/Nip51Service.test.ts` |
 | 52 | Calendar events | `~/code/nips/52.md` | `src/client/Nip52Service.ts` | `src/client/Nip52Service.test.ts` |
 | 53 | Live activities | `~/code/nips/53.md` | `src/client/Nip53Service.ts` | `src/client/Nip53Service.test.ts` |
@@ -116,5 +116,16 @@ Lettered NIPs (Definitive)
 | C7 | Chats | `~/code/nips/C7.md` | `src/client/NipC7Service.ts` | `src/client/NipC7Service.test.ts` |
 | CC | Geocaching Events | `~/code/nips/CC.md` | `src/client/NipCCService.ts`, `src/wrappers/nipCC.ts` | `src/client/parity-batch-e.test.ts` |
 | F4 | Podcasts | `~/code/nips/F4.md` | `src/client/NipF4Service.ts`, `src/wrappers/nipF4.ts` | `src/client/parity-batch-e.test.ts` |
+
+### OpenAgents draft NIPs (non-upstream)
+
+| Spec | Title | Spec path | Code | Tests |
+| --- | --- | --- | --- | --- |
+| SA | Sovereign Agents | `~/work/openagents/docs/nips/SA.md` | `src/core/OpenAgentsDrafts.ts` | `src/parity-100.test.ts` |
+| AC | Agent Credit | `~/work/openagents/docs/nips/AC.md` | `src/core/OpenAgentsDrafts.ts` | `src/parity-100.test.ts` |
+| SKL | Skills | `~/work/openagents/docs/nips/SKL.md` | `src/core/OpenAgentsDrafts.ts` | `src/parity-100.test.ts` |
+| TRN | Training Network | `~/work/openagents/docs/nips/TRN.md` | `src/core/OpenAgentsDrafts.ts` | `src/parity-100.test.ts` |
+| LBR | Agentic Labor | `~/work/openagents/docs/nips/LBR.md` | `src/core/Nip90.ts` + OpenAgentsDrafts | `src/parity-100.test.ts` |
+| DS | Datasets | `~/work/openagents/docs/nips/DS.md` | `src/core/Nip90.ts` + OpenAgentsDrafts | `src/parity-100.test.ts` |
 | EE | MLS E2EE Messaging | `~/code/nips/EE.md` | `src/client/NipEEService.ts` | `src/client/NipEEService.test.ts` |
 | SB | Remote Sandbox Protocol | `docs/mechacoder/NIP-SB.md` (OpenAgents) | `src/core/NipSB.ts`, `src/client/SandboxService.ts` | `src/client/SandboxService.test.ts` |

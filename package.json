@@ -92,6 +92,7 @@
     "./references": "./src/wrappers/references.ts",
     "./signer": "./src/wrappers/signer.ts",
     "./identity": "./src/wrappers/identity.ts",
+    "./openagents-drafts": "./src/core/OpenAgentsDrafts.ts",
     "./helpers": "./src/wrappers/helpers.ts",
     "./fakejson": "./src/wrappers/fakejson.ts",
     "./client": "./src/client/index.ts",
