@@ -5,10 +5,21 @@
  * Protocol for clients to access a remote lightning wallet.
  */
 import { sha256 } from "@noble/hashes/sha256"
-import { bytesToHex } from "@noble/hashes/utils"
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"
-import { encrypt as nip04Encrypt } from "./Nip04.js"
+import { encrypt as nip04Encrypt, decrypt as nip04Decrypt } from "./Nip04.js"
+import {
+  encrypt as nip44Encrypt,
+  decrypt as nip44Decrypt,
+  getConversationKey,
+} from "../wrappers/nip44.js"
 import type { EventKind, UnixTimestamp, EventId, Signature, PublicKey } from "./Schema.js"
+
+/** Encryption schemes supported by NIP-47 */
+export type NwcEncryption = "nip44_v2" | "nip04"
+
+/** Default encryption for new requests (current NIP-47) */
+export const NWC_DEFAULT_ENCRYPTION: NwcEncryption = "nip44_v2"
 
 const utf8Encoder = new TextEncoder()
 
@@ -142,31 +153,73 @@ export function parseConnectionString(connectionString: string): NWCConnection {
 }
 
 /**
+ * Encrypt NWC payload with NIP-44 v2 or legacy NIP-04.
+ */
+export function encryptNwcPayload(
+  secretKey: Uint8Array,
+  walletPubkey: string,
+  plaintext: string,
+  encryption: NwcEncryption = NWC_DEFAULT_ENCRYPTION
+): string {
+  if (encryption === "nip04") {
+    return nip04Encrypt(secretKey, walletPubkey, plaintext)
+  }
+  const conversationKey = getConversationKey(secretKey, walletPubkey)
+  return nip44Encrypt(plaintext, conversationKey)
+}
+
+/**
+ * Decrypt NWC payload. Uses encryption tag when present; otherwise legacy NIP-04.
+ */
+export function decryptNwcPayload(
+  secretKey: Uint8Array,
+  walletPubkey: string,
+  ciphertext: string,
+  encryption?: NwcEncryption
+): string {
+  const mode = encryption ?? (ciphertext.includes("?iv=") ? "nip04" : "nip44_v2")
+  if (mode === "nip04") {
+    return nip04Decrypt(secretKey, walletPubkey, ciphertext)
+  }
+  const conversationKey = getConversationKey(secretKey, walletPubkey)
+  return nip44Decrypt(ciphertext, conversationKey)
+}
+
+/**
+ * Resolve encryption from event tags (NIP-47 encryption tag).
+ * Absent tag → nip04 for backwards compatibility.
+ */
+export function getNwcEncryptionFromTags(tags: readonly string[][]): NwcEncryption {
+  const tag = tags.find((t) => t[0] === "encryption" && t[1])
+  if (!tag?.[1]) return "nip04"
+  // Space-separated list; prefer nip44_v2 when listed
+  const modes = tag[1].split(/\s+/)
+  if (modes.includes("nip44_v2")) return "nip44_v2"
+  if (modes.includes("nip04")) return "nip04"
+  return "nip04"
+}
+
+export interface MakeNwcRequestOptions {
+  /** Encryption scheme (default: nip44_v2) */
+  readonly encryption?: NwcEncryption
+}
+
+/**
  * Create an NWC request event for paying an invoice
  *
  * @param pubkey - Public key of the wallet service
  * @param secretKey - Secret key from the connection string (as Uint8Array)
  * @param invoice - BOLT11 invoice to pay
+ * @param options - Encryption options
  * @returns Finalized and signed event
  */
-export function makeNwcRequestEvent(pubkey: string, secretKey: Uint8Array, invoice: string): FinalizedEvent {
-  const content: NWCRequest = {
-    method: "pay_invoice",
-    params: {
-      invoice,
-    },
-  }
-
-  const encryptedContent = nip04Encrypt(secretKey, pubkey, JSON.stringify(content))
-
-  const eventTemplate: EventTemplate = {
-    kind: NWC_REQUEST_KIND,
-    created_at: Math.round(Date.now() / 1000) as UnixTimestamp,
-    content: encryptedContent,
-    tags: [["p", pubkey]],
-  }
-
-  return finalizeEvent(eventTemplate, secretKey)
+export function makeNwcRequestEvent(
+  pubkey: string,
+  secretKey: Uint8Array,
+  invoice: string,
+  options: MakeNwcRequestOptions = {}
+): FinalizedEvent {
+  return makeNwcRequest(pubkey, secretKey, NWC_METHODS.PAY_INVOICE, { invoice }, options)
 }
 
 /**
@@ -176,26 +229,101 @@ export function makeNwcRequestEvent(pubkey: string, secretKey: Uint8Array, invoi
  * @param secretKey - Secret key from the connection string (as Uint8Array)
  * @param method - NWC method name
  * @param params - Method parameters
+ * @param options - Encryption options (default NIP-44 v2)
  * @returns Finalized and signed event
  */
 export function makeNwcRequest(
   pubkey: string,
   secretKey: Uint8Array,
   method: string,
-  params: Record<string, unknown> = {}
+  params: Record<string, unknown> = {},
+  options: MakeNwcRequestOptions = {}
 ): FinalizedEvent {
+  const encryption = options.encryption ?? NWC_DEFAULT_ENCRYPTION
   const content: NWCRequest = { method, params }
+  const encryptedContent = encryptNwcPayload(
+    secretKey,
+    pubkey,
+    JSON.stringify(content),
+    encryption
+  )
 
-  const encryptedContent = nip04Encrypt(secretKey, pubkey, JSON.stringify(content))
+  const tags: string[][] = [["p", pubkey]]
+  if (encryption === "nip44_v2") {
+    tags.push(["encryption", "nip44_v2"])
+  }
+  // Legacy NIP-04 omits encryption tag for interop with old wallet services
 
   const eventTemplate: EventTemplate = {
     kind: NWC_REQUEST_KIND,
     created_at: Math.round(Date.now() / 1000) as UnixTimestamp,
     content: encryptedContent,
-    tags: [["p", pubkey]],
+    tags,
   }
 
   return finalizeEvent(eventTemplate, secretKey)
+}
+
+/**
+ * Decrypt and parse an NWC response or notification event content.
+ */
+export function parseNwcEncryptedContent<T = NWCResponse>(
+  event: { content: string; tags: readonly string[][]; pubkey: string },
+  clientSecretKey: Uint8Array | string
+): T {
+  const secret =
+    typeof clientSecretKey === "string" ? hexToBytes(clientSecretKey) : clientSecretKey
+  const encryption = getNwcEncryptionFromTags(event.tags)
+  const plaintext = decryptNwcPayload(secret, event.pubkey, event.content, encryption)
+  return JSON.parse(plaintext) as T
+}
+
+/** Hold invoice: create */
+export function makeHoldInvoiceRequest(
+  pubkey: string,
+  secretKey: Uint8Array,
+  params: {
+    readonly amount: number
+    readonly description?: string
+    readonly description_hash?: string
+    readonly expiry?: number
+    readonly payment_hash: string
+  },
+  options: MakeNwcRequestOptions = {}
+): FinalizedEvent {
+  return makeNwcRequest(pubkey, secretKey, NWC_METHODS.MAKE_HOLD_INVOICE, { ...params }, options)
+}
+
+/** Hold invoice: cancel by payment hash */
+export function makeCancelHoldInvoiceRequest(
+  pubkey: string,
+  secretKey: Uint8Array,
+  paymentHash: string,
+  options: MakeNwcRequestOptions = {}
+): FinalizedEvent {
+  return makeNwcRequest(
+    pubkey,
+    secretKey,
+    NWC_METHODS.CANCEL_HOLD_INVOICE,
+    { payment_hash: paymentHash },
+    options
+  )
+}
+
+/** Hold invoice: settle with preimage */
+export function makeSettleHoldInvoiceRequest(
+  pubkey: string,
+  secretKey: Uint8Array,
+  preimage: string,
+  options: MakeNwcRequestOptions = {}
+): FinalizedEvent {
+  return makeNwcRequest(
+    pubkey,
+    secretKey,
+    NWC_METHODS.SETTLE_HOLD_INVOICE,
+    { preimage },
+    options
+  )
 }
 
 /**
@@ -248,6 +376,9 @@ export const NWC_METHODS = {
   LIST_TRANSACTIONS: "list_transactions",
   GET_BALANCE: "get_balance",
   GET_INFO: "get_info",
+  MAKE_HOLD_INVOICE: "make_hold_invoice",
+  CANCEL_HOLD_INVOICE: "cancel_hold_invoice",
+  SETTLE_HOLD_INVOICE: "settle_hold_invoice",
 } as const
 
 /**
@@ -256,4 +387,5 @@ export const NWC_METHODS = {
 export const NWC_NOTIFICATIONS = {
   PAYMENT_RECEIVED: "payment_received",
   PAYMENT_SENT: "payment_sent",
+  HOLD_INVOICE_ACCEPTED: "hold_invoice_accepted",
 } as const

@@ -80,10 +80,10 @@ Roadmap status: **postponed**. Full gap analysis: [draft-openagents.md](./draft-
 ### Done (Phase D — ongoing)
 
 7. ~~**P1** NIP-85 Trusted Assertions service~~ — `Nip85Service` + `nip85` wrapper
+8. ~~**P1** NIP-47 NIP-44 encryption + hold invoices~~ — default `nip44_v2`, hold invoice helpers
 
 ### Remaining
 
-8. **P1** NIP-47 NIP-44 encryption + hold invoices
 9. **P1** NIP-57 Appendix F receipt validation + Appendix G zap splits
 10. **P1** NIP-29 groups metadata/moderation catch-up
 11. **P2** NIP-11 client type alignment with relay schema

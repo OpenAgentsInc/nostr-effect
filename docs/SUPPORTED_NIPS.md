@@ -54,7 +54,7 @@ Keep this file up to date whenever adding or removing support.
 | 44 | Versioned encryption | `~/code/nips/44.md` | `src/services/Nip44Service.ts` | `src/services/Nip44Service.test.ts` |
 | 45 | Event counts | `~/code/nips/45.md` | `src/client/Nip45Service.ts`, `src/relay/core/MessageHandler.ts` | `src/client/Nip45Service.test.ts` |
 | 46 | Nostr Connect | `~/code/nips/46.md` | `src/client/Nip46Service.ts` | `src/client/Nip46Service.test.ts` |
-| 47 | Nostr Wallet Connect | `~/code/nips/47.md` | `src/wrappers/nip47.ts` | `src/core/Nip47.test.ts` |
+| 47 | Nostr Wallet Connect | `~/code/nips/47.md` | `src/core/Nip47.ts` (NIP-44 default, hold invoices), `src/wrappers/nip47.ts` | `src/core/Nip47.test.ts` |
 | 48 | Proxy tags | `~/code/nips/48.md` | `src/wrappers/nip48.ts` | `src/wrappers/nip48.test.ts` |
 | 49 | Encrypted private keys | `~/code/nips/49.md` | `src/wrappers/nip49.ts` | `src/core/Nip49.test.ts` |
 | 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` | `src/client/Nip50Service.test.ts` |
