@@ -27,7 +27,13 @@ export {
   generateSeedWords,
   validateWords,
   privateKeyToHex,
+  normalizeMnemonic,
+  accountPath,
+  deriveOpenAgentsLegacyNostrAccount,
   DERIVATION_PATH,
+  NIP06_ACCOUNT_PATH,
+  OPENAGENTS_LEGACY_IDENTITY_PROFILE,
   type DerivedAccount,
   type ExtendedKeys,
+  type MnemonicStrength,
 } from "../core/Nip06.js"

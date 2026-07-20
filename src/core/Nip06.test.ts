@@ -1,6 +1,6 @@
 /**
  * NIP-06: Key Derivation from Mnemonic Seed Phrase Tests
- * Tests ported from nostr-tools for 100% parity
+ * Official NIP-06 vectors + nostr-tools parity + OpenAgents #9092 empty-passphrase path
  */
 import { describe, test, expect } from "bun:test"
 import {
@@ -12,13 +12,80 @@ import {
   validateWords,
   privateKeyToHex,
   DERIVATION_PATH,
+  NIP06_ACCOUNT_PATH,
+  accountPath,
+  deriveOpenAgentsLegacyNostrAccount,
+  normalizeMnemonic,
 } from "./Nip06.js"
 import { hexToBytes } from "@noble/hashes/utils"
+import { nsecEncodeSync, npubEncodeSync } from "./Nip19.js"
 
 describe("NIP-06: Mnemonic Key Derivation", () => {
-  describe("DERIVATION_PATH", () => {
-    test("should have correct derivation path", () => {
+  describe("paths", () => {
+    test("DERIVATION_PATH is purpose+coin type", () => {
       expect(DERIVATION_PATH).toBe("m/44'/1237'")
+    })
+
+    test("NIP06_ACCOUNT_PATH matches OpenAgents / Pylon account 0", () => {
+      expect(NIP06_ACCOUNT_PATH).toBe("m/44'/1237'/0'/0/0")
+      expect(accountPath(0)).toBe(NIP06_ACCOUNT_PATH)
+      expect(accountPath(1)).toBe("m/44'/1237'/1'/0/0")
+    })
+  })
+
+  describe("official NIP-06 test vectors", () => {
+    test("vector 1: leader monkey…", () => {
+      const mnemonic =
+        "leader monkey parrot ring guide accident before fence cannon height naive bean"
+      const privateKey = privateKeyFromSeedWords(mnemonic, "")
+      expect(privateKeyToHex(privateKey)).toBe(
+        "7f7ff03d123792d6ac594bfa67bf6d0c0ab55b6b1fdb6249303fe861f1ccba9a"
+      )
+      const { publicKey } = accountFromSeedWords(mnemonic, "")
+      expect(publicKey).toBe("17162c921dc4d2518f9a101db33695df1afb56ab82f5ff3e5da6eec3ca5cd917")
+      expect(nsecEncodeSync(privateKey)).toBe(
+        "nsec10allq0gjx7fddtzef0ax00mdps9t2kmtrldkyjfs8l5xruwvh2dq0lhhkp"
+      )
+      expect(npubEncodeSync(publicKey)).toBe(
+        "npub1zutzeysacnf9rru6zqwmxd54mud0k44tst6l70ja5mhv8jjumytsd2x7nu"
+      )
+    })
+
+    test("vector 2: what bleak badge… (24 words)", () => {
+      const mnemonic =
+        "what bleak badge arrange retreat wolf trade produce cricket blur garlic valid proud rude strong choose busy staff weather area salt hollow arm fade"
+      const privateKey = privateKeyFromSeedWords(mnemonic)
+      expect(privateKeyToHex(privateKey)).toBe(
+        "c15d739894c81a2fcfd3a2df85a0d2c0dbc47a280d092799f144d73d7ae78add"
+      )
+      const { publicKey } = accountFromSeedWords(mnemonic)
+      expect(publicKey).toBe("d41b22899549e1f3d335a31002cfd382174006e166d3e658e3a5eecdb6463573")
+      expect(nsecEncodeSync(privateKey)).toBe(
+        "nsec1c9wh8xy5eqdzln7n5t0ctgxjcrdug73gp5yj0x03gntn67h83twssdfhel"
+      )
+      expect(npubEncodeSync(publicKey)).toBe(
+        "npub16sdj9zv4f8sl85e45vgq9n7nsgt5qphpvmf7vk8r5hhvmdjxx4es8rq74h"
+      )
+    })
+  })
+
+  describe("OpenAgents #9092 empty-passphrase legacy", () => {
+    test("deriveOpenAgentsLegacyNostrAccount matches empty passphrase account 0", () => {
+      const mnemonic = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong"
+      const a = deriveOpenAgentsLegacyNostrAccount(mnemonic)
+      const b = accountFromSeedWords(mnemonic, "", 0)
+      expect(a.privateKey).toEqual(b.privateKey)
+      expect(a.publicKey).toBe(b.publicKey)
+      expect(privateKeyToHex(a.privateKey)).toBe(
+        "c26cf31d8ba425b555ca27d00ca71b5008004f2f662470f8c8131822ec129fe2"
+      )
+    })
+
+    test("undefined passphrase equals empty string (legacy)", () => {
+      const mnemonic = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong"
+      const a = privateKeyFromSeedWords(mnemonic)
+      const b = privateKeyFromSeedWords(mnemonic, "")
+      expect(a).toEqual(b)
     })
   })
 
@@ -93,14 +160,15 @@ describe("NIP-06: Mnemonic Key Derivation", () => {
   })
 
   describe("generateSeedWords", () => {
-    test("should generate 12-word mnemonic", () => {
+    test("should generate 12-word mnemonic by default", () => {
       const words = generateSeedWords()
-      const wordCount = words.split(" ").length
-      expect(wordCount).toBe(12)
+      expect(words.split(" ").length).toBe(12)
+      expect(validateWords(words)).toBe(true)
     })
 
-    test("should generate valid mnemonic", () => {
-      const words = generateSeedWords()
+    test("should generate 24-word mnemonic at 256-bit strength", () => {
+      const words = generateSeedWords(256)
+      expect(words.split(" ").length).toBe(24)
       expect(validateWords(words)).toBe(true)
     })
 
@@ -111,7 +179,7 @@ describe("NIP-06: Mnemonic Key Derivation", () => {
     })
   })
 
-  describe("validateWords", () => {
+  describe("validateWords / normalizeMnemonic", () => {
     test("should validate correct mnemonic", () => {
       expect(validateWords("zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong")).toBe(true)
     })
@@ -119,14 +187,27 @@ describe("NIP-06: Mnemonic Key Derivation", () => {
     test("should reject invalid mnemonic", () => {
       expect(validateWords("invalid mnemonic phrase")).toBe(false)
     })
+
+    test("should normalize extra whitespace", () => {
+      expect(normalizeMnemonic("  zoo   zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong  ")).toBe(
+        "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong"
+      )
+      expect(
+        validateWords("  zoo   zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong  ")
+      ).toBe(true)
+    })
+
+    test("rejects invalid mnemonic on derive", () => {
+      expect(() => privateKeyFromSeedWords("not a real mnemonic at all")).toThrow(/Invalid BIP-39/)
+    })
   })
 
-  describe("privateKeyToHex", () => {
-    test("should convert private key to hex", () => {
-      const mnemonic = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong"
-      const privateKey = privateKeyFromSeedWords(mnemonic)
-      const hex = privateKeyToHex(privateKey)
-      expect(hex).toBe("c26cf31d8ba425b555ca27d00ca71b5008004f2f662470f8c8131822ec129fe2")
-    })
+  test("roundtrip: generate → derive → nsec/npub", () => {
+    const mnemonic = generateSeedWords()
+    const { privateKey, publicKey } = accountFromSeedWords(mnemonic)
+    expect(privateKey.length).toBe(32)
+    expect(publicKey).toHaveLength(64)
+    expect(nsecEncodeSync(privateKey).startsWith("nsec1")).toBe(true)
+    expect(npubEncodeSync(publicKey).startsWith("npub1")).toBe(true)
   })
 })

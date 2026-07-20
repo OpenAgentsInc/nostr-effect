@@ -106,7 +106,11 @@ Unrecommended but kept for interop: 03, 04, 06, 08, 15, 26, 28, 31, 72, 90, 96, 
 
 ---
 
+## Related roadmaps
+
+- **OpenAgents #9092 sovereign identity** (BIP-39 Nostr + Spark): library NIP parity plan in [`docs/IDR_9092_NIP_PARITY_ROADMAP.md`](../IDR_9092_NIP_PARITY_ROADMAP.md) (NIP-06/19/44/46/98).
+
 ## Next steps
 
-Start implementation from the **Priority backlog** above (P0 open tag filters first). Sequential files are the NIP-by-NIP record; deep dives have extra context for high-risk areas.
+Start general gap work from the **Priority backlog** above (P0 open tag filters first), or follow the #9092 roadmap when supporting identity recovery. Sequential files are the NIP-by-NIP record; deep dives have extra context for high-risk areas.
 

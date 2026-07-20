@@ -14,7 +14,10 @@ import {
   validateEventUrlTag,
   validateEventMethodTag,
   validateEventPayloadTag,
+  validateEventFull,
+  verifyHttpAuthEvent,
   hashPayload,
+  hashPayloadBytes,
   HTTP_AUTH_KIND,
   type EventTemplate,
 } from "./Nip98.js"
@@ -251,6 +254,62 @@ describe("NIP-98: HTTP Auth", () => {
       const expectedPayloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))
 
       expect(computedPayloadHash).toBe(expectedPayloadHash)
+    })
+
+    test("hashes raw Uint8Array body bytes", () => {
+      const body = utf8Encoder.encode('{"a":1}')
+      expect(hashPayload(body)).toBe(hashPayloadBytes(body))
+      expect(hashPayload(body)).toBe(bytesToHex(sha256(body)))
+    })
+
+    test("hashes raw string body as UTF-8 (not JSON-escaped)", () => {
+      const raw = "hello"
+      expect(hashPayload(raw)).toBe(bytesToHex(sha256(utf8Encoder.encode(raw))))
+      // JSON.stringify("hello") yields "\"hello\"" — different bytes
+      expect(hashPayload(raw)).not.toBe(bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(raw)))))
+    })
+  })
+
+  describe("validateEventFull / verifyHttpAuthEvent", () => {
+    test("accepts a valid signed token", async () => {
+      const sk = generateSecretKey()
+      const token = await getToken("https://api.example.com/v1", "POST", (e) => finalizeEvent(e, sk), true)
+      const event = await unpackEventFromToken(token)
+      expect(verifyHttpAuthEvent(event)).toBe(true)
+      await expect(validateEventFull(event, "https://api.example.com/v1", "POST")).resolves.toBe(true)
+    })
+
+    test("rejects tampered signature", async () => {
+      const sk = generateSecretKey()
+      const token = await getToken("https://api.example.com/v1", "GET", (e) => finalizeEvent(e, sk))
+      const event = await unpackEventFromToken(token)
+      const bad = {
+        ...event,
+        sig: "0".repeat(64) as Signature,
+      }
+      expect(verifyHttpAuthEvent(bad)).toBe(false)
+      await expect(validateEventFull(bad, "https://api.example.com/v1", "GET")).rejects.toThrow(
+        /signature invalid/
+      )
+    })
+
+    test("validates payload against raw body bytes", async () => {
+      const sk = generateSecretKey()
+      const rawBody = utf8Encoder.encode('{"hello":"world"}')
+      const token = await getToken(
+        "https://api.example.com/upload",
+        "PUT",
+        (e) => finalizeEvent(e, sk),
+        false,
+        rawBody
+      )
+      const event = await unpackEventFromToken(token)
+      await expect(
+        validateEventFull(event, "https://api.example.com/upload", "PUT", rawBody)
+      ).resolves.toBe(true)
+      await expect(
+        validateEventFull(event, "https://api.example.com/upload", "PUT", utf8Encoder.encode("{}"))
+      ).rejects.toThrow(/payload tag/)
     })
   })
 })

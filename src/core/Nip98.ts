@@ -6,7 +6,9 @@
  */
 import { sha256 } from "@noble/hashes/sha256"
 import { bytesToHex } from "@noble/hashes/utils"
+import { schnorr } from "@noble/curves/secp256k1"
 import type { EventKind, UnixTimestamp, NostrEvent } from "./Schema.js"
+import { verifyEvent } from "../wrappers/pure.js"
 
 /** Kind 27235: HTTP Auth */
 export const HTTP_AUTH_KIND = 27235 as EventKind
@@ -35,7 +37,7 @@ export async function getToken(
   httpMethod: string,
   sign: SignerFunction,
   includeAuthorizationScheme: boolean = false,
-  payload?: Record<string, unknown>
+  payload?: unknown
 ): Promise<string> {
   const event: EventTemplate = {
     kind: HTTP_AUTH_KIND,
@@ -125,11 +127,30 @@ export function validateEventMethodTag(event: NostrEvent, method: string): boole
 }
 
 /**
- * Calculates the hash of a payload
+ * Hash arbitrary payload bytes (preferred for HTTP bodies).
+ */
+export function hashPayloadBytes(bytes: Uint8Array): string {
+  return bytesToHex(sha256(bytes))
+}
+
+/**
+ * Calculates the hash of a payload for the NIP-98 `payload` tag.
+ *
+ * - `Uint8Array` / `ArrayBuffer`: hash raw bytes (HTTP body)
+ * - `string`: hash UTF-8 bytes of the string (raw body text)
+ * - other: hash `JSON.stringify(payload)` (convenience; prefer raw body when possible)
  */
 export function hashPayload(payload: unknown): string {
-  const hash = sha256(utf8Encoder.encode(JSON.stringify(payload)))
-  return bytesToHex(hash)
+  if (payload instanceof Uint8Array) {
+    return hashPayloadBytes(payload)
+  }
+  if (payload instanceof ArrayBuffer) {
+    return hashPayloadBytes(new Uint8Array(payload))
+  }
+  if (typeof payload === "string") {
+    return hashPayloadBytes(utf8Encoder.encode(payload))
+  }
+  return hashPayloadBytes(utf8Encoder.encode(JSON.stringify(payload)))
 }
 
 /**
@@ -145,22 +166,47 @@ export function validateEventPayloadTag(event: NostrEvent, payload: unknown): bo
 }
 
 /**
- * Full validation of a Nostr event for NIP-98 flow
+ * Verify kind/id/signature of a NIP-98 event (sync).
+ */
+export function verifyHttpAuthEvent(event: NostrEvent): boolean {
+  if (!validateEventKind(event)) return false
+  if (!event.id || !event.pubkey || !event.sig) return false
+  try {
+    // pure.verifyEvent mutates a verifiedSymbol; cast via unknown for brand compatibility
+    return verifyEvent(event as unknown as Parameters<typeof verifyEvent>[0])
+  } catch {
+    try {
+      return schnorr.verify(event.sig, event.id, event.pubkey)
+    } catch {
+      return false
+    }
+  }
+}
+
+/**
+ * Full validation of a Nostr event for NIP-98 flow.
+ * Verifies signature, kind, timestamp window, URL, method, and optional payload hash.
+ *
+ * @param body - Prefer raw request body as `Uint8Array` or `string` for payload checks
+ * @param options.maxSkewSeconds - Allowed age of created_at (default 60)
  */
 export async function validateEventFull(
   event: NostrEvent,
   url: string,
   method: string,
-  body?: unknown
+  body?: unknown,
+  options?: { maxSkewSeconds?: number }
 ): Promise<boolean> {
-  // Note: In a full implementation, verifyEvent would be called here
-  // For now, we assume the signature is valid
+  if (!verifyHttpAuthEvent(event)) {
+    throw new Error("Invalid nostr event, signature invalid")
+  }
 
   if (!validateEventKind(event)) {
     throw new Error("Invalid nostr event, kind invalid")
   }
 
-  if (!validateEventTimestamp(event)) {
+  const maxSkew = options?.maxSkewSeconds ?? 60
+  if (!event.created_at || Math.round(Date.now() / 1000) - event.created_at >= maxSkew) {
     throw new Error("Invalid nostr event, created_at timestamp invalid")
   }
 
@@ -172,8 +218,13 @@ export async function validateEventFull(
     throw new Error("Invalid nostr event, method tag invalid")
   }
 
-  if (body && typeof body === "object" && Object.keys(body).length > 0) {
-    if (!validateEventPayloadTag(event, body)) {
+  if (body !== undefined && body !== null) {
+    const emptyObject =
+      typeof body === "object" &&
+      !(body instanceof Uint8Array) &&
+      !(body instanceof ArrayBuffer) &&
+      Object.keys(body as object).length === 0
+    if (!emptyObject && !validateEventPayloadTag(event, body)) {
       throw new Error("Invalid nostr event, payload tag does not match request body hash")
     }
   }
