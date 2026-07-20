@@ -38,10 +38,17 @@ Out of scope for **this** repo (lives in OpenAgents packets #9093–#9103):
 7. `LocalSignerPort` + `LocalKeySigner` (sign, NIP-44, NIP-98; no key export on port)  
 8. Consumer docs: [`docs/IDENTITY.md`](./IDENTITY.md)  
 
-### Phase C — Broader gap analysis (not #9092-blocking)
+### Phase C — Foundation parity (gap analysis P0/P1) ✅
 
-Continues from `docs/nip-gap-analysis/`: open tag filters, NIP-58 badges, NIP-57, NIP-47, OpenAgents drafts (SA/AC/SKL/…), etc.  
-**Do not block IDR** on those.
+Not #9092-blocking. From `docs/nip-gap-analysis/` priority backlog:
+
+1. **Open single-letter `#` tag filters** (NIP-01/12) — `Filter` via `StructWithRest` + `FilterMatcher` iterates all `#a-zA-Z`
+2. **NIP-58** — Profile Badges **10008**, Badge Sets **30008**, legacy `30008`+`d=profile_badges` accepted
+3. **NIP-16** ephemeral — `broadcast` pre-store action (no store)
+4. **NIP-09** — `a`-tag multi-version deletion up to `created_at`
+5. **NIP-67** — EOSE third element `finish` / `more`; `Nip67Module` in DefaultModules
+
+Remaining backlog (later phases): NIP-85, NIP-47 hold invoices, NIP-57 Appendix F/G, NIP-29 catch-up, lettered NIPs, OpenAgents drafts.
 
 ## Success criteria
 
@@ -66,13 +73,23 @@ Continues from `docs/nip-gap-analysis/`: open tag filters, NIP-58 badges, NIP-57
 - [x] Package export `nostr-effect/identity`  
 - [x] Docs in `docs/IDENTITY.md`  
 
+### Phase C success criteria
+
+- [x] `decodeFilter({ "#u": [...], "#L": [...] })` retains keys  
+- [x] `matchesFilter` honors arbitrary single-letter tags  
+- [x] Ephemeral kinds 20000–29999 not persisted  
+- [x] Kind 5 with `a` tag deletes addressable events up to `created_at`  
+- [x] Profile Badges kind **10008**; Badge Sets **30008**  
+- [x] EOSE may include `["finish"]` / `["more"]`; NIP **67** in `supported_nips`  
+- [x] `bun run verify` green  
+
 ## Status
 
 | Phase | Status |
 | --- | --- |
 | A | **Done** |
 | B | **Done** |
-| C | Separate from #9092 |
+| C | **Done** (foundation P0/P1) |
 
 ## Code touchpoints
 

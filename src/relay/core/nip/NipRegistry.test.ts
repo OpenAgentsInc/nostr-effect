@@ -276,6 +276,15 @@ describe("Built-in Modules", () => {
         expect(result.deleteFilter?.dTag).toBe("my-identifier")
       }
     })
+
+    it("should return broadcast action for ephemeral events (not store)", async () => {
+      const event = createTestEvent({ kind: 20000 })
+      const result = await Effect.runPromise(Nip16Module.preStoreHook!(event))
+      expect(result.action).toBe("broadcast")
+      if (result.action === "broadcast") {
+        expect(result.event).toBe(event)
+      }
+    })
   })
 
   describe("DefaultModules", () => {

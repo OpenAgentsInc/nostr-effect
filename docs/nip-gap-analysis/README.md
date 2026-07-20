@@ -68,12 +68,17 @@ Roadmap status: **postponed**. Full gap analysis: [draft-openagents.md](./draft-
 
 ## Priority backlog
 
-1. **P0** Open single-letter `#` tag filters (NIP-01/12) — unblocks 32, 61, 69, 29, …
-2. **P0** NIP-58 Profile Badges → kind **10008**; Badge Sets **30008**; fix `kinds.ts`
-3. **P0** NIP-98 verify event signature + hash raw body
-4. **P1** NIP-09 `a`-tag multi-version deletion
-5. **P1** NIP-16 ephemeral broadcast-only (do not store)
-6. **P1** NIP-67 EOSE completeness hints
+### Done (Phase C foundation — 2026-07-20)
+
+1. ~~**P0** Open single-letter `#` tag filters (NIP-01/12)~~ — `Schema.Filter` + `FilterMatcher`
+2. ~~**P0** NIP-58 Profile Badges → kind **10008**; Badge Sets **30008**~~
+3. ~~**P0** NIP-98 verify event signature + hash raw body~~ (Phase A)
+4. ~~**P1** NIP-09 `a`-tag multi-version deletion~~
+5. ~~**P1** NIP-16 ephemeral broadcast-only (do not store)~~
+6. ~~**P1** NIP-67 EOSE completeness hints~~
+
+### Remaining
+
 7. **P1** NIP-85 Trusted Assertions service
 8. **P1** NIP-47 NIP-44 encryption + hold invoices
 9. **P1** NIP-57 Appendix F receipt validation + Appendix G zap splits

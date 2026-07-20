@@ -96,5 +96,68 @@ describe("NIP-09 Deletion", () => {
 
     await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
   })
+
+  test("author deletes parameterized replaceable events via a-tag", async () => {
+    const program = Effect.gen(function* () {
+      const relayService = yield* RelayService
+      const crypto = yield* CryptoService
+      const events = yield* EventService
+      yield* relayService.connect()
+
+      const sk = yield* crypto.generatePrivateKey()
+      const author = yield* crypto.getPublicKey(sk)
+      const d = "article-1"
+
+      const article = yield* events.createEvent(
+        {
+          kind: decodeKind(30023),
+          content: "delete me via a-tag",
+          tags: [["d", d]].map((t) => decodeTag(t as any)),
+        },
+        sk
+      )
+      expect((yield* relayService.publish(article)).accepted).toBe(true)
+
+      // Confirm stored
+      const sub0 = yield* relayService.subscribe([
+        decodeFilter({ kinds: [decodeKind(30023)], authors: [author], "#d": [d] }),
+      ])
+      const before = yield* Effect.race(
+        sub0.events.pipe(Stream.runHead),
+        Effect.sleep(400).pipe(Effect.as(Option.none()))
+      )
+      yield* sub0.unsubscribe()
+      expect(Option.isSome(before)).toBe(true)
+
+      // NIP-09 a-tag: delete all versions of addressable event up to created_at
+      const address = `30023:${author}:${d}`
+      const del = yield* events.createEvent(
+        {
+          kind: decodeKind(5),
+          content: "delete article",
+          tags: [
+            ["a", address],
+            ["k", "30023"],
+          ].map((t) => decodeTag(t as any)),
+        },
+        sk
+      )
+      expect((yield* relayService.publish(del)).accepted).toBe(true)
+
+      const sub = yield* relayService.subscribe([
+        decodeFilter({ kinds: [decodeKind(30023)], authors: [author], "#d": [d] }),
+      ])
+      const maybe = yield* Effect.race(
+        sub.events.pipe(Stream.runHead),
+        Effect.sleep(400).pipe(Effect.as(Option.none()))
+      )
+      yield* sub.unsubscribe()
+      expect(Option.isNone(maybe)).toBe(true)
+
+      yield* relayService.disconnect()
+    })
+
+    await Effect.runPromise(program.pipe(Effect.provide(makeTestLayers())))
+  })
 })
 

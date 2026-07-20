@@ -260,8 +260,17 @@ export const Curationsets = 30004
 /** Video sets (NIP-51) */
 export const VideoSets = 30005
 
-/** Profile badges (NIP-58) */
-export const ProfileBadges = 30008
+/**
+ * Profile badges (NIP-58) — replaceable list kind 10008.
+ * Earlier NIP drafts used 30008 + d=profile_badges; treat those as legacy.
+ */
+export const ProfileBadges = 10008
+
+/** Badge sets (NIP-58) — addressable kind 30008 */
+export const BadgeSets = 30008
+
+/** @deprecated Use BadgeSets; 30008 is Badge Sets, not Profile Badges */
+export const LegacyProfileBadges = 30008
 
 /** Badge definition (NIP-58) */
 export const BadgeDefinition = 30009
@@ -675,6 +684,8 @@ export const kinds = {
   CurationSets,
   VideoSets,
   ProfileBadges,
+  BadgeSets,
+  LegacyProfileBadges,
   BadgeDefinition,
   InterestSets,
   EmojiSets,

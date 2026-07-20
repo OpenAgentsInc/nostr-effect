@@ -37,11 +37,9 @@ export const Nip16Module: NipModule = createModule({
 
   preStoreHook: (event) =>
     Effect.sync(() => {
-      // Ephemeral events - don't store, just broadcast
+      // Ephemeral events (20000–29999): do not store; broadcast to matching subs only
       if (isEphemeralKind(event.kind)) {
-        // For now, we still store ephemeral events but they could be filtered
-        // In a full implementation, we'd return a special "broadcast-only" action
-        return { action: "store", event } as const
+        return { action: "broadcast", event } as const
       }
 
       // Replaceable events - delete old, store new

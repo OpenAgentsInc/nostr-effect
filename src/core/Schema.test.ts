@@ -7,6 +7,7 @@ import {
   Tag,
   Filter,
   UnixTimestamp,
+  RelayEoseMessage,
 } from "./Schema"
 
 describe("Schema", () => {
@@ -95,6 +96,33 @@ describe("Schema", () => {
       expect(result["#t"]).toHaveLength(2)
     })
 
+    test("accepts any single-letter tag filters (NIP-01 open # tags)", () => {
+      const filter = {
+        "#u": ["https://example.com"],
+        "#L": ["ugc"],
+        "#l": ["permies"],
+        "#h": ["group-id"],
+        "#k": ["1"],
+        "#i": ["isbn:123"],
+      }
+      const result = Schema.decodeUnknownSync(Filter)(filter)
+      expect(result["#u"]).toEqual(["https://example.com"])
+      expect(result["#L"]).toEqual(["ugc"])
+      expect(result["#l"]).toEqual(["permies"])
+      expect(result["#h"]).toEqual(["group-id"])
+      expect(result["#k"]).toEqual(["1"])
+      expect(result["#i"]).toEqual(["isbn:123"])
+    })
+
+    test("strips multi-letter tag filter keys", () => {
+      const result = Schema.decodeUnknownSync(Filter)({
+        "#ee": ["nope"],
+        kinds: [1],
+      })
+      expect((result as any)["#ee"]).toBeUndefined()
+      expect(result.kinds?.map(Number)).toEqual([1])
+    })
+
     test("accepts complex filter", () => {
       const decodeTimestamp = Schema.decodeSync(UnixTimestamp)
       const filter = {
@@ -109,6 +137,34 @@ describe("Schema", () => {
       expect(result.authors).toHaveLength(1)
       expect(result.since).toBe(decodeTimestamp(1700000000))
       expect(result.limit).toBe(100)
+    })
+  })
+
+  describe("RelayEoseMessage (NIP-67)", () => {
+    test("accepts two-element EOSE", () => {
+      const msg = Schema.decodeUnknownSync(RelayEoseMessage)(["EOSE", "sub1"] as unknown)
+      expect(msg[0]).toBe("EOSE")
+      expect(String(msg[1])).toBe("sub1")
+    })
+
+    test("accepts three-element EOSE with hints", () => {
+      const msg = Schema.decodeUnknownSync(RelayEoseMessage)([
+        "EOSE",
+        "sub1",
+        ["finish"],
+      ] as unknown)
+      expect(msg[0]).toBe("EOSE")
+      expect(String(msg[1])).toBe("sub1")
+      expect((msg as readonly unknown[])[2]).toEqual(["finish"])
+    })
+
+    test("accepts more hint", () => {
+      const msg = Schema.decodeUnknownSync(RelayEoseMessage)([
+        "EOSE",
+        "sub1",
+        ["more"],
+      ] as unknown)
+      expect((msg as readonly unknown[])[2]).toEqual(["more"])
     })
   })
 })

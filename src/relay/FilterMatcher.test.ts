@@ -43,20 +43,8 @@ const buildEvent = (partial: {
   }
 }
 
-// Helper to build filters with proper typing
-const buildFilter = (partial: {
-  ids?: string[]
-  authors?: string[]
-  kinds?: number[]
-  since?: number
-  until?: number
-  limit?: number
-  "#e"?: string[]
-  "#p"?: string[]
-  "#a"?: string[]
-  "#d"?: string[]
-  "#t"?: string[]
-}): Filter => {
+// Helper to build filters with proper typing (open single-letter # tags)
+const buildFilter = (partial: Record<string, unknown>): Filter => {
   const result: Record<string, unknown> = {}
 
   if (partial.ids) result.ids = partial.ids as EventId[]
@@ -65,11 +53,13 @@ const buildFilter = (partial: {
   if (partial.since !== undefined) result.since = partial.since as UnixTimestamp
   if (partial.until !== undefined) result.until = partial.until as UnixTimestamp
   if (partial.limit !== undefined) result.limit = partial.limit
-  if (partial["#e"]) result["#e"] = partial["#e"]
-  if (partial["#p"]) result["#p"] = partial["#p"]
-  if (partial["#a"]) result["#a"] = partial["#a"]
-  if (partial["#d"]) result["#d"] = partial["#d"]
-  if (partial["#t"]) result["#t"] = partial["#t"]
+  if (partial.search !== undefined) result.search = partial.search
+
+  for (const [key, value] of Object.entries(partial)) {
+    if (key.length === 2 && key.startsWith("#") && Array.isArray(value)) {
+      result[key] = value
+    }
+  }
 
   return result as unknown as Filter
 }
@@ -77,7 +67,6 @@ const buildFilter = (partial: {
 describe("FilterMatcher", () => {
   describe("matchesFilter", () => {
     // From nostr-tools: should return true when all filter conditions are met
-    // NOTE: Our FilterMatcher only supports specific tags: #e, #p, #a, #d, #t
     test("returns true when all filter conditions are met", () => {
       const filter = buildFilter({
         ids: ["123", "456"],
@@ -344,6 +333,20 @@ describe("FilterMatcher", () => {
       const filter = buildFilter({ "#t": ["nostr"] })
       const event = buildEvent({ tags: [["t", "nostr"]] })
       expect(matchesFilter(event, filter)).toBe(true)
+    })
+
+    test("supports arbitrary single-letter tag filters (#u, #L, #h)", () => {
+      const event = buildEvent({
+        tags: [
+          ["u", "https://example.com"],
+          ["L", "ugc"],
+          ["h", "group-1"],
+        ],
+      })
+      expect(matchesFilter(event, buildFilter({ "#u": ["https://example.com"] }))).toBe(true)
+      expect(matchesFilter(event, buildFilter({ "#L": ["ugc"] }))).toBe(true)
+      expect(matchesFilter(event, buildFilter({ "#h": ["group-1"] }))).toBe(true)
+      expect(matchesFilter(event, buildFilter({ "#u": ["https://other.com"] }))).toBe(false)
     })
   })
 

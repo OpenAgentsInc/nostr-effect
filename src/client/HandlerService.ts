@@ -328,7 +328,7 @@ const make = Effect.gen(function* () {
         filter.authors = [...authors]
       }
 
-      const sub = yield* relay.subscribe([decodeFilter(filter)])
+      const sub = yield* relay.subscribe([decodeFilter(filter as never)])
 
       // Collect events with timeout
       const handlers: NostrEvent[] = []
@@ -374,7 +374,7 @@ const make = Effect.gen(function* () {
         filter.authors = [...authors]
       }
 
-      const sub = yield* relay.subscribe([decodeFilter(filter)])
+      const sub = yield* relay.subscribe([decodeFilter(filter as never)])
 
       // Collect events with timeout
       const recommendations: NostrEvent[] = []

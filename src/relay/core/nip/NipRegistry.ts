@@ -53,6 +53,7 @@ export interface NipRegistry {
   ): Effect.Effect<
     | { readonly action: "store"; readonly event: NostrEvent }
     | { readonly action: "replace"; readonly event: NostrEvent; readonly deleteFilter?: { kinds?: readonly number[]; authors?: readonly string[]; dTag?: string } }
+    | { readonly action: "broadcast"; readonly event: NostrEvent }
     | { readonly action: "reject"; readonly reason: string },
     never
   >
@@ -126,6 +127,10 @@ const make = (modules: readonly NipModule[]): NipRegistry => {
           }
 
           if (result.action === "replace") {
+            return result
+          }
+
+          if (result.action === "broadcast") {
             return result
           }
 

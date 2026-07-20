@@ -9,7 +9,7 @@ Keep this file up to date whenever adding or removing support.
 
 | NIP | Title | Spec | Code (service/wrapper/module) | Tests |
 |-----|-------|------|--------------------------------|-------|
-| 01 | Basic protocol flow | `~/code/nips/01.md` | `src/relay/core/nip/modules/Nip01Module.ts` | `src/relay/FilterMatcher.test.ts` |
+| 01 | Basic protocol flow | `~/code/nips/01.md` | `src/relay/core/nip/modules/Nip01Module.ts`, `src/core/Schema.ts` (open `#` tag filters), `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts`, `src/core/Schema.test.ts` |
 | 02 | Follow list | `~/code/nips/02.md` | `src/client/FollowListService.ts` | `src/client/FollowListService.test.ts` |
 | 03 | OpenTimestamps attestations | `~/code/nips/03.md` | `src/wrappers/nip03.ts` | `src/wrappers/nip03.test.ts` |
 | 04 | Legacy encrypted DMs | `~/code/nips/04.md` | `src/wrappers/nip04.ts` | `src/core/Nip04.test.ts` |
@@ -17,14 +17,14 @@ Keep this file up to date whenever adding or removing support.
 | 06 | Key derivation from mnemonic | `~/code/nips/06.md` | `src/wrappers/nip06.ts` | `src/core/Nip06.test.ts` |
 | 08 | Handling mentions | `~/code/nips/08.md` | `src/wrappers/nip08.ts` | `src/wrappers/nip08.test.ts` |
 | 07 | window.nostr capability | `~/code/nips/07.md` | `src/wrappers/nip07.ts` | `src/wrappers/nip07.test.ts` |
-| 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip09Deletion.test.ts` |
+| 09 | Event deletion | `~/code/nips/09.md` | `src/relay/core/MessageHandler.ts` (`e` + `a` tags) | `src/relay/Nip09Deletion.test.ts` |
 | 10 | Reply threading | `~/code/nips/10.md` | `src/client/Nip10Service.ts` | `src/client/Nip10Service.test.ts` |
 | 11 | Relay information | `~/code/nips/11.md` | `src/relay/core/nip/modules/Nip11Module.ts` | `src/core/Nip11.test.ts`, `src/relay/RelayInfo.test.ts` |
 | 12 | Generic tag queries (moved to NIP-01) | `~/code/nips/12.md` | `src/core/Schema.ts`, `src/relay/core/FilterMatcher.ts` | `src/relay/FilterMatcher.test.ts` |
 | 13 | Proof of Work | `~/code/nips/13.md` | `src/wrappers/nip13.ts` | `src/core/Nip13.test.ts` |
 | 14 | Subject tag | `~/code/nips/14.md` | `src/wrappers/nip14.ts` | `src/wrappers/nip14.test.ts` |
 | 15 | Nostr Marketplace | `~/code/nips/15.md` | `src/client/MarketplaceService.ts` | `src/client/MarketplaceService.test.ts` |
-| 16 | Event treatment | `~/code/nips/16.md` | `src/relay/core/nip/modules/Nip16Module.ts` | `src/relay/core/nip/NipRegistry.test.ts` |
+| 16 | Event treatment | `~/code/nips/16.md` | `src/relay/core/nip/modules/Nip16Module.ts` (ephemeral → broadcast, no store) | `src/relay/core/nip/NipRegistry.test.ts`, `src/relay/Nip16Ephemeral.test.ts` |
 | 17 | Private direct messages | `~/code/nips/17.md` | `src/client/Nip17Service.ts` | `src/core/Nip17.test.ts`, `src/client/Nip17Service.test.ts` |
 | 18 | Reposts | `~/code/nips/18.md` | `src/client/Nip18Service.ts` | `src/client/Nip18Service.test.ts` |
 | 19 | bech32 encoding | `~/code/nips/19.md` | `src/core/Nip19.ts`, `src/wrappers/nip19.ts` | `src/core/Nip19.test.ts`, `src/wrappers/nip19.test.ts` |
@@ -65,7 +65,7 @@ Keep this file up to date whenever adding or removing support.
 | 55 | Android signer application | `~/code/nips/55.md` | `src/wrappers/nip55.ts` | `src/wrappers/nip55.test.ts` |
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
 | 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts`, `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts` |
-| 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` | `src/client/Nip58Service.test.ts` |
+| 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` (10008 profile badges, 30008 sets) | `src/client/Nip58Service.test.ts` |
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
 | 61 | Nutzaps | `~/code/nips/61.md` | `src/client/NutzapService.ts` | `src/client/NutzapService.test.ts` |
@@ -73,6 +73,7 @@ Keep this file up to date whenever adding or removing support.
 | 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
 | 66 | Relay discovery & liveness | `~/code/nips/66.md` | `src/client/RelayDiscoveryService.ts` | `src/client/RelayDiscoveryService.test.ts` |
+| 67 | EOSE Completeness Hint | `~/code/nips/67.md` | `src/relay/core/MessageHandler.ts`, `src/relay/core/nip/modules/Nip67Module.ts` | `src/relay/Nip67Eose.test.ts`, `src/core/Schema.test.ts` |
 | 68 | Picture-first feeds | `~/code/nips/68.md` | `src/wrappers/nip68.ts` | `src/wrappers/nip68.test.ts` |
 | 69 | Peer-to-peer orders | `~/code/nips/69.md` | `src/wrappers/nip69.ts` | `src/wrappers/nip69.test.ts` |
 | 70 | Protected events | `~/code/nips/70.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip70Protected.test.ts` |

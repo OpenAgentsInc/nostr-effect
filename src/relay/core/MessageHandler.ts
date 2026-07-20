@@ -19,6 +19,7 @@ import {
   type EventId,
   isReplaceableKind,
   isParameterizedReplaceableKind,
+  isEphemeralKind,
   getDTagValue,
 } from "../../core/Schema.js"
 import { NipRegistry } from "./nip/NipRegistry.js"
@@ -79,8 +80,14 @@ const okMessage = (eventId: EventId, success: boolean, message: string): RelayMe
 const eventMessage = (subscriptionId: SubscriptionId, event: NostrEvent): RelayMessage =>
   ["EVENT", subscriptionId, event] as RelayMessage
 
-const eoseMessage = (subscriptionId: SubscriptionId): RelayMessage =>
-  ["EOSE", subscriptionId] as RelayMessage
+/** NIP-01 EOSE; optional NIP-67 completeness hints (`finish` / `more`). */
+const eoseMessage = (
+  subscriptionId: SubscriptionId,
+  hints?: readonly string[]
+): RelayMessage =>
+  (hints !== undefined
+    ? (["EOSE", subscriptionId, hints] as RelayMessage)
+    : (["EOSE", subscriptionId] as RelayMessage))
 
 // =============================================================================
 // Service Implementation
@@ -158,14 +165,43 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
             return { responses: [okMessage(event.id, false, "auth-required: protected event")], broadcasts: [] }
           }
         }
-        // NIP-09: Deletion request (kind 5) – delete referenced events authored by the same pubkey
+        // NIP-09: Deletion request (kind 5) – e tags and a tags (same pubkey only)
         if (event.kind === 5) {
+          // e-tag: delete specific event ids authored by the deleter
           const idsToDelete = event.tags.filter((t) => t[0] === "e").map((t) => t[1]!).filter(Boolean)
           for (const id of idsToDelete) {
             const matches = yield* eventStore.queryEvents([{ ids: [id as any] } as any])
             const target = matches.find((e) => e.id === id)
             if (target && target.pubkey === event.pubkey) {
               yield* eventStore.deleteEvent(id as any).pipe(Effect.ignore)
+            }
+          }
+
+          // a-tag: delete all versions of the addressable/replaceable event up to created_at
+          // Address format: "<kind>:<pubkey>:<d-tag>" (d may contain colons)
+          const aTags = event.tags.filter((t) => t[0] === "a").map((t) => t[1]!).filter(Boolean)
+          for (const address of aTags) {
+            const firstColon = address.indexOf(":")
+            const secondColon = address.indexOf(":", firstColon + 1)
+            if (firstColon < 0 || secondColon < 0) continue
+            const kind = Number(address.slice(0, firstColon))
+            const aPubkey = address.slice(firstColon + 1, secondColon)
+            const dTag = address.slice(secondColon + 1)
+            if (!Number.isFinite(kind) || aPubkey !== event.pubkey) continue
+
+            const filter: Record<string, unknown> = {
+              kinds: [kind],
+              authors: [event.pubkey],
+              until: event.created_at,
+            }
+            if (dTag.length > 0 || kind >= 30000) {
+              filter["#d"] = [dTag]
+            }
+            const matches = yield* eventStore.queryEvents([filter as any])
+            for (const target of matches) {
+              if (target.pubkey === event.pubkey && target.created_at <= event.created_at) {
+                yield* eventStore.deleteEvent(target.id).pipe(Effect.ignore)
+              }
             }
           }
         }
@@ -197,6 +233,20 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           }
 
           eventToStore = hookResult.event
+
+          if (hookResult.action === "broadcast") {
+            // NIP-16 ephemeral: accept + live-broadcast, do not persist
+            const matchingSubs = yield* subscriptionManager.getMatchingSubscriptions(eventToStore)
+            const broadcasts: BroadcastMessage[] = matchingSubs.map((sub: Subscription) => ({
+              connectionId: sub.connectionId,
+              subscriptionId: sub.subscriptionId,
+              event: eventToStore,
+            }))
+            return {
+              responses: [okMessage(event.id, true, "")],
+              broadcasts,
+            }
+          }
 
           if (hookResult.action === "replace" && hookResult.deleteFilter) {
             // Replaceable event - use the filter from the hook
@@ -230,7 +280,18 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
           }
         } else {
           // Fallback: use hard-coded logic (for backwards compatibility)
-          if (isReplaceableKind(event.kind)) {
+          if (isEphemeralKind(event.kind)) {
+            const matchingSubs = yield* subscriptionManager.getMatchingSubscriptions(event)
+            const broadcasts: BroadcastMessage[] = matchingSubs.map((sub: Subscription) => ({
+              connectionId: sub.connectionId,
+              subscriptionId: sub.subscriptionId,
+              event,
+            }))
+            return {
+              responses: [okMessage(event.id, true, "")],
+              broadcasts,
+            }
+          } else if (isReplaceableKind(event.kind)) {
             // NIP-16: Replaceable event (kinds 0, 3, 10000-19999)
             const result = yield* eventStore.storeReplaceableEvent(event)
             stored = result.stored
@@ -299,13 +360,31 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
       // Register the subscription
       yield* subscriptionManager.subscribe(connectionId, subscriptionId, filters)
 
-      // Query matching events from storage
-      const events = yield* eventStore.queryEvents(filters)
+      // NIP-67: probe limit+1 when a client limit is set so we can emit finish/more
+      const clientLimit = filters[0]?.limit
+      const queryFilters =
+        clientLimit !== undefined
+          ? filters.map((f, i) =>
+              i === 0 && f.limit !== undefined
+                ? ({ ...f, limit: (f.limit + 1) as typeof f.limit } as typeof f)
+                : f
+            )
+          : filters
 
-      // Build response: EVENT messages + EOSE
+      const queried = yield* eventStore.queryEvents(queryFilters)
+
+      // NIP-67 completeness hints: finish = all stored matches sent; more = more exist
+      let events = queried
+      let hints: readonly string[] = ["finish"]
+      if (clientLimit !== undefined && queried.length > clientLimit) {
+        events = queried.slice(0, clientLimit)
+        hints = ["more"]
+      }
+
+      // Build response: EVENT messages + EOSE (with optional NIP-67 hints)
       const responses: RelayMessage[] = [
         ...events.map((event) => eventMessage(subscriptionId, event)),
-        eoseMessage(subscriptionId),
+        eoseMessage(subscriptionId, hints),
       ]
 
       return { responses, broadcasts: [] }

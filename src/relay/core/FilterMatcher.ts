@@ -6,6 +6,10 @@
  */
 import type { NostrEvent, Filter } from "../../core/Schema.js"
 
+/** True if key is a NIP-01 single-letter tag filter (`#` + a-zA-Z). */
+const isTagFilterKey = (key: string): boolean =>
+  key.length === 2 && key.startsWith("#") && /^[a-zA-Z]$/.test(key[1]!)
+
 /**
  * Check if an event matches a single filter (AND logic within filter)
  */
@@ -35,20 +39,20 @@ export const matchesFilter = (event: NostrEvent, filter: Filter): boolean => {
     if (event.created_at > filter.until) return false
   }
 
-  // Tag filters (#e, #p, #a, #d, #t)
-  const tagFilters: Array<[string, readonly string[] | undefined]> = [
-    ["e", filter["#e"] as readonly string[] | undefined],
-    ["p", filter["#p"] as readonly string[] | undefined],
-    ["a", filter["#a"] as readonly string[] | undefined],
-    ["d", filter["#d"] as readonly string[] | undefined],
-    ["t", filter["#t"] as readonly string[] | undefined],
-  ]
+  // Tag filters: any single-letter `#X` key (NIP-01 / NIP-12)
+  // Only the first value of each tag is indexed.
+  for (const [key, rawValues] of Object.entries(filter as unknown as Record<string, unknown>)) {
+    if (!isTagFilterKey(key)) continue
+    if (!Array.isArray(rawValues) || rawValues.length === 0) continue
 
-  for (const [tagName, tagValues] of tagFilters) {
-    if (tagValues && tagValues.length > 0) {
-      const eventTagValues = event.tags.filter((tag) => tag[0] === tagName).map((tag) => tag[1])
-      if (!tagValues.some((v) => eventTagValues.includes(v))) return false
-    }
+    const tagName = key[1]!
+    const tagValues = rawValues as readonly string[]
+    const eventTagValues = event.tags
+      .filter((tag) => tag[0] === tagName)
+      .map((tag) => tag[1])
+      .filter((v): v is string => typeof v === "string")
+
+    if (!tagValues.some((v) => eventTagValues.includes(v))) return false
   }
 
   // NIP-50: basic search on content (case-insensitive substring)

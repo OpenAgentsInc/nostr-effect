@@ -24,6 +24,8 @@ export type PreStoreHook = (
 ) => Effect.Effect<
   | { readonly action: "store"; readonly event: NostrEvent }
   | { readonly action: "replace"; readonly event: NostrEvent; readonly deleteFilter?: EventDeleteFilter }
+  /** NIP-16 ephemeral: OK + live broadcast, do not persist */
+  | { readonly action: "broadcast"; readonly event: NostrEvent }
   | { readonly action: "reject"; readonly reason: string },
   never
 >

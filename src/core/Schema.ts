@@ -104,8 +104,29 @@ export type EventParams = typeof EventParams.Type
 // Filter Type
 // =============================================================================
 
-/** Event filter for subscriptions (NIP-01) */
-export const Filter = Schema.Struct({
+/**
+ * Single-letter tag filter key (NIP-01 / NIP-12).
+ * Relays index all single-letter (a-zA-Z) tags; clients may filter with `#X`.
+ *
+ * Uses TemplateLiteral + letter Literals so the Record index signature is
+ * `#a`|`#b`|… (not `string`), which keeps `kinds`/`limit` etc. type-compatible.
+ */
+const SINGLE_LETTER_TAG =
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("") as [
+    string,
+    ...string[],
+  ]
+export const TagFilterKey = Schema.TemplateLiteral([
+  Schema.Literal("#"),
+  Schema.Literals(SINGLE_LETTER_TAG),
+])
+export type TagFilterKey = typeof TagFilterKey.Type
+
+/**
+ * Known filter fields. `#e` / `#p` keep strict hex validation;
+ * all other single-letter tag filters are accepted via StructWithRest.
+ */
+const FilterFields = Schema.Struct({
   ids: Schema.optional(Schema.Array(EventId)),
   authors: Schema.optional(Schema.Array(PublicKey)),
   kinds: Schema.optional(Schema.Array(EventKind)),
@@ -114,13 +135,15 @@ export const Filter = Schema.Struct({
   limit: Schema.optional(Schema.Int.check(Schema.isGreaterThan(0))),
   // NIP-50 search capability
   search: Schema.optional(Schema.String),
-  // Tag filters (#e, #p, #a, #d, #t, etc.)
+  // Common tag filters with tighter validation where the spec requires hex
   "#e": Schema.optional(Schema.Array(EventId)),
   "#p": Schema.optional(Schema.Array(PublicKey)),
-  "#a": Schema.optional(Schema.Array(Schema.String)),
-  "#d": Schema.optional(Schema.Array(Schema.String)),
-  "#t": Schema.optional(Schema.Array(Schema.String)),
-}).pipe(Schema.brand("Filter"))
+})
+
+/** Event filter for subscriptions (NIP-01) — open single-letter `#` tag filters */
+export const Filter = Schema.StructWithRest(FilterFields, [
+  Schema.Record(TagFilterKey, Schema.Array(Schema.String)),
+]).pipe(Schema.brand("Filter"))
 export type Filter = typeof Filter.Type
 
 // =============================================================================
@@ -204,10 +227,17 @@ export const RelayOkMessage = Schema.Tuple(
 )
 export type RelayOkMessage = typeof RelayOkMessage.Type
 
-/** EOSE message: end of stored events */
-export const RelayEoseMessage = Schema.Tuple(
-  [Schema.Literal("EOSE"), SubscriptionId]
-)
+/**
+ * EOSE message: end of stored events (NIP-01).
+ * Optional third element is NIP-67 completeness hints (`finish` / `more` / unknown).
+ */
+export const EoseCompletenessHint = Schema.String
+export type EoseCompletenessHint = typeof EoseCompletenessHint.Type
+
+export const RelayEoseMessage = Schema.Union([
+  Schema.Tuple([Schema.Literal("EOSE"), SubscriptionId, Schema.Array(EoseCompletenessHint)]),
+  Schema.Tuple([Schema.Literal("EOSE"), SubscriptionId]),
+])
 export type RelayEoseMessage = typeof RelayEoseMessage.Type
 
 /** CLOSED message: subscription closed by relay */

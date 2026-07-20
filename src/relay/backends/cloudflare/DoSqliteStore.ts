@@ -397,8 +397,14 @@ function buildWhereClause(filter: any): { where: string; params: unknown[] } {
     }
     if (ors.length > 0) clauses.push(`(${ors.join(' OR ')})`)
   }
-  if (Array.isArray(filter['#e']) && filter['#e'].length > 0) tagClause('e', filter['#e'])
-  if (Array.isArray(filter['#p']) && filter['#p'].length > 0) tagClause('p', filter['#p'])
+  // NIP-01: any single-letter tag filter (#e, #p, #u, #L, …)
+  // #d already handled via d_tag column above
+  for (const [key, values] of Object.entries(filter as Record<string, unknown>)) {
+    if (key.length !== 2 || key[0] !== '#' || !/^[a-zA-Z]$/.test(key[1]!)) continue
+    if (key === '#d') continue
+    if (!Array.isArray(values) || values.length === 0) continue
+    tagClause(key[1]!, values as string[])
+  }
 
   return { where: clauses.join(' AND '), params }
 }
