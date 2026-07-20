@@ -45,8 +45,11 @@ export interface Signer {
   signEvent(event: EventTemplate): Promise<SignedEvent>
 }
 
-/** Blossom authorization event kind */
+/** Blossom authorization event kind (BUD-02) */
 export const BLOSSOM_AUTH_KIND = 24242
+
+/** User Server List kind (BUD-03) — replaceable list of preferred blossom servers */
+export const BLOSSOM_USER_SERVER_LIST_KIND = 10063
 
 // =============================================================================
 // Service Interface
@@ -114,6 +117,46 @@ export interface BlossomService {
 // =============================================================================
 
 export const BlossomService = Context.Service<BlossomService>("BlossomService")
+
+// =============================================================================
+// BUD-03 User Server List helpers (pure)
+// =============================================================================
+
+/**
+ * Build tags for kind 10063 User Server List.
+ * Each server is a `["server", url]` tag (NIP-51 style list).
+ */
+export function buildUserServerListTags(servers: readonly string[]): string[][] {
+  return servers.map((url) => {
+    const u = url.trim().replace(/\/$/, "")
+    return ["server", u]
+  })
+}
+
+/**
+ * Parse blossom server URLs from a kind 10063 event.
+ */
+export function parseUserServerList(event: {
+  readonly kind: number
+  readonly tags: readonly (readonly string[])[]
+}): readonly string[] {
+  if (Number(event.kind) !== BLOSSOM_USER_SERVER_LIST_KIND) return []
+  return event.tags
+    .filter((t) => t[0] === "server" && typeof t[1] === "string" && t[1].length > 0)
+    .map((t) => t[1]!.replace(/\/$/, ""))
+}
+
+/**
+ * Event template for publishing a User Server List (caller signs).
+ */
+export function createUserServerListTemplate(servers: readonly string[]): EventTemplate {
+  return {
+    kind: BLOSSOM_USER_SERVER_LIST_KIND,
+    created_at: Math.floor(Date.now() / 1000),
+    content: "",
+    tags: buildUserServerListTags(servers),
+  }
+}
 
 // =============================================================================
 // Helper Functions

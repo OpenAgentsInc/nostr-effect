@@ -36,11 +36,21 @@ import {
   type BlobDescriptor,
   type Signer,
   BLOSSOM_AUTH_KIND,
+  BLOSSOM_USER_SERVER_LIST_KIND,
+  buildUserServerListTags,
+  parseUserServerList,
+  createUserServerListTemplate,
 } from "../client/BlossomService.js"
 
 // Re-export types
 export type { BlobDescriptor, Signer }
-export { BLOSSOM_AUTH_KIND }
+export {
+  BLOSSOM_AUTH_KIND,
+  BLOSSOM_USER_SERVER_LIST_KIND,
+  buildUserServerListTags,
+  parseUserServerList,
+  createUserServerListTemplate,
+}
 
 /**
  * BlossomClient - nostr-tools-compatible Blossom client.

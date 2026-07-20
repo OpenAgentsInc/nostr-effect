@@ -10,11 +10,23 @@ import { SubscriptionManager } from "../../core/SubscriptionManager.js"
 import type { RelayMessage } from "../../../core/Schema.js"
 import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "../../core/RelayInfo.js"
 import { Nip86AdminService } from "../../core/admin/Nip86AdminService.js"
-import { unpackEventFromToken, validateEventFull } from "../../../core/Nip98.js"
+import { unpackEventFromToken, validateEventFull, HTTP_AUTH_KIND } from "../../../core/Nip98.js"
+import { hmac } from "@noble/hashes/hmac"
+import { sha256 } from "@noble/hashes/sha256"
+import { bytesToHex } from "@noble/hashes/utils"
 
 // =============================================================================
 // Types
 // =============================================================================
+
+export interface LivekitConfig {
+  /** LiveKit server WebSocket URL returned to clients */
+  readonly url: string
+  /** Optional HS256 secret for JWT minting (dev/test). Production should use LiveKit API keys. */
+  readonly jwtSecret?: string
+  /** Token TTL seconds (default 3600) */
+  readonly tokenTtlSeconds?: number
+}
 
 export interface RelayConfig {
   readonly port: number
@@ -22,6 +34,8 @@ export interface RelayConfig {
   readonly dbPath?: string
   /** NIP-11 relay info configuration */
   readonly relayInfo?: Partial<RelayInfo>
+  /** NIP-29 LiveKit AV chat support */
+  readonly livekit?: LivekitConfig
 }
 
 export interface ConnectionData {
@@ -103,12 +117,14 @@ const make = Effect.gen(function* () {
       // Mutable overlay for NIP-86 changes
       let currentRelayInfo: Partial<RelayInfo> = { ...relayInfo }
 
-      // CORS headers for NIP-11 compliance
+      // CORS headers for NIP-11 / NIP-29 LiveKit
       const corsHeaders = {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Accept, Content-Type",
+        "Access-Control-Allow-Headers": "Accept, Content-Type, Authorization",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
       }
+
+      const livekit = config.livekit
 
       // Start Bun WebSocket server
       const server = Bun.serve({
@@ -125,6 +141,59 @@ const make = Effect.gen(function* () {
               status: 204,
               headers: corsHeaders,
             })
+          }
+
+          // NIP-29 LiveKit: capability probe (204 = supported)
+          if (
+            req.method === "GET" &&
+            url.pathname === "/.well-known/nip29/livekit" &&
+            !req.headers.get("upgrade")
+          ) {
+            if (!livekit) {
+              return new Response("LiveKit not configured", { status: 404, headers: corsHeaders })
+            }
+            return new Response(null, { status: 204, headers: corsHeaders })
+          }
+
+          // NIP-29 LiveKit: token endpoint for group (NIP-98 auth required)
+          const livekitGroupMatch = url.pathname.match(
+            /^\/\.well-known\/nip29\/livekit\/([^/]+)\/?$/
+          )
+          if (req.method === "GET" && livekitGroupMatch && !req.headers.get("upgrade")) {
+            if (!livekit) {
+              return new Response(JSON.stringify({ error: "livekit not configured" }), {
+                status: 404,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              })
+            }
+            const groupId = decodeURIComponent(livekitGroupMatch[1]!)
+            const auth = req.headers.get("authorization") ?? ""
+            if (!auth) {
+              return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+            }
+            try {
+              const event = await unpackEventFromToken(auth)
+              if (Number(event.kind) !== Number(HTTP_AUTH_KIND)) {
+                return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+              }
+              const expectedUrl = `${url.origin}/.well-known/nip29/livekit/${encodeURIComponent(groupId)}`
+              await validateEventFull(event, expectedUrl, "get")
+              const token = mintLivekitJwt({
+                pubkey: event.pubkey,
+                groupId,
+                secret: livekit.jwtSecret ?? "nostr-effect-dev-livekit",
+                ttlSeconds: livekit.tokenTtlSeconds ?? 3600,
+              })
+              return new Response(
+                JSON.stringify({ token, url: livekit.url, room: groupId }),
+                {
+                  status: 200,
+                  headers: { "Content-Type": "application/json", ...corsHeaders },
+                }
+              )
+            } catch {
+              return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+            }
           }
 
           // NIP-11: Return relay info for HTTP GET /
@@ -373,6 +442,46 @@ const make = Effect.gen(function* () {
     connectionCount,
   }
 })
+
+// =============================================================================
+// NIP-29 LiveKit JWT (minimal HS256 for dev/test)
+// Spec: sub MUST start with lowercase hex pubkey (first 64 chars)
+// =============================================================================
+
+const b64url = (data: Uint8Array | string): string => {
+  const bytes =
+    typeof data === "string" ? new TextEncoder().encode(data) : data
+  let bin = ""
+  for (const b of bytes) bin += String.fromCharCode(b)
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+}
+
+export function mintLivekitJwt(params: {
+  readonly pubkey: string
+  readonly groupId: string
+  readonly secret: string
+  readonly ttlSeconds?: number
+}): string {
+  const header = { alg: "HS256", typ: "JWT" }
+  const now = Math.floor(Date.now() / 1000)
+  const random = bytesToHex(sha256(new TextEncoder().encode(`${params.pubkey}:${now}`))).slice(0, 8)
+  const payload = {
+    // NIP-29: first 64 chars of sub = lowercase hex pubkey
+    sub: `${params.pubkey.toLowerCase()}_${random}`,
+    video: {
+      roomJoin: true,
+      room: params.groupId,
+    },
+    iat: now,
+    exp: now + (params.ttlSeconds ?? 3600),
+    nbf: now,
+  }
+  const h = b64url(JSON.stringify(header))
+  const p = b64url(JSON.stringify(payload))
+  const signingInput = `${h}.${p}`
+  const sig = hmac(sha256, new TextEncoder().encode(params.secret), new TextEncoder().encode(signingInput))
+  return `${signingInput}.${b64url(sig)}`
+}
 
 // =============================================================================
 // Service Layer

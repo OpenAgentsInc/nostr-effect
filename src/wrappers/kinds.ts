@@ -167,6 +167,9 @@ export const UserEmojiList = 10030
 /** Trusted assertion service preferences (NIP-85) */
 export const TrustedProviders = 10040
 
+/** Blossom user server list (BUD-03 / NIP-B7) */
+export const BlossomUserServerList = 10063
+
 /** Public message (NIP-A4) */
 export const PublicMessage = 24
 

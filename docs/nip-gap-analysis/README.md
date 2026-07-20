@@ -29,13 +29,21 @@ Compare upstream NIP text (`~/work/projects/repos/nips`) and OpenAgents drafts (
 | NIP-30 emoji set-address 4th tag param | **Done** |
 | OpenAgents drafts SA/AC/SKL/TRN/LBR/DS kind surfaces (`OpenAgentsDrafts.ts`) | **Done** |
 
+### Depth batch G (continued)
+
+- Bun relay: `/.well-known/nip29/livekit` (204) + per-group JWT mint with NIP-98  
+- Blossom BUD-03 kind **10063** user server list helpers  
+- NIP-61 redeem NIP-44 fallback when wallet service absent  
+- OpenAgents: SA tick, AC spend, TRN window templates  
+
 ### Intentionally out of “protocol complete”
 
-These are product/runtime concerns, not missing library primitives:
+These remain product/runtime (not missing library primitives):
 
-- Full relay-side enforcement of every NIP-29 admin policy / LiveKit JWT minting server  
-- Paid-relay settlement integrations beyond NIP-11 fee document fields  
-- OpenAgents marketplace runtime (only protocol kinds/templates in this repo)
+- Full NIP-29 role-matrix *enforcement* inside storage (policy is relay-specific)  
+- Production LiveKit API-key signing (dev HS256 JWT provided)  
+- OpenAgents marketplace runners / settlement engines  
+- Paid-relay settlement beyond NIP-11 fee document fields
 
 ## OpenAgents drafts
 

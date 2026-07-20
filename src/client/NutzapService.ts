@@ -16,6 +16,8 @@ import {
   Tag,
 } from "../core/Schema.js"
 import { CashuWalletService } from "./CashuWalletService.js"
+import { Nip44Service } from "../services/Nip44Service.js"
+import { CryptoService } from "../services/CryptoService.js"
 
 const decodeKind = Schema.decodeSync(EventKind)
 const decodeFilter = Schema.decodeSync(Filter)
@@ -88,6 +90,8 @@ const make = Effect.gen(function* () {
   const relay = yield* RelayService
   const events = yield* EventService
   const wallet = yield* Effect.serviceOption(CashuWalletService)
+  const nip44 = yield* Effect.serviceOption(Nip44Service)
+  const crypto = yield* Effect.serviceOption(CryptoService)
 
   const publishInfo: NutzapService["publishInfo"] = (input, privateKey) =>
     Effect.gen(function* () {
@@ -164,7 +168,7 @@ const make = Effect.gen(function* () {
 
   const redeem: NutzapService["redeem"] = (params, privateKey) =>
     Effect.gen(function* () {
-      // If CashuWalletService is available, publish spending history using it
+      // Prefer CashuWalletService (NIP-44 encrypted spending history)
       if (Option.isSome(wallet)) {
         const w = wallet.value
         return yield* w.publishSpendingHistory(
@@ -179,16 +183,30 @@ const make = Effect.gen(function* () {
         )
       }
 
-      // Fallback: publish a simple 7376 event directly
+      // Fallback: still NIP-44-encrypt content when Nip44Service is available (NIP-60/61)
       const pairs: Array<[string, string, string?, string?]> = [
         ["direction", "in"],
         ["amount", String(params.amount)],
         ["unit", params.unit ?? "sat"],
         ["e", params.newTokenEventId, "", "created"],
       ]
-      const tags: string[][] = [["e", params.nutzapEvent.id, "", "redeemed"], ["p", params.senderPubkey]]
+      const tags: string[][] = [
+        ["e", params.nutzapEvent.id, "", "redeemed"],
+        ["p", params.senderPubkey],
+      ]
+
+      let content: string
+      if (Option.isSome(nip44) && Option.isSome(crypto)) {
+        const authorPub = yield* crypto.value.getPublicKey(privateKey)
+        const ck = yield* nip44.value.getConversationKey(privateKey, authorPub)
+        content = yield* nip44.value.encrypt(JSON.stringify(pairs), ck)
+      } else {
+        // Last resort: plaintext only if crypto layers missing
+        content = JSON.stringify(pairs)
+      }
+
       const ev = yield* events.createEvent(
-        { kind: decodeKind(7376), content: JSON.stringify(pairs), tags: tags.map((t) => decodeTag(t)) },
+        { kind: decodeKind(7376), content, tags: tags.map((t) => decodeTag(t)) },
         privateKey
       )
       return yield* relay.publish(ev)

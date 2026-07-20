@@ -157,6 +157,80 @@ export function generateTrnNetworkContractTemplate(params: {
   }
 }
 
+/** SA tick request (kind 39210) */
+export function generateSaTickRequestTemplate(params: {
+  readonly agentPubkey: string
+  readonly budgetSats?: number
+  readonly spendRail?: string
+  readonly envelopeId?: string
+  readonly guardian?: string
+  readonly approvalThreshold?: number
+  readonly content?: string
+}): DraftEventTemplate {
+  const tags: string[][] = [["p", params.agentPubkey]]
+  if (params.budgetSats !== undefined) {
+    if (params.spendRail === "envelope" && params.envelopeId) {
+      tags.push(["budget", String(params.budgetSats), "envelope", params.envelopeId])
+    } else if (params.spendRail) {
+      tags.push(["budget", String(params.budgetSats), params.spendRail])
+    } else {
+      tags.push(["budget", String(params.budgetSats)])
+    }
+  }
+  if (params.guardian) tags.push(["guardian", params.guardian])
+  if (params.approvalThreshold !== undefined) {
+    tags.push(["approval_threshold", String(params.approvalThreshold)])
+  }
+  return {
+    kind: SA_TICK_REQUEST_KIND,
+    tags,
+    content: params.content ?? "",
+    created_at: now(),
+  }
+}
+
+/** AC spend authorization (kind 39243) */
+export function generateAcSpendAuthorizationTemplate(params: {
+  readonly envelopeId: string
+  readonly amountSats: number
+  readonly providerPubkey?: string
+  readonly jobEventId?: string
+  readonly content?: string
+}): DraftEventTemplate {
+  const tags: string[][] = [
+    ["envelope", params.envelopeId],
+    ["amount", String(params.amountSats)],
+  ]
+  if (params.providerPubkey) tags.push(["p", params.providerPubkey])
+  if (params.jobEventId) tags.push(["e", params.jobEventId])
+  return {
+    kind: AC_SPEND_AUTHORIZATION_KIND,
+    tags,
+    content: params.content ?? "",
+    created_at: now(),
+  }
+}
+
+/** TRN training window (kind 39510) */
+export function generateTrnWindowTemplate(params: {
+  readonly d: string
+  readonly networkId: string
+  readonly round?: number
+  readonly content?: string
+}): DraftEventTemplate {
+  const tags: string[][] = [
+    ["d", params.d],
+    ["network", params.networkId],
+  ]
+  if (params.round !== undefined) tags.push(["round", String(params.round)])
+  return {
+    kind: TRN_WINDOW_KIND,
+    tags,
+    content: params.content ?? "",
+    created_at: now(),
+  }
+}
+
 /** All draft kind numbers for discovery / documentation */
 export const OPENAGENTS_DRAFT_KINDS = {
   SA: [

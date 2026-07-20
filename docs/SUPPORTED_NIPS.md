@@ -68,7 +68,7 @@ Keep this file up to date whenever adding or removing support.
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` (10008 profile badges, 30008 sets) | `src/client/Nip58Service.test.ts` |
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
-| 61 | Nutzaps | `~/code/nips/61.md` | `src/client/NutzapService.ts` | `src/client/NutzapService.test.ts` |
+| 61 | Nutzaps | `~/code/nips/61.md` | `src/client/NutzapService.ts` (`#u` filters, NIP-44 redeem fallback) | `src/client/NutzapService.test.ts` |
 | 62 | Request to Vanish | `~/code/nips/62.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip62Vanish.test.ts` |
 | 64 | Chess (PGN) | `~/code/nips/64.md` | `src/wrappers/nip64.ts` | `src/wrappers/nip64.test.ts` |
 | 65 | Relay list metadata | `~/code/nips/65.md` | `src/client/RelayListService.ts` | `src/client/RelayListService.test.ts` |
@@ -110,7 +110,7 @@ Lettered NIPs (Definitive)
 | A0 | Voice Messages | `~/code/nips/A0.md` | `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` | `src/client/NipA0Service.test.ts`, `src/relay/NipA0Module.test.ts` |
 | A4 | Public Messages | `~/code/nips/A4.md` | `src/client/NipA4Service.ts`, `src/wrappers/nipA4.ts` | `src/client/parity-batch-e.test.ts` |
 | B0 | Web Bookmarking | `~/code/nips/B0.md` | `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts` | `src/client/NipB0Service.test.ts` |
-| B7 | Blossom Media | `~/code/nips/B7.md` | `src/client/BlossomService.ts`, `src/wrappers/nipb7.ts` | — |
+| B7 | Blossom Media | `~/code/nips/B7.md` | `src/client/BlossomService.ts` (BUD-03 10063), `src/wrappers/nipb7.ts` | `src/parity-depth-g.test.ts` |
 | BE | BLE Communications | `~/code/nips/BE.md` | `src/client/NipBEService.ts` | `src/client/NipBEService.test.ts` |
 | C0 | Code Snippets | `~/code/nips/C0.md` | `src/client/NipC0Service.ts` | `src/client/NipC0Service.test.ts` |
 | C7 | Chats | `~/code/nips/C7.md` | `src/client/NipC7Service.ts` | `src/client/NipC7Service.test.ts` |
