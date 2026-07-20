@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-20  
 **Scope (this pass):** NIP-01 foundation, plus marketplace and Lightning/payment-adjacent NIPs.  
-**Status:** Initial review draft for style and prioritization feedback. Not a full-repo parity audit.
+**Status:** Initial review draft for style and prioritization feedback. Not a full-repo parity audit.  
+**Follow-up:** [`NIP_GAP_ANALYSIS_CORE_CHAT_REPUTATION.md`](./NIP_GAP_ANALYSIS_CORE_CHAT_REPUTATION.md) (core relay, chat/groups, reputation).
 
 ## Reference inputs
 
