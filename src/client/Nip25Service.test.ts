@@ -95,7 +95,7 @@ describe("NIP-25: Reactions", () => {
       expect(pTags.some((t) => t[1] === reactedEvent.pubkey)).toBe(true)
     })
 
-    test("should inherit e and p tags from reacted event", async () => {
+    test("should include k tag for reacted event kind", async () => {
       const reactedEvent = createTestEvent()
 
       const result = await runWithService(
@@ -105,12 +105,10 @@ describe("NIP-25: Reactions", () => {
         })
       )
 
-      const eTags = result.tags.filter((t) => t[0] === "e")
-      const pTags = result.tags.filter((t) => t[0] === "p")
-
-      // Should have both inherited and new tags
-      expect(eTags.length).toBeGreaterThanOrEqual(2)
-      expect(pTags.length).toBeGreaterThanOrEqual(2)
+      expect(result.tags.some((t) => t[0] === "k" && t[1] === String(reactedEvent.kind))).toBe(true)
+      // Spec: only target e/p (not inherited extras)
+      expect(result.tags.filter((t) => t[0] === "e")).toHaveLength(1)
+      expect(result.tags.filter((t) => t[0] === "p")).toHaveLength(1)
     })
   })
 

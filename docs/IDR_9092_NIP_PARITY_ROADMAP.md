@@ -48,7 +48,7 @@ Not #9092-blocking. From `docs/nip-gap-analysis/` priority backlog:
 4. **NIP-09** — `a`-tag multi-version deletion up to `created_at`
 5. **NIP-67** — EOSE third element `finish` / `more`; `Nip67Module` in DefaultModules
 
-Remaining backlog (later phases): NIP-85, NIP-47 hold invoices, NIP-57 Appendix F/G, NIP-29 catch-up, lettered NIPs, OpenAgents drafts.
+Later phases landed: NIP-85, NIP-47 NIP-44+hold, NIP-57 F/G, NIP-29 metadata/moderation helpers, NIP-25 a/k/17, NIP-50 search extensions, lettered A4/5A/F4/CC. OpenAgents drafts still postponed.
 
 ## Success criteria
 

@@ -39,8 +39,26 @@ export interface GroupMetadata {
   name?: string
   picture?: string
   about?: string
+  /**
+   * @deprecated Prefer `isPrivate` (current NIP-29). True when group is publicly readable.
+   */
   isPublic?: boolean
+  /**
+   * @deprecated Prefer `isClosed` (current NIP-29). True when joins are open.
+   */
   isOpen?: boolean
+  /** Only members can read (tag `private`) */
+  isPrivate?: boolean
+  /** Join requests ignored without invite (tag `closed`) */
+  isClosed?: boolean
+  /** Only members can write (tag `restricted`) */
+  isRestricted?: boolean
+  /** Metadata hidden from non-members (tag `hidden`) */
+  isHidden?: boolean
+  /** Parent group id (subgroup) */
+  parent?: string
+  /** Child group ids */
+  children?: string[]
 }
 
 /** Represents a NIP-29 group reference */
@@ -78,6 +96,17 @@ export enum GroupAdminPermission {
 export const GROUP_METADATA_KIND = 39000
 export const GROUP_ADMINS_KIND = 39001
 export const GROUP_MEMBERS_KIND = 39002
+/** Supported roles advertisement */
+export const GROUP_ROLES_KIND = 39003
+
+/** Moderation: put-user (assign roles / add) */
+export const GROUP_PUT_USER_KIND = 9000
+/** Moderation: remove-user */
+export const GROUP_REMOVE_USER_KIND = 9001
+/** Moderation: edit-metadata */
+export const GROUP_EDIT_METADATA_KIND = 9002
+/** Join request */
+export const GROUP_JOIN_REQUEST_KIND = 9021
 
 /** NIP-11 Relay Information */
 export interface RelayInformation {
@@ -188,11 +217,17 @@ function parseMetadataFromEvent(event: NostrEvent): GroupMetadata {
   const metadata: GroupMetadata = {
     id: "",
     pubkey: event.pubkey,
+    children: [],
   }
 
   for (const tag of event.tags) {
     const [tagName, tagValue] = tag
-    // Presence-only toggles
+    // Current NIP-29 presence-only flags
+    if (tagName === "private") metadata.isPrivate = true
+    if (tagName === "closed") metadata.isClosed = true
+    if (tagName === "restricted") metadata.isRestricted = true
+    if (tagName === "hidden") metadata.isHidden = true
+    // Legacy flag names (older clients/relays)
     if (tagName === "public") metadata.isPublic = true
     if (tagName === "open") metadata.isOpen = true
 
@@ -211,10 +246,85 @@ function parseMetadataFromEvent(event: NostrEvent): GroupMetadata {
       case "about":
         metadata.about = tagValue
         break
+      case "parent":
+        metadata.parent = tagValue
+        break
+      case "child":
+        metadata.children = [...(metadata.children ?? []), tagValue]
+        break
     }
   }
 
+  // Derive legacy booleans when only new flags present
+  if (metadata.isPrivate === undefined && metadata.isPublic === undefined) {
+    metadata.isPublic = !metadata.isPrivate
+  }
+  if (metadata.isPrivate) metadata.isPublic = false
+  if (metadata.isClosed === undefined && metadata.isOpen === undefined) {
+    metadata.isOpen = !metadata.isClosed
+  }
+  if (metadata.isClosed) metadata.isOpen = false
+  if (metadata.isPublic) metadata.isPrivate = false
+  if (metadata.isOpen) metadata.isClosed = false
+
   return metadata
+}
+
+/**
+ * Build tags for a group metadata event (kind 39000) from structured metadata.
+ */
+export function buildGroupMetadataTags(meta: {
+  readonly id: string
+  readonly name?: string
+  readonly picture?: string
+  readonly about?: string
+  readonly isPrivate?: boolean
+  readonly isClosed?: boolean
+  readonly isRestricted?: boolean
+  readonly isHidden?: boolean
+  readonly parent?: string
+  readonly children?: readonly string[]
+}): string[][] {
+  const tags: string[][] = [["d", meta.id]]
+  if (meta.name) tags.push(["name", meta.name])
+  if (meta.picture) tags.push(["picture", meta.picture])
+  if (meta.about) tags.push(["about", meta.about])
+  if (meta.isPrivate) tags.push(["private"])
+  if (meta.isClosed) tags.push(["closed"])
+  if (meta.isRestricted) tags.push(["restricted"])
+  if (meta.isHidden) tags.push(["hidden"])
+  if (meta.parent) tags.push(["parent", meta.parent])
+  if (meta.children) {
+    for (const c of meta.children) tags.push(["child", c])
+  }
+  return tags
+}
+
+/**
+ * Build a put-user moderation event template (kind 9000).
+ */
+export function buildPutUserTags(
+  groupId: string,
+  pubkey: string,
+  roles: readonly string[] = []
+): string[][] {
+  return [
+    ["h", groupId],
+    ["p", pubkey, ...roles],
+  ]
+}
+
+/**
+ * Build a join-request template tags (kind 9021).
+ */
+export function buildJoinRequestTags(
+  groupId: string,
+  options?: { readonly code?: string; readonly reason?: string }
+): string[][] {
+  const tags: string[][] = [["h", groupId]]
+  if (options?.code) tags.push(["code", options.code])
+  if (options?.reason) tags.push(["reason", options.reason])
+  return tags
 }
 
 function parseAdminsFromEvent(event: NostrEvent): GroupAdmin[] {

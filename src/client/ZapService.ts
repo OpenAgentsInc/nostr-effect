@@ -92,6 +92,28 @@ export type ZapValidationError =
   | "Zap request 'e' tag is not valid hex."
   | "Zap request doesn't have a 'relays' tag."
 
+/** NIP-57 Appendix F receipt validation errors */
+export type ZapReceiptValidationError =
+  | "Invalid zap receipt."
+  | "Zap receipt pubkey does not match LNURL nostrPubkey."
+  | "Zap receipt missing bolt11 tag."
+  | "Zap receipt missing description (zap request)."
+  | "Invalid zap request in receipt description."
+  | "Invoice amount does not match zap request amount."
+  | "Zap request lnurl does not match recipient lnurl."
+
+/** NIP-57 Appendix G zap split receiver */
+export interface ZapSplitReceiver {
+  readonly pubkey: string
+  readonly relay: string
+  readonly weight: number
+}
+
+/** Zap split with computed millisat amount */
+export interface ZapSplitAllocation extends ZapSplitReceiver {
+  readonly amountMsats: number
+}
+
 // =============================================================================
 // Service Interface
 // =============================================================================
@@ -135,6 +157,32 @@ export interface ZapService {
    * Parse the satoshi amount from a bolt11 invoice
    */
   getSatoshisAmountFromBolt11(bolt11: string): number
+
+  /**
+   * NIP-57 Appendix F: validate a zap receipt against LNURL provider pubkey
+   * and optional expected recipient lnurl.
+   * Returns null if valid.
+   */
+  validateZapReceipt(
+    receipt: NostrEvent,
+    options: {
+      readonly lnurlNostrPubkey: string
+      readonly recipientLnurl?: string
+    }
+  ): ZapReceiptValidationError | null
+
+  /**
+   * NIP-57 Appendix G: parse `zap` split tags from an event
+   */
+  parseZapSplitTags(event: NostrEvent): readonly ZapSplitReceiver[]
+
+  /**
+   * NIP-57 Appendix G: allocate total millisats across split receivers by weight
+   */
+  calculateZapSplits(
+    totalMsats: number,
+    receivers: readonly ZapSplitReceiver[]
+  ): readonly ZapSplitAllocation[]
 }
 
 // =============================================================================
@@ -213,6 +261,118 @@ export function getSatoshisAmountFromBolt11(bolt11: string): number {
  * Check if a string is valid 64-character hex
  */
 const isValidHex64 = (s: string): boolean => /^[a-f0-9]{64}$/.test(s)
+
+/**
+ * Millisats from bolt11 (sats × 1000). Exported for Appendix F amount checks.
+ */
+export function getMillisatsAmountFromBolt11(bolt11: string): number {
+  return Math.round(getSatoshisAmountFromBolt11(bolt11) * 1000)
+}
+
+/**
+ * Pure Appendix F validation (also used by wrappers).
+ */
+export function validateZapReceipt(
+  receipt: NostrEvent,
+  options: {
+    readonly lnurlNostrPubkey: string
+    readonly recipientLnurl?: string
+  }
+): ZapReceiptValidationError | null {
+  if (Number(receipt.kind) !== Number(ZAP_RECEIPT_KIND)) {
+    return "Invalid zap receipt."
+  }
+  if (receipt.pubkey.toLowerCase() !== options.lnurlNostrPubkey.toLowerCase()) {
+    return "Zap receipt pubkey does not match LNURL nostrPubkey."
+  }
+
+  const bolt11 = receipt.tags.find((t) => t[0] === "bolt11")?.[1]
+  if (!bolt11) return "Zap receipt missing bolt11 tag."
+
+  const description = receipt.tags.find((t) => t[0] === "description")?.[1]
+  if (!description) return "Zap receipt missing description (zap request)."
+
+  let zapRequest: NostrEvent
+  try {
+    zapRequest = JSON.parse(description) as NostrEvent
+  } catch {
+    return "Invalid zap request in receipt description."
+  }
+
+  const amountTag = zapRequest.tags?.find((t) => t[0] === "amount")?.[1]
+  if (amountTag !== undefined) {
+    const expectedMsats = Number(amountTag)
+    const invoiceMsats = getMillisatsAmountFromBolt11(bolt11)
+    if (Number.isFinite(expectedMsats) && expectedMsats > 0 && invoiceMsats !== expectedMsats) {
+      return "Invoice amount does not match zap request amount."
+    }
+  }
+
+  if (options.recipientLnurl) {
+    const reqLnurl = zapRequest.tags?.find((t) => t[0] === "lnurl")?.[1]
+    if (reqLnurl && reqLnurl !== options.recipientLnurl) {
+      return "Zap request lnurl does not match recipient lnurl."
+    }
+  }
+
+  return null
+}
+
+/**
+ * Pure Appendix G: parse zap split tags.
+ * Tag: ["zap", <pubkey>, <relay>, <weight?>]
+ */
+export function parseZapSplitTags(event: NostrEvent): readonly ZapSplitReceiver[] {
+  const receivers: ZapSplitReceiver[] = []
+  for (const tag of event.tags) {
+    if (tag[0] !== "zap" || !tag[1] || !tag[2]) continue
+    const weightRaw = tag[3]
+    let weight: number
+    if (weightRaw === undefined) {
+      // Will be equalized later if all missing; mark as NaN sentinel then fix
+      weight = Number.NaN
+    } else {
+      weight = Number(weightRaw)
+      if (!Number.isFinite(weight) || weight < 0) weight = 0
+    }
+    receivers.push({ pubkey: tag[1], relay: tag[2], weight })
+  }
+
+  // Spec: if weights partially present, missing weight = 0; if none present, equal weight
+  const anyWeight = receivers.some((r) => Number.isFinite(r.weight))
+  if (!anyWeight) {
+    return receivers.map((r) => ({ ...r, weight: 1 }))
+  }
+  return receivers.map((r) => ({
+    ...r,
+    weight: Number.isFinite(r.weight) ? r.weight : 0,
+  }))
+}
+
+/**
+ * Pure Appendix G: allocate total msats by weight. Remainder goes to first non-zero receiver.
+ */
+export function calculateZapSplits(
+  totalMsats: number,
+  receivers: readonly ZapSplitReceiver[]
+): readonly ZapSplitAllocation[] {
+  if (receivers.length === 0 || totalMsats <= 0) return []
+  const totalWeight = receivers.reduce((s, r) => s + r.weight, 0)
+  if (totalWeight <= 0) return receivers.map((r) => ({ ...r, amountMsats: 0 }))
+
+  const allocations: ZapSplitAllocation[] = []
+  let allocated = 0
+  for (let i = 0; i < receivers.length; i++) {
+    const r = receivers[i]!
+    const amount =
+      i === receivers.length - 1
+        ? totalMsats - allocated
+        : Math.floor((totalMsats * r.weight) / totalWeight)
+    allocated += amount
+    allocations.push({ ...r, amountMsats: amount })
+  }
+  return allocations
+}
 
 // =============================================================================
 // Service Implementation
@@ -392,6 +552,9 @@ const make = Effect.gen(function* () {
     validateZapRequest,
     makeZapReceipt,
     getSatoshisAmountFromBolt11: getSatoshisAmountFromBolt11Impl,
+    validateZapReceipt,
+    parseZapSplitTags,
+    calculateZapSplits,
   }
 })
 

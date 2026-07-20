@@ -21,12 +21,18 @@
 
 import { finalizeEvent } from "./pure.js"
 import { Reaction } from "./kinds.js"
+import { isParameterizedReplaceableKind, getDTagValue } from "../core/Schema.js"
 
 // Re-export pure functions from service
-export { getReactedEventPointer, REACTION_KIND } from "../client/Nip25Service.js"
+export {
+  getReactedEventPointer,
+  REACTION_KIND,
+  EXTERNAL_REACTION_KIND,
+} from "../client/Nip25Service.js"
 
 // Re-export types
 export type { EventPointer } from "../core/Nip19.js"
+export type { ExternalReactionParams, ReactionParams } from "../client/Nip25Service.js"
 
 /** Event type for reactions */
 export interface Event {
@@ -60,18 +66,56 @@ export interface ReactionEventTemplate {
 export function finishReactionEvent(
   t: ReactionEventTemplate,
   reacted: Event,
-  privateKey: Uint8Array
+  privateKey: Uint8Array,
+  options?: { readonly relayHint?: string }
 ): Event {
-  const inheritedTags = reacted.tags.filter(
-    (tag) => tag.length >= 2 && (tag[0] === "e" || tag[0] === "p")
-  )
+  const hint = options?.relayHint
+  const eTag = hint
+    ? ["e", reacted.id, hint, reacted.pubkey]
+    : ["e", reacted.id]
+  const pTag = hint ? ["p", reacted.pubkey, hint] : ["p", reacted.pubkey]
+  const tags: string[][] = [...(t.tags ?? []), eTag, pTag, ["k", String(reacted.kind)]]
+
+  if (isParameterizedReplaceableKind(reacted.kind)) {
+    const d = getDTagValue(reacted as never) ?? ""
+    const a = `${reacted.kind}:${reacted.pubkey}:${d}`
+    tags.push(hint ? ["a", a, hint, reacted.pubkey] : ["a", a])
+  }
 
   return finalizeEvent(
     {
       ...t,
       kind: Reaction,
-      tags: [...(t.tags ?? []), ...inheritedTags, ["e", reacted.id], ["p", reacted.pubkey]],
+      tags,
       content: t.content ?? "+",
+    },
+    privateKey
+  ) as unknown as Event
+}
+
+/**
+ * Create a kind-17 external content reaction (NIP-73 i/k tags)
+ */
+export function finishExternalReactionEvent(
+  t: {
+    content?: string
+    created_at: number
+    tags?: string[][]
+  },
+  targets: readonly { k: string; i: string; url?: string }[],
+  privateKey: Uint8Array
+): Event {
+  const tags: string[][] = [...(t.tags ?? [])]
+  for (const target of targets) {
+    tags.push(["k", target.k])
+    tags.push(target.url ? ["i", target.i, target.url] : ["i", target.i])
+  }
+  return finalizeEvent(
+    {
+      kind: 17,
+      created_at: t.created_at,
+      content: t.content ?? "+",
+      tags,
     },
     privateKey
   ) as unknown as Event

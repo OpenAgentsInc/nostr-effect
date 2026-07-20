@@ -23,7 +23,20 @@ import { validateEvent, verifyEvent } from "./pure.js"
 import { isReplaceable, isParameterizedReplaceable } from "./kinds.js"
 
 // Re-export pure functions from service
-export { getSatoshisAmountFromBolt11, decodeLnurl } from "../client/ZapService.js"
+export {
+  getSatoshisAmountFromBolt11,
+  getMillisatsAmountFromBolt11,
+  decodeLnurl,
+  validateZapReceipt,
+  parseZapSplitTags,
+  calculateZapSplits,
+} from "../client/ZapService.js"
+
+export type {
+  ZapReceiptValidationError,
+  ZapSplitReceiver,
+  ZapSplitAllocation,
+} from "../client/ZapService.js"
 
 let _fetch: typeof fetch = globalThis.fetch
 

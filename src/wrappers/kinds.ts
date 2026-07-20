@@ -167,6 +167,33 @@ export const UserEmojiList = 10030
 /** Trusted assertion service preferences (NIP-85) */
 export const TrustedProviders = 10040
 
+/** Public message (NIP-A4) */
+export const PublicMessage = 24
+
+/** Podcast episode (NIP-F4) */
+export const PodcastEpisode = 54
+
+/** Podcast favorites list (NIP-F4 / NIP-51) */
+export const PodcastFavorites = 10054
+
+/** Podcast author claims (NIP-F4) */
+export const PodcastAuthorClaim = 10064
+
+/** Podcast metadata (NIP-F4) */
+export const PodcastMetadata = 10154
+
+/** Nsite root (NIP-5A) */
+export const NsiteRoot = 15128
+
+/** Nsite named site (NIP-5A) */
+export const NsiteNamed = 35128
+
+/** Geocache listing (NIP-CC) */
+export const GeocacheListing = 37516
+
+/** External content reaction (NIP-25) */
+export const ExternalReaction = 17
+
 /** Direct message relays list (NIP-17) */
 export const DirectMessageRelaysList = 10050
 

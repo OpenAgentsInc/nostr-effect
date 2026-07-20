@@ -55,10 +55,90 @@ export const matchesFilter = (event: NostrEvent, filter: Filter): boolean => {
     if (!tagValues.some((v) => eventTagValues.includes(v))) return false
   }
 
-  // NIP-50: basic search on content (case-insensitive substring)
+  // NIP-50: search with optional extensions (include:spam, domain:, language:)
   if (filter.search && filter.search.trim().length > 0) {
-    const needle = filter.search.toLowerCase()
-    if (!event.content.toLowerCase().includes(needle)) return false
+    if (!matchesSearch(event, filter.search)) return false
+  }
+
+  return true
+}
+
+/**
+ * Parse a NIP-50 search string into free-text terms and known extensions.
+ * Unknown extension tokens are treated as free-text terms.
+ */
+export interface ParsedSearchQuery {
+  readonly terms: readonly string[]
+  readonly includeSpam: boolean
+  readonly domain?: string
+  readonly language?: string
+}
+
+export const parseSearchQuery = (search: string): ParsedSearchQuery => {
+  const tokens = search.trim().split(/\s+/).filter(Boolean)
+  const terms: string[] = []
+  let includeSpam = false
+  let domain: string | undefined
+  let language: string | undefined
+
+  for (const token of tokens) {
+    const lower = token.toLowerCase()
+    if (lower === "include:spam") {
+      includeSpam = true
+      continue
+    }
+    if (lower.startsWith("domain:")) {
+      domain = token.slice("domain:".length).toLowerCase()
+      continue
+    }
+    if (lower.startsWith("language:")) {
+      language = token.slice("language:".length).toLowerCase()
+      continue
+    }
+    terms.push(token)
+  }
+
+  return {
+    terms,
+    includeSpam,
+    ...(domain !== undefined ? { domain } : {}),
+    ...(language !== undefined ? { language } : {}),
+  }
+}
+
+/**
+ * Match event against NIP-50 search string.
+ * - Free-text terms: all must appear in content (case-insensitive)
+ * - include:spam: no-op here (we do not spam-filter by default)
+ * - domain: matches against any tag value containing the domain (e.g. nip05-like)
+ * - language: matches optional `l` language tags (ISO 639-1)
+ */
+export const matchesSearch = (event: NostrEvent, search: string): boolean => {
+  const parsed = parseSearchQuery(search)
+  const content = event.content.toLowerCase()
+
+  for (const term of parsed.terms) {
+    if (!content.includes(term.toLowerCase())) return false
+  }
+
+  if (parsed.domain) {
+    const domain = parsed.domain
+    const tagHit = event.tags.some(
+      (t) => t[1] !== undefined && t[1].toLowerCase().includes(domain)
+    )
+    const contentHit = content.includes(domain)
+    if (!tagHit && !contentHit) return false
+  }
+
+  if (parsed.language) {
+    const langs = event.tags
+      .filter((t) => t[0] === "l" || t[0] === "L")
+      .map((t) => t[1]?.toLowerCase())
+      .filter((v): v is string => typeof v === "string")
+    // If the event declares language tags, require a match; otherwise allow (unknown)
+    if (langs.length > 0 && !langs.some((l) => l === parsed.language || l.startsWith(parsed.language!))) {
+      return false
+    }
   }
 
   return true

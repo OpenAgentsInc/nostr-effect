@@ -33,11 +33,11 @@ Keep this file up to date whenever adding or removing support.
 | 22 | Comment | `~/code/nips/22.md` | `src/wrappers/nip22.ts` | `src/wrappers/nip22.test.ts` |
 | 23 | Long-form content | `~/code/nips/23.md` | `src/client/Nip23Service.ts` | `src/client/Nip23Service.test.ts` |
 | 24 | Extra metadata fields and tags | `~/code/nips/24.md` | `src/wrappers/nip24.ts` | `src/wrappers/nip24.test.ts` |
-| 25 | Reactions | `~/code/nips/25.md` | `src/client/Nip25Service.ts` | `src/client/Nip25Service.test.ts` |
+| 25 | Reactions | `~/code/nips/25.md` | `src/client/Nip25Service.ts` (`a`/`k`, kind 17 external) | `src/client/Nip25Service.test.ts` |
 | 26 | Delegated event signing | `~/code/nips/26.md` | `src/wrappers/nip26.ts` | `src/wrappers/nip26.test.ts` |
 | 27 | Content parsing | `~/code/nips/27.md` | `src/wrappers/nip27.ts` | `src/core/Nip27.test.ts` |
 | 28 | Public chat | `~/code/nips/28.md` | `src/client/ChatService.ts`, `src/relay/core/nip/modules/Nip28Module.ts` | `src/client/ChatService.test.ts` |
-| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` | `src/client/Nip29Service.test.ts` |
+| 29 | Relay-based groups | `~/code/nips/29.md` | `src/client/Nip29Service.ts` (private/closed/restricted/hidden, subgroups, moderation helpers) | `src/client/Nip29Service.test.ts`, `src/client/parity-batch-e.test.ts` |
 | 30 | Custom emoji | `~/code/nips/30.md` | `src/wrappers/nip30.ts` | `src/core/Nip30.test.ts` |
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 32 | Labeling | `~/code/nips/32.md` | `src/client/Nip32Service.ts` | `src/client/Nip32Service.test.ts` |
@@ -57,14 +57,14 @@ Keep this file up to date whenever adding or removing support.
 | 47 | Nostr Wallet Connect | `~/code/nips/47.md` | `src/core/Nip47.ts` (NIP-44 default, hold invoices), `src/wrappers/nip47.ts` | `src/core/Nip47.test.ts` |
 | 48 | Proxy tags | `~/code/nips/48.md` | `src/wrappers/nip48.ts` | `src/wrappers/nip48.test.ts` |
 | 49 | Encrypted private keys | `~/code/nips/49.md` | `src/wrappers/nip49.ts` | `src/core/Nip49.test.ts` |
-| 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` | `src/client/Nip50Service.test.ts` |
+| 50 | Search capability | `~/code/nips/50.md` | `src/client/Nip50Service.ts`, `src/relay/core/FilterMatcher.ts` (`parseSearchQuery`, extensions) | `src/client/Nip50Service.test.ts`, `src/client/parity-batch-e.test.ts` |
 | 51 | Lists | `~/code/nips/51.md` | `src/client/Nip51Service.ts` | `src/client/Nip51Service.test.ts` |
 | 52 | Calendar events | `~/code/nips/52.md` | `src/client/Nip52Service.ts` | `src/client/Nip52Service.test.ts` |
 | 53 | Live activities | `~/code/nips/53.md` | `src/client/Nip53Service.ts` | `src/client/Nip53Service.test.ts` |
 | 54 | Wiki | `~/code/nips/54.md` | `src/wrappers/nip54.ts` | `src/core/Nip54.test.ts` |
 | 55 | Android signer application | `~/code/nips/55.md` | `src/wrappers/nip55.ts` | `src/wrappers/nip55.test.ts` |
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
-| 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts`, `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts` |
+| 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts` (Appendix F/G), `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts`, `src/client/ZapService.appendix.test.ts` |
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` (10008 profile badges, 30008 sets) | `src/client/Nip58Service.test.ts` |
 | 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
@@ -106,11 +106,15 @@ Lettered NIPs (Definitive)
 
 | NIP | Title | Spec | Code (service/module) | Tests |
 |-----|-------|------|------------------------|-------|
+| 5A | Static Websites (nsites) | `~/code/nips/5A.md` | `src/client/Nip5AService.ts`, `src/wrappers/nip5a.ts` | `src/client/parity-batch-e.test.ts` |
 | A0 | Voice Messages | `~/code/nips/A0.md` | `src/client/NipA0Service.ts`, `src/relay/core/nip/modules/NipA0Module.ts` | `src/client/NipA0Service.test.ts`, `src/relay/NipA0Module.test.ts` |
+| A4 | Public Messages | `~/code/nips/A4.md` | `src/client/NipA4Service.ts`, `src/wrappers/nipA4.ts` | `src/client/parity-batch-e.test.ts` |
 | B0 | Web Bookmarking | `~/code/nips/B0.md` | `src/client/NipB0Service.ts`, `src/relay/core/nip/modules/NipB0Module.ts` | `src/client/NipB0Service.test.ts` |
 | B7 | Blossom Media | `~/code/nips/B7.md` | `src/client/BlossomService.ts`, `src/wrappers/nipb7.ts` | — |
 | BE | BLE Communications | `~/code/nips/BE.md` | `src/client/NipBEService.ts` | `src/client/NipBEService.test.ts` |
 | C0 | Code Snippets | `~/code/nips/C0.md` | `src/client/NipC0Service.ts` | `src/client/NipC0Service.test.ts` |
 | C7 | Chats | `~/code/nips/C7.md` | `src/client/NipC7Service.ts` | `src/client/NipC7Service.test.ts` |
+| CC | Geocaching Events | `~/code/nips/CC.md` | `src/client/NipCCService.ts`, `src/wrappers/nipCC.ts` | `src/client/parity-batch-e.test.ts` |
+| F4 | Podcasts | `~/code/nips/F4.md` | `src/client/NipF4Service.ts`, `src/wrappers/nipF4.ts` | `src/client/parity-batch-e.test.ts` |
 | EE | MLS E2EE Messaging | `~/code/nips/EE.md` | `src/client/NipEEService.ts` | `src/client/NipEEService.test.ts` |
 | SB | Remote Sandbox Protocol | `docs/mechacoder/NIP-SB.md` (OpenAgents) | `src/core/NipSB.ts`, `src/client/SandboxService.ts` | `src/client/SandboxService.test.ts` |

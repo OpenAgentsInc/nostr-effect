@@ -35,17 +35,15 @@ describe("NIP-25 Pure Helpers", () => {
 
     expect(reaction.kind).toBe(REACTION_KIND)
     expect(reaction.content).toBe("👍")
-    expect(reaction.tags.length).toBeGreaterThanOrEqual(4) // inherited + new e/p
 
-    // Has new e/p for reacted
-    const eTags = reaction.tags.filter(t => t[0] === "e")
-    const pTags = reaction.tags.filter(t => t[0] === "p")
-    expect(eTags.some(t => t[1] === reacted.id)).toBe(true)
-    expect(pTags.some(t => t[1] === reacted.pubkey)).toBe(true)
-
-    // Inherits existing e/p
-    expect(reaction.tags.some(t => t[1] === "previousevent")).toBe(true)
-    expect(reaction.tags.some(t => t[1] === "previouspubkey")).toBe(true)
+    // Target e/p + k (spec: other e/p from source not recommended)
+    const eTags = reaction.tags.filter((t) => t[0] === "e")
+    const pTags = reaction.tags.filter((t) => t[0] === "p")
+    expect(eTags).toHaveLength(1)
+    expect(pTags).toHaveLength(1)
+    expect(eTags[0]![1]).toBe(reacted.id)
+    expect(pTags[0]![1]).toBe(reacted.pubkey)
+    expect(reaction.tags.some((t) => t[0] === "k" && t[1] === "1")).toBe(true)
   })
 
   test("finishReactionEvent uses default content", () => {
