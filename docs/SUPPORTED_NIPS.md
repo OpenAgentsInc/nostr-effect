@@ -85,6 +85,7 @@ Keep this file up to date whenever adding or removing support.
 | 77 | Negentropy syncing | `~/code/nips/77.md` | `src/client/Nip77Service.ts`, `src/relay/core/nip/modules/Nip77Module.ts`, `src/relay/core/MessageHandler.ts` | `src/client/Nip77Service.test.ts`, `src/relay/Nip77Negentropy.test.ts` |
 | 78 | Arbitrary custom app data | `~/code/nips/78.md` | `src/client/AppDataService.ts` | `src/client/AppDataService.test.ts` |
 | 84 | Highlights | `~/code/nips/84.md` | `src/wrappers/nip84.ts` | `src/wrappers/nip84.test.ts` |
+| 85 | Trusted Assertions | `~/code/nips/85.md` | `src/client/Nip85Service.ts`, `src/wrappers/nip85.ts` | `src/client/Nip85Service.test.ts` |
 | 86 | Relay Management API | `~/code/nips/86.md` | `src/relay/core/nip/modules/Nip86Module.ts`, `src/relay/backends/bun/BunServer.ts` | `src/relay/Nip86Management.test.ts` |
 | 87 | Ecash mint discoverability | `~/code/nips/87.md` | `src/client/MintDiscoverabilityService.ts` | `src/client/MintDiscoverabilityService.test.ts` |
 | 88 | Polls | `~/code/nips/88.md` | `src/client/Nip88Service.ts` | `src/client/Nip88Service.test.ts` |

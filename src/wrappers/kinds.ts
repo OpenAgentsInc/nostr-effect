@@ -164,6 +164,9 @@ export const EmojisList = 10030
 /** User emoji list (NIP-51) - alias */
 export const UserEmojiList = 10030
 
+/** Trusted assertion service preferences (NIP-85) */
+export const TrustedProviders = 10040
+
 /** Direct message relays list (NIP-17) */
 export const DirectMessageRelaysList = 10050
 
@@ -274,6 +277,18 @@ export const LegacyProfileBadges = 30008
 
 /** Badge definition (NIP-58) */
 export const BadgeDefinition = 30009
+
+/** User trusted assertion (NIP-85) */
+export const TrustedAssertionUser = 30382
+
+/** Event trusted assertion (NIP-85) */
+export const TrustedAssertionEvent = 30383
+
+/** Addressable trusted assertion (NIP-85) */
+export const TrustedAssertionAddress = 30384
+
+/** External identifier trusted assertion (NIP-85) */
+export const TrustedAssertionExternal = 30385
 
 /** Interest sets (NIP-51) */
 export const InterestSets = 30015
@@ -673,6 +688,7 @@ export const kinds = {
   SimpleGroupsList,
   InterestsList,
   EmojisList,
+  TrustedProviders,
   GoodWikiAuthors,
   GoodWikiRelays,
   ClientAuth,
@@ -687,6 +703,10 @@ export const kinds = {
   BadgeSets,
   LegacyProfileBadges,
   BadgeDefinition,
+  TrustedAssertionUser,
+  TrustedAssertionEvent,
+  TrustedAssertionAddress,
+  TrustedAssertionExternal,
   InterestSets,
   EmojiSets,
   LongFormArticle,

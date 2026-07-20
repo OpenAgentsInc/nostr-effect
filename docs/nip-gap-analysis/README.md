@@ -47,7 +47,7 @@ Cross-cutting P0: `Filter` in `src/core/Schema.ts` only models `#e/#p/#a/#d/#t`.
 | NIP | Title | Priority | Notes |
 | --- | --- | --- | --- |
 | 67 | EOSE Completeness Hint | **P1** | Optional `finish`/`more` on EOSE |
-| 85 | Trusted Assertions | **P1** | Kinds 30382–30385 + 10040 |
+| 85 | Trusted Assertions | **done** | Kinds 30382–30385 + 10040 (`Nip85Service`) |
 | 5A | Static Websites (nsites) | P2 | Adjacent to Blossom |
 | A4 | Public Messages | P2 | Kind 24 |
 | F4 | Podcasts | P2 | Media clients |
@@ -77,9 +77,12 @@ Roadmap status: **postponed**. Full gap analysis: [draft-openagents.md](./draft-
 5. ~~**P1** NIP-16 ephemeral broadcast-only (do not store)~~
 6. ~~**P1** NIP-67 EOSE completeness hints~~
 
+### Done (Phase D — ongoing)
+
+7. ~~**P1** NIP-85 Trusted Assertions service~~ — `Nip85Service` + `nip85` wrapper
+
 ### Remaining
 
-7. **P1** NIP-85 Trusted Assertions service
 8. **P1** NIP-47 NIP-44 encryption + hold invoices
 9. **P1** NIP-57 Appendix F receipt validation + Appendix G zap splits
 10. **P1** NIP-29 groups metadata/moderation catch-up
