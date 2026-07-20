@@ -1,0 +1,156 @@
+# Sequential NIP Gap Analysis — Batch 4: NIPs 46–60
+
+**Date:** 2026-07-20  
+**Series:** Sequential full-repo scan  
+**Prior:** `NIP_GAP_ANALYSIS_SEQ_31_45.md`
+
+## Batch summary
+
+| NIP | Title | Claimed | Grade | Top gap |
+| --- | --- | --- | --- | --- |
+| 46 | Nostr Connect (remote signing) | yes | **Mostly OK** | Full bunker session UX edge cases |
+| 47 | Nostr Wallet Connect | yes | **Partial** | NIP-04 only; no hold-invoice / NIP-44 negotiate |
+| 48 | Bridged / proxy tags | yes | **Mostly OK** | Thin wrapper |
+| 49 | Private key encryption (`ncryptsec`) | yes | **Mostly OK** | Complete crypto helper |
+| 50 | Search capability | yes | **Partial** | Substring only; no extensions |
+| 51 | Lists | yes | **Mostly OK** | Generic service; kinds.ts constants |
+| 52 | Calendar events | yes | **Mostly OK** | Date/time/calendar/RSVP |
+| 53 | Live streaming & spaces | yes | **Mostly OK** | 30311 + 1311 chat |
+| 54 | Wiki | yes | **Mostly OK** | Core builders |
+| 55 | Android signer | yes | **Mostly OK** | Intent URI builders |
+| 56 | Reporting | yes | **Mostly OK** | See reputation thematic |
+| 57 | Lightning zaps | yes | **Partial** | Receipt validation / zap splits |
+| 58 | Badges | yes | **Stale** | Profile badges kind wrong |
+| 59 | Gift wrap | yes | **Mostly OK** | Used by NIP-17 |
+| 60 | Cashu wallets | yes | **Mostly OK** | On-relay state solid |
+
+---
+
+## NIP-46 — Remote signing
+
+**Code:** `Nip46Service.ts` — bunker:// + nostrconnect://, kind 24133, methods connect/sign_event/ping/get_public_key/nip44_*.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Full method matrix vs latest 46.md | **P2** | Re-diff for any new methods (e.g. nip04_* legacy). |
+| Silent timeout hardening | **P2** | Upstream notes timeout issues; confirm client timeouts. |
+
+**Grade: Mostly OK**
+
+---
+
+## NIP-47 — NWC
+
+See payments analysis. **Partial** — NIP-04 encryption path, missing hold invoices & encryption negotiation.
+
+---
+
+## NIP-48 — Bridged events / proxy tags
+
+**Code:** `nip48.ts` proxy tag helpers. **Mostly OK.**
+
+---
+
+## NIP-49 — `ncryptsec`
+
+**Code:** `Nip49.ts` encrypt/decrypt private keys. **Mostly OK.**
+
+---
+
+## NIP-50 — Search
+
+**Code:** `Nip50Service` + FilterMatcher substring on `content`.  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Quality ranking | **P2** | Spec wants score-ordered results; matcher is filter-only substring. |
+| Extensions | **P2** | Spec MAY: `include:spam`, `domain:`, `language:`, `sentiment:`, `nsfw:` — none implemented. |
+| Multi-field match | **P3** | Only content. |
+
+**Grade: Partial**
+
+---
+
+## NIP-51 — Lists
+
+Generic publish/get with private NIP-44 items; works for 100xx and 300xx. Constants in `kinds.ts` (mute 10000, pins 10001, bookmarks 10003, groups 10009, sets, etc.).  
+
+### Gaps
+
+| Item | Sev | Detail |
+| --- | --- | --- |
+| Typed helpers per standard list | **P3** | Generic API; apps pass kind numbers. |
+| Profile badges kind 10008 | **P0** | Tied to NIP-58 migration; kinds.ts still has ProfileBadges=30008. |
+
+**Grade: Mostly OK** (except badge kind constant)
+
+---
+
+## NIP-52 — Calendar
+
+Kinds 31922 date, 31923 time, 31924 calendar, 31925 RSVP. **Mostly OK.**
+
+---
+
+## NIP-53 — Live activities
+
+30311 live event + 1311 chat. **Mostly OK.** Spot-check for spaces/host tags vs latest 53.md.
+
+---
+
+## NIP-54 — Wiki
+
+Core wiki event helpers. **Mostly OK.**
+
+---
+
+## NIP-55 — Android signer
+
+Intent URI builders. **Mostly OK.**
+
+---
+
+## NIP-56 — Reporting
+
+Kind 1984 templates. **Mostly OK.**
+
+---
+
+## NIP-57 — Zaps
+
+**Partial** — see payments doc (App F/G, LNURL HTTP).
+
+---
+
+## NIP-58 — Badges
+
+**Stale** — Profile Badges should be 10008; Badge Sets 30008. **P0.**
+
+---
+
+## NIP-59 — Gift wrap
+
+**Code:** `Nip59.ts` wrap/unwrap; foundation for 17/37/EE. **Mostly OK.**
+
+---
+
+## NIP-60 — Cashu wallets
+
+17375/7375/7376. **Mostly OK** (payments doc).
+
+---
+
+## Batch 4 backlog
+
+1. **P0** NIP-58 + kinds.ts ProfileBadges.  
+2. **P1** NIP-47 NIP-44 + hold invoices.  
+3. **P1** NIP-57 receipt validation.  
+4. **P2** NIP-50 search extensions / ranking.
+
+## Next
+
+**Batch 5:** NIPs 61–78 (incl. missing 67).
