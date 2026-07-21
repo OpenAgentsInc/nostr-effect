@@ -869,3 +869,20 @@ export const ChannelWindowBounds = 39006
 export const DmVisibilitySnapshot = 30622
   // DM Visibility (NIP-DV)
   DmVisibilitySnapshot,
+// Identity Archival (NIP-IA)
+/** Archived identity delta (NIP-IA) — relay-signed */
+export const ArchivedIdentity = 8002
+/** Unarchived identity delta (NIP-IA) — relay-signed */
+export const UnarchivedIdentity = 8003
+/** Archive request (NIP-IA) — user/agent-signed */
+export const ArchiveRequest = 9035
+/** Unarchive request (NIP-IA) — user/agent-signed */
+export const UnarchiveRequest = 9036
+/** Archived identities list snapshot (NIP-IA) — relay-signed, replaceable */
+export const ArchivedIdentitiesList = 13535
+  // Identity Archival (NIP-IA)
+  ArchivedIdentity,
+  UnarchivedIdentity,
+  ArchiveRequest,
+  UnarchiveRequest,
+  ArchivedIdentitiesList,

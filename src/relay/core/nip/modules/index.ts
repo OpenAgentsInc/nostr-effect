@@ -22,6 +22,7 @@ export { Nip77Module } from "./Nip77Module.js"
 export { Nip40Module } from "./Nip40Module.js"
 export { NipA0Module } from "./NipA0Module.js"
 export { NipB0Module } from "./NipB0Module.js"
+export { NipIAModule } from "./NipIAModule.js"
 export { Nip67Module } from "./Nip67Module.js"
 export { Nip29Module } from "./Nip29Module.js"
 export {
@@ -66,6 +67,7 @@ import { Nip77Module } from "./Nip77Module.js"
 import { Nip40Module } from "./Nip40Module.js"
 import { NipA0Module } from "./NipA0Module.js"
 import { NipB0Module } from "./NipB0Module.js"
+import { NipIAModule } from "./NipIAModule.js"
 import { Nip67Module } from "./Nip67Module.js"
 import { Nip29Module } from "./Nip29Module.js"
 import type { NipModule } from "../NipModule.js"
@@ -92,6 +94,7 @@ export const DefaultModules: readonly NipModule[] = [
   Nip40Module,
   NipA0Module,
   NipB0Module,
+  NipIAModule,
   Nip67Module,
   Nip29Module,
 ]
