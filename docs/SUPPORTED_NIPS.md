@@ -135,4 +135,4 @@ Lettered NIPs (Definitive)
 | Spec | Title | Spec path | Code | Tests |
 | --- | --- | --- | --- | --- |
 | ER | Event Reminders (`kind:30300`, NIP-44 encrypt-to-self, NIP-40 expiry, NIP-09 delete) | buzz `docs/nips/NIP-ER.md` | `src/client/EventReminderService.ts` | `src/client/EventReminderService.test.ts` |
-| AP | Agent Personas (buzz) | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
+| AO | Agent Observability (ephemeral `kind:24200`, NIP-44 bidirectional + opt NIP-59) | `~/work/projects/repos/buzz/docs/nips/NIP-AO.md` | `src/core/NipAO.ts`, `src/client/AgentObservabilityService.ts` (ephemeral via `src/relay/core/nip/modules/Nip16Module.ts`) | `src/client/AgentObservabilityService.test.ts` |

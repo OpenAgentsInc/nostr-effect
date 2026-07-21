@@ -7,3 +7,4 @@
 export * from "./Schema.js"
 export * from "./Errors.js"
 export * from "./Nip19.js"
+export * as NipAO from "./NipAO.js"

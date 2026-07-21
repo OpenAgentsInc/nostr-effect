@@ -55,6 +55,7 @@
     "./nip85": "./src/wrappers/nip85.ts",
     "./nip90": "./src/core/Nip90.ts",
     "./nipA4": "./src/wrappers/nipA4.ts",
+    "./nipAO": "./src/core/NipAO.ts",
     "./nip5a": "./src/wrappers/nip5a.ts",
     "./nipF4": "./src/wrappers/nipF4.ts",
     "./nipCC": "./src/wrappers/nipCC.ts",

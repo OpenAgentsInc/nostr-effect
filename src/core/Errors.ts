@@ -61,6 +61,24 @@ export class InvalidPublicKey extends Schema.TaggedErrorClass<InvalidPublicKey>(
 ) {}
 
 // =============================================================================
+// Observability Errors (NIP-AO)
+// =============================================================================
+
+export class ObservabilityError extends Schema.TaggedErrorClass<ObservabilityError>()(
+  "ObservabilityError",
+  {
+    message: Schema.String,
+    operation: Schema.Literals([
+      "buildTelemetryFrame",
+      "buildControlFrame",
+      "readFrame",
+      "wrapFrame",
+      "unwrapFrame",
+    ]),
+  }
+) {}
+
+// =============================================================================
 // Encoding Errors
 // =============================================================================
 
