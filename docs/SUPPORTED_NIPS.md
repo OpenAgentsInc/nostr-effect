@@ -141,3 +141,5 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 | --- | --- | --- | --- | --- |
 | OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |
 | AP | Agent Personas | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
+| AO | Agent Observability | `~/work/projects/repos/buzz/docs/nips/NIP-AO.md` | `src/client/AgentObservabilityService.ts`, `src/core/NipAO.ts` (ephemeral `kind:24200`, NIP-44 bidirectional, optional NIP-59) | `src/client/AgentObservabilityService.test.ts` |
+| ER | Event Reminders | `~/work/projects/repos/buzz/docs/nips/NIP-ER.md` | `src/client/EventReminderService.ts` (addressable `kind:30300`, NIP-44 encrypt-to-self + NIP-40) | `src/client/EventReminderService.test.ts` |
