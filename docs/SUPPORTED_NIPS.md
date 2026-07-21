@@ -139,7 +139,6 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 
 | NIP | Title | Spec | Code (service/module) | Tests |
 | --- | --- | --- | --- | --- |
-| AB | Device Pairing | `~/work/projects/repos/buzz/crates/buzz-core/src/pairing/NIP-AB.md` | `src/core/NipAB.ts` (ECDH+HKDF+SAS+NIP-44 crypto, QR, `PairingSession` state machine; kind `24134`) | `src/core/NipAB.test.ts` |
 | OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |
 | AA | Agent Authentication | `~/work/projects/repos/buzz/docs/nips/NIP-AA.md` | `src/client/AgentAuthService.ts` (kind 22242 + NIP-OA `auth` tag), `src/core/NipAA.ts` (`verifyAgentAuth`), `src/relay/core/nip/modules/NipAaModule.ts` (opt-in) | `src/client/AgentAuthService.test.ts`, `src/core/NipAA.test.ts` |
 | AP | Agent Personas | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
@@ -153,3 +152,5 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 | DV | DM Visibility | `~/work/projects/repos/buzz/docs/nips/NIP-DV.md` | `src/client/DmVisibilityService.ts` (relay-signed `kind:30622` verifying reader; pure parse/filter helpers), `src/wrappers/kinds.ts` (`DmVisibilitySnapshot`) | `src/client/DmVisibilityService.test.ts` |
 | IA | Identity Archival | `~/work/projects/repos/buzz/docs/nips/NIP-IA.md` | `src/client/NipIAService.ts` (kinds 9035/9036/8002/8003/13535; NIP-70 + NIP-OA), `src/wrappers/nipIA.ts`, `src/wrappers/kinds.ts`, `src/relay/core/nip/modules/NipIAModule.ts` | `src/client/NipIAService.test.ts` |
 | WP | Workspace Profile | `~/work/projects/repos/buzz/docs/nips/NIP-WP.md` | `src/client/WorkspaceProfileService.ts` (`kind:9033` set/clear icon; read via NIP-11), `src/wrappers/kinds.ts` (`SetWorkspaceProfile`) | `src/client/WorkspaceProfileService.test.ts` |
+| AB | Device Pairing | `~/work/projects/repos/buzz/crates/buzz-core/src/pairing/NIP-AB.md` | `src/core/NipAB.ts` (ECDH+HKDF+SAS+NIP-44 crypto, QR, `PairingSession` state machine; kind `24134`) | `src/core/NipAB.test.ts` |
+| PL | Push Leases | `~/work/projects/repos/buzz/docs/nips/NIP-PL.md` | `src/client/PushLeaseService.ts` (**wire format only**: addressable `kind:30350`, public tags `d`/`expiration`/`exec`/`alt`, NIP-44 encrypt-to-executor, restricted filter grammar). Out of scope: push.buzz.xyz APNs gateway, App Attest, buzz-relay dispatch. | `src/client/PushLeaseService.test.ts` |

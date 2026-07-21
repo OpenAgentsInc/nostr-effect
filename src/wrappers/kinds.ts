@@ -378,6 +378,12 @@ export const LiveEvent = 30311
 /** User statuses (NIP-38) */
 export const UserStatuses = 30315
 
+/** Event reminder (NIP-ER, buzz-parity draft) — addressable, NIP-44 self-encrypted */
+export const EventReminder = 30300
+
+/** Push lease (NIP-PL, buzz-parity draft) — addressable, NIP-44 encrypt-to-executor */
+export const PushLease = 30350
+
 /** Classified listing (NIP-99) */
 export const ClassifiedListing = 30402
 
@@ -774,6 +780,8 @@ export const kinds = {
   ApplicationSpecificData,
   LiveEvent,
   UserStatuses,
+  EventReminder,
+  PushLease,
   ClassifiedListing,
   ClassifiedListingDraft,
   DateBasedCalendarEvent,
