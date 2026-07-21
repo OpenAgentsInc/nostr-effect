@@ -129,3 +129,9 @@ Lettered NIPs (Definitive)
 | DS | Datasets | `~/work/openagents/docs/nips/DS.md` | `src/core/Nip90.ts` + OpenAgentsDrafts | `src/parity-100.test.ts` |
 | EE | MLS E2EE Messaging | `~/code/nips/EE.md` | `src/client/NipEEService.ts` | `src/client/NipEEService.test.ts` |
 | SB | Remote Sandbox Protocol | `docs/mechacoder/NIP-SB.md` (OpenAgents) | `src/core/NipSB.ts`, `src/client/SandboxService.ts` | `src/client/SandboxService.test.ts` |
+
+### buzz-parity draft NIPs (non-upstream)
+
+| Spec | Title | Spec path | Code | Tests |
+| --- | --- | --- | --- | --- |
+| ER | Event Reminders (`kind:30300`, NIP-44 encrypt-to-self, NIP-40 expiry, NIP-09 delete) | buzz `docs/nips/NIP-ER.md` | `src/client/EventReminderService.ts` | `src/client/EventReminderService.test.ts` |
