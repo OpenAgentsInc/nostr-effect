@@ -521,6 +521,16 @@ export const SandboxState = 31750
 export const SandboxHeartbeat = 27570
 
 // =============================================================================
+// Agent Personas (NIP-AP)
+// =============================================================================
+
+/** Agent persona blueprint (NIP-AP) - addressable, plaintext */
+export const AgentPersona = 30175
+
+/** Agent instance state (NIP-AP) - addressable per-instance, plaintext */
+export const AgentInstanceState = 30177
+
+// =============================================================================
 // Zap Events (NIP-57)
 // =============================================================================
 
@@ -808,6 +818,9 @@ export const kinds = {
   SandboxPortForwardResult,
   SandboxState,
   SandboxHeartbeat,
+  // Agent Personas (NIP-AP)
+  AgentPersona,
+  AgentInstanceState,
   // Helpers
   isReplaceable,
   isEphemeral,
