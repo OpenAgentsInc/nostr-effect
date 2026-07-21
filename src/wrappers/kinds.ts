@@ -538,6 +538,13 @@ export const AgentPersona = 30175
 export const AgentInstanceState = 30177
 
 // =============================================================================
+// Agent Turn Metrics (NIP-AM)
+// =============================================================================
+
+/** Agent turn metrics (NIP-AM) - regular append-only, NIP-44 encrypt-to-owner */
+export const AgentTurnMetrics = 44200
+
+// =============================================================================
 // Zap Events (NIP-57)
 // =============================================================================
 
@@ -830,6 +837,8 @@ export const kinds = {
   // Agent Personas (NIP-AP)
   AgentPersona,
   AgentInstanceState,
+  // Agent Turn Metrics (NIP-AM)
+  AgentTurnMetrics,
   // Helpers
   isReplaceable,
   isEphemeral,

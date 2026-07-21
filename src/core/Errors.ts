@@ -79,6 +79,18 @@ export class ObservabilityError extends Schema.TaggedErrorClass<ObservabilityErr
 ) {}
 
 // =============================================================================
+// Agent Metrics Errors (NIP-AM)
+// =============================================================================
+
+export class AgentMetricsError extends Schema.TaggedErrorClass<AgentMetricsError>()(
+  "AgentMetricsError",
+  {
+    message: Schema.String,
+    operation: Schema.Literals(["buildTurnMetric", "readTurnMetric"]),
+  }
+) {}
+
+// =============================================================================
 // Encoding Errors
 // =============================================================================
 

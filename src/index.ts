@@ -72,3 +72,4 @@ export * from "./client/index.js"
 
 // Note: Do not export the relay server from the root to keep
 // the bare import environment-agnostic. Use subpath 'nostr-effect/relay-server'.
+export * as NipAM from "./core/NipAM.js"
