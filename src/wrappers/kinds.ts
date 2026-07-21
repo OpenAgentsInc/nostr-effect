@@ -115,6 +115,9 @@ export const JobFeedback = 7000
 /** Zap goal (NIP-75) */
 export const ZapGoal = 9041
 
+/** Set Workspace Profile command (NIP-WP) — admin/owner signed */
+export const SetWorkspaceProfile = 9033
+
 /** Highlights (NIP-84) */
 export const Highlights = 9802
 
