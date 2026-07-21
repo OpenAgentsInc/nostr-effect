@@ -31,6 +31,19 @@ export {
   type Nip42Config,
   type AuthVerificationResult,
 } from "./Nip42Module.js"
+export {
+  createNipAaModule,
+  NipAaModule,
+  NIP_AA_EXTENSION,
+  verifyAgentAuth,
+  verifyAgentAuthSync,
+  DEFAULT_MAX_AUTH_AGE_SECONDS,
+  type AgentAuthResult,
+  type AgentAuthMemberGrant,
+  type AgentAuthVirtualGrant,
+  type AgentAuthReject,
+  type VerifyAgentAuthParams,
+} from "./NipAaModule.js"
 
 // =============================================================================
 // Default Module Set

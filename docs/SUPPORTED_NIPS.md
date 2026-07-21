@@ -140,6 +140,7 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 | NIP | Title | Spec | Code (service/module) | Tests |
 | --- | --- | --- | --- | --- |
 | OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |
+| AA | Agent Authentication | `~/work/projects/repos/buzz/docs/nips/NIP-AA.md` | `src/client/AgentAuthService.ts` (kind 22242 + NIP-OA `auth` tag), `src/core/NipAA.ts` (`verifyAgentAuth`), `src/relay/core/nip/modules/NipAaModule.ts` (opt-in) | `src/client/AgentAuthService.test.ts`, `src/core/NipAA.test.ts` |
 | AP | Agent Personas | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
 | AE | Agent Engrams | `~/work/projects/repos/buzz/docs/nips/NIP-AE.md` | `src/client/EngramService.ts` (addressable `kind:30174`, NIP-44 agent↔owner, HMAC-blinded `d`), `src/wrappers/kinds.ts` (`AgentEngram`) | `src/client/EngramService.test.ts` |
 | AO | Agent Observability | `~/work/projects/repos/buzz/docs/nips/NIP-AO.md` | `src/client/AgentObservabilityService.ts`, `src/core/NipAO.ts` (ephemeral `kind:24200`, NIP-44 bidirectional, optional NIP-59) | `src/client/AgentObservabilityService.test.ts` |
