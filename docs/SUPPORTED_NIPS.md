@@ -130,9 +130,13 @@ Lettered NIPs (Definitive)
 | EE | MLS E2EE Messaging | `~/code/nips/EE.md` | `src/client/NipEEService.ts` | `src/client/NipEEService.test.ts` |
 | SB | Remote Sandbox Protocol | `docs/mechacoder/NIP-SB.md` (OpenAgents) | `src/core/NipSB.ts`, `src/client/SandboxService.ts` | `src/client/SandboxService.test.ts` |
 
-### buzz-parity draft NIPs (non-upstream)
+### Buzz-parity custom NIPs (agent NIP family)
 
-| Spec | Title | Spec path | Code | Tests |
+Custom (non-upstream) NIPs implemented for buzz parity. These advertise via NIP-11
+`supported_extensions: ["nip-xx"]`, never `supported_nips`. See the gap analysis at
+`docs/2026-07-21-buzz-nip-gap-analysis.md`. NIP-OA is the shared cryptographic root
+reused by NIP-AA, NIP-GS, and NIP-IA.
+
+| NIP | Title | Spec | Code (service/module) | Tests |
 | --- | --- | --- | --- | --- |
-| ER | Event Reminders (`kind:30300`, NIP-44 encrypt-to-self, NIP-40 expiry, NIP-09 delete) | buzz `docs/nips/NIP-ER.md` | `src/client/EventReminderService.ts` | `src/client/EventReminderService.test.ts` |
-| AO | Agent Observability (ephemeral `kind:24200`, NIP-44 bidirectional + opt NIP-59) | `~/work/projects/repos/buzz/docs/nips/NIP-AO.md` | `src/core/NipAO.ts`, `src/client/AgentObservabilityService.ts` (ephemeral via `src/relay/core/nip/modules/Nip16Module.ts`) | `src/client/AgentObservabilityService.test.ts` |
+| OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |

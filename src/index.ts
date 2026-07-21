@@ -64,6 +64,7 @@ export {
 // Services
 export * from "./services/CryptoService.js"
 export * from "./services/EventService.js"
+export * from "./services/OwnerAttestationService.js"
 
 // Client
 export * from "./client/index.js"
