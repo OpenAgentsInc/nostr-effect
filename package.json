@@ -154,3 +154,4 @@
     "pako": "2.1.0"
   }
 }
+    "./nipAB": "./src/core/NipAB.ts",

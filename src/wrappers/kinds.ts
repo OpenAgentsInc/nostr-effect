@@ -234,6 +234,9 @@ export const NWCWalletResponse = 23195
 /** Nostr Connect (NIP-46) */
 export const NostrConnect = 24133
 
+/** Device pairing message (NIP-AB) — ephemeral kind 24134 */
+export const DevicePairing = 24134
+
 // =============================================================================
 // Lettered NIPs
 // =============================================================================

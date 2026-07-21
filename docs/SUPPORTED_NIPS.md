@@ -139,6 +139,7 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 
 | NIP | Title | Spec | Code (service/module) | Tests |
 | --- | --- | --- | --- | --- |
+| AB | Device Pairing | `~/work/projects/repos/buzz/crates/buzz-core/src/pairing/NIP-AB.md` | `src/core/NipAB.ts` (ECDH+HKDF+SAS+NIP-44 crypto, QR, `PairingSession` state machine; kind `24134`) | `src/core/NipAB.test.ts` |
 | OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |
 | AA | Agent Authentication | `~/work/projects/repos/buzz/docs/nips/NIP-AA.md` | `src/client/AgentAuthService.ts` (kind 22242 + NIP-OA `auth` tag), `src/core/NipAA.ts` (`verifyAgentAuth`), `src/relay/core/nip/modules/NipAaModule.ts` (opt-in) | `src/client/AgentAuthService.test.ts`, `src/core/NipAA.test.ts` |
 | AP | Agent Personas | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
