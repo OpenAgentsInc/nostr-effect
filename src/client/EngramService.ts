@@ -539,7 +539,7 @@ export const selectHead = <T extends { readonly created_at: number; readonly id:
 /**
  * Spec formula: `created_at := max(now, T + 1)` where T is head `created_at` or 0.
  */
-export const monotonicCreatedAt = (now: number, headCreatedAt: number = 0): number =>
+export const engramMonotonicCreatedAt = (now: number, headCreatedAt: number = 0): number =>
   Math.max(now, headCreatedAt + 1)
 
 /** True when a prior head appears clock-poisoned relative to wall-clock. */
@@ -766,7 +766,7 @@ const make = Effect.gen(function* () {
           `clock-poisoned head: created_at=${prior} is more than ${CLOCK_POISON_THRESHOLD_SECONDS}s ahead of now=${now}`
         )
       }
-      return monotonicCreatedAt(now, prior)
+      return engramMonotonicCreatedAt(now, prior)
     })
 
   const buildAndPublish = (

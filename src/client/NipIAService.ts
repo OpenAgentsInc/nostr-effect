@@ -223,7 +223,7 @@ export interface NipIaEventTemplate {
 // =============================================================================
 
 /** True when `value` is a 64-character lowercase hex pubkey/id. */
-export const isHex64 = (value: string): boolean => HEX64.test(value)
+const isHex64 = (value: string): boolean => HEX64.test(value)
 
 /** True when the event carries exactly one NIP-70 `-` tag. */
 export const hasNip70Tag = (

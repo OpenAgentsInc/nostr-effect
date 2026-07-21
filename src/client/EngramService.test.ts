@@ -25,7 +25,7 @@ import {
   getEngramD,
   getOwnerP,
   selectHead,
-  monotonicCreatedAt,
+  engramMonotonicCreatedAt,
   extractWikiLinks,
   engramAddress,
   type MemoryBody,
@@ -195,11 +195,11 @@ describe("NIP-AE helpers", () => {
     expect(selectHead([])).toBeNull()
   })
 
-  test("monotonicCreatedAt enforces T+1", () => {
-    expect(monotonicCreatedAt(100, 0)).toBe(100)
-    expect(monotonicCreatedAt(100, 50)).toBe(100)
-    expect(monotonicCreatedAt(100, 100)).toBe(101)
-    expect(monotonicCreatedAt(100, 200)).toBe(201)
+  test("engramMonotonicCreatedAt enforces T+1", () => {
+    expect(engramMonotonicCreatedAt(100, 0)).toBe(100)
+    expect(engramMonotonicCreatedAt(100, 50)).toBe(100)
+    expect(engramMonotonicCreatedAt(100, 100)).toBe(101)
+    expect(engramMonotonicCreatedAt(100, 200)).toBe(201)
   })
 
   test("isClockPoisoned flags heads far ahead of wall-clock", () => {
