@@ -863,3 +863,9 @@ export const ChannelWindowBounds = 39006
   // Channel Window (NIP-CW)
   ChannelThreadSummary,
   ChannelWindowBounds,
+// DM Visibility (NIP-DV)
+ * DM visibility snapshot (NIP-DV) — relay-signed, parameterized-replaceable.
+ * Keyed by `d` = viewer pubkey; lists currently-hidden DM channel ids via `h` tags.
+export const DmVisibilitySnapshot = 30622
+  // DM Visibility (NIP-DV)
+  DmVisibilitySnapshot,
