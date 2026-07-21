@@ -47,6 +47,8 @@ export * as Nip99 from "./core/Nip99.js"
 export * as NipSB from "./core/NipSB.js"
 export * as NipAO from "./core/NipAO.js"
 export * as NipAA from "./core/NipAA.js"
+export * as NipAM from "./core/NipAM.js"
+export * as NipAB from "./core/NipAB.js"
 
 // Identity façade (OpenAgents #9092 Phase B)
 export {
@@ -73,5 +75,3 @@ export * from "./client/index.js"
 
 // Note: Do not export the relay server from the root to keep
 // the bare import environment-agnostic. Use subpath 'nostr-effect/relay-server'.
-export * as NipAM from "./core/NipAM.js"
-export * as NipAB from "./core/NipAB.js"

@@ -115,9 +115,6 @@ export const JobFeedback = 7000
 /** Zap goal (NIP-75) */
 export const ZapGoal = 9041
 
-/** Set Workspace Profile command (NIP-WP) — admin/owner signed */
-export const SetWorkspaceProfile = 9033
-
 /** Highlights (NIP-84) */
 export const Highlights = 9802
 
@@ -233,9 +230,6 @@ export const NWCWalletResponse = 23195
 
 /** Nostr Connect (NIP-46) */
 export const NostrConnect = 24133
-
-/** Device pairing message (NIP-AB) — ephemeral kind 24134 */
-export const DevicePairing = 24134
 
 // =============================================================================
 // Lettered NIPs
@@ -377,12 +371,6 @@ export const LiveEvent = 30311
 
 /** User statuses (NIP-38) */
 export const UserStatuses = 30315
-
-/** Event reminder (NIP-ER, buzz-parity draft) — addressable, NIP-44 self-encrypted */
-export const EventReminder = 30300
-
-/** Push lease (NIP-PL, buzz-parity draft) — addressable, NIP-44 encrypt-to-executor */
-export const PushLease = 30350
 
 /** Classified listing (NIP-99) */
 export const ClassifiedListing = 30402
@@ -533,13 +521,6 @@ export const SandboxState = 31750
 export const SandboxHeartbeat = 27570
 
 // =============================================================================
-// Agent Engrams (NIP-AE)
-// =============================================================================
-
-/** Agent engram / memory record (NIP-AE) - addressable, NIP-44 agent↔owner */
-export const AgentEngram = 30174
-
-// =============================================================================
 // Agent Personas (NIP-AP)
 // =============================================================================
 
@@ -549,12 +530,89 @@ export const AgentPersona = 30175
 /** Agent instance state (NIP-AP) - addressable per-instance, plaintext */
 export const AgentInstanceState = 30177
 
+
+// =============================================================================
+// Agent Engrams (NIP-AE)
+// =============================================================================
+
+/** Agent engram memory record (NIP-AE) - addressable, NIP-44 agent↔owner */
+export const AgentEngram = 30174
+
 // =============================================================================
 // Agent Turn Metrics (NIP-AM)
 // =============================================================================
 
 /** Agent turn metrics (NIP-AM) - regular append-only, NIP-44 encrypt-to-owner */
 export const AgentTurnMetrics = 44200
+
+// =============================================================================
+// Event Reminders (NIP-ER)
+// =============================================================================
+
+/** Encrypted event reminder (NIP-ER) - addressable, NIP-44 encrypt-to-self */
+export const EventReminder = 30300
+
+// =============================================================================
+// Workspace Profile (NIP-WP)
+// =============================================================================
+
+/** Set workspace profile icon (NIP-WP) - admin/owner command */
+export const SetWorkspaceProfile = 9033
+
+// =============================================================================
+// Channel Window (NIP-CW)
+// =============================================================================
+
+/**
+ * Channel thread summary overlay (NIP-CW) — relay-signed.
+ * Note: NIP-29 also uses 39005 for pinned-events; CW overlays are distinguished
+ * by tag cardinality / JSON content and relay identity.
+ */
+export const ChannelThreadSummary = 39005
+
+/** Channel window bounds overlay (NIP-CW) — relay-signed */
+export const ChannelWindowBounds = 39006
+
+// =============================================================================
+// DM Visibility (NIP-DV)
+// =============================================================================
+
+/** DM visibility snapshot (NIP-DV) — relay-signed, parameterized-replaceable */
+export const DmVisibilitySnapshot = 30622
+
+// =============================================================================
+// Identity Archival (NIP-IA)
+// =============================================================================
+
+/** Archived identity delta (NIP-IA) — relay-signed */
+export const ArchivedIdentity = 8002
+
+/** Unarchived identity delta (NIP-IA) — relay-signed */
+export const UnarchivedIdentity = 8003
+
+/** Archive request (NIP-IA) — user/agent-signed */
+export const ArchiveRequest = 9035
+
+/** Unarchive request (NIP-IA) — user/agent-signed */
+export const UnarchiveRequest = 9036
+
+/** Archived identities list snapshot (NIP-IA) — relay-signed, replaceable */
+export const ArchivedIdentitiesList = 13535
+
+// =============================================================================
+// Device Pairing (NIP-AB)
+// =============================================================================
+
+/** Device pairing message (NIP-AB) — ephemeral sidecar kind */
+export const DevicePairing = 24134
+
+// =============================================================================
+// Push Leases (NIP-PL) — wire format only
+// =============================================================================
+
+/** Push lease (NIP-PL) — addressable, NIP-44 encrypt-to-executor */
+export const PushLease = 30350
+
 
 // =============================================================================
 // Zap Events (NIP-57)
@@ -780,8 +838,6 @@ export const kinds = {
   ApplicationSpecificData,
   LiveEvent,
   UserStatuses,
-  EventReminder,
-  PushLease,
   ClassifiedListing,
   ClassifiedListingDraft,
   DateBasedCalendarEvent,
@@ -846,13 +902,32 @@ export const kinds = {
   SandboxPortForwardResult,
   SandboxState,
   SandboxHeartbeat,
-  // Agent Engrams (NIP-AE)
-  AgentEngram,
   // Agent Personas (NIP-AP)
   AgentPersona,
   AgentInstanceState,
+  // Agent Engrams (NIP-AE)
+  AgentEngram,
   // Agent Turn Metrics (NIP-AM)
   AgentTurnMetrics,
+  // Event Reminders (NIP-ER)
+  EventReminder,
+  // Workspace Profile (NIP-WP)
+  SetWorkspaceProfile,
+  // Channel Window (NIP-CW)
+  ChannelThreadSummary,
+  ChannelWindowBounds,
+  // DM Visibility (NIP-DV)
+  DmVisibilitySnapshot,
+  // Identity Archival (NIP-IA)
+  ArchivedIdentity,
+  UnarchivedIdentity,
+  ArchiveRequest,
+  UnarchiveRequest,
+  ArchivedIdentitiesList,
+  // Device Pairing (NIP-AB)
+  DevicePairing,
+  // Push Leases (NIP-PL)
+  PushLease,
   // Helpers
   isReplaceable,
   isEphemeral,
@@ -862,38 +937,3 @@ export const kinds = {
 }
 
 export default kinds
-// Channel Window overlays (NIP-CW)
- * Channel thread summary overlay (NIP-CW) — relay-signed, parameterized-replaceable.
- * One per returned top-level row that has replies. `d` = row event id.
- * Note: upstream NIP-29 also uses 39005 for group pinned-events lists; NIP-CW
- * overlays are distinguished by tag cardinality / JSON content and relay identity.
-export const ChannelThreadSummary = 39005
- * Channel window bounds overlay (NIP-CW) — relay-signed, parameterized-replaceable.
- * Exactly one per served window response. Carries `has_more` and `next_cursor`.
-export const ChannelWindowBounds = 39006
-  // Channel Window (NIP-CW)
-  ChannelThreadSummary,
-  ChannelWindowBounds,
-// DM Visibility (NIP-DV)
- * DM visibility snapshot (NIP-DV) — relay-signed, parameterized-replaceable.
- * Keyed by `d` = viewer pubkey; lists currently-hidden DM channel ids via `h` tags.
-export const DmVisibilitySnapshot = 30622
-  // DM Visibility (NIP-DV)
-  DmVisibilitySnapshot,
-// Identity Archival (NIP-IA)
-/** Archived identity delta (NIP-IA) — relay-signed */
-export const ArchivedIdentity = 8002
-/** Unarchived identity delta (NIP-IA) — relay-signed */
-export const UnarchivedIdentity = 8003
-/** Archive request (NIP-IA) — user/agent-signed */
-export const ArchiveRequest = 9035
-/** Unarchive request (NIP-IA) — user/agent-signed */
-export const UnarchiveRequest = 9036
-/** Archived identities list snapshot (NIP-IA) — relay-signed, replaceable */
-export const ArchivedIdentitiesList = 13535
-  // Identity Archival (NIP-IA)
-  ArchivedIdentity,
-  UnarchivedIdentity,
-  ArchiveRequest,
-  UnarchiveRequest,
-  ArchivedIdentitiesList,

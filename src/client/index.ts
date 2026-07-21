@@ -41,51 +41,6 @@ export * from "./Nip38Service.js"
 export * from "./Nip77Service.js"
 export * from "./NipA0Service.js"
 export * from "./NipAPService.js"
-export {
-  NipIAService,
-  NipIAServiceLive,
-  NipIaError,
-  ARCHIVE_REQUEST_KIND,
-  UNARCHIVE_REQUEST_KIND,
-  ARCHIVED_IDENTITY_KIND,
-  UNARCHIVED_IDENTITY_KIND,
-  ARCHIVED_IDENTITIES_LIST_KIND,
-  NIP70_TAG,
-  CONSENT_PATHS,
-  REASON_CODES,
-  isHex64,
-  hasNip70Tag,
-  extractSinglePTag,
-  extractArchivePTags,
-  parseConsentTag,
-  extractReason,
-  extractReplacedBy,
-  extractRequestEventId,
-  normalizeAuthTagArray,
-  buildRequestTags,
-  buildArchiveRequestTemplate,
-  buildUnarchiveRequestTemplate,
-  buildArchivedDeltaTemplate,
-  buildUnarchivedDeltaTemplate,
-  buildArchiveSnapshotTemplate,
-  parseArchiveRequest,
-  parseArchiveDelta,
-  parseArchiveSnapshot,
-  verifyRelayProjection,
-  verifyRequestBorneOwnerAuth,
-  inferConsentPath,
-  type ConsentPath,
-  type ReasonCode,
-  type ConsentTag,
-  type RequestOptions,
-  type DeltaOptions,
-  type SnapshotOptions,
-  type ParsedArchiveRequest,
-  type ParsedArchiveDelta,
-  type ParsedArchiveSnapshot,
-  type NipIaEventTemplate,
-  type NipIAService as NipIAServiceInterface,
-} from "./NipIAService.js"
 export * from "./NipC0Service.js"
 export * from "./NipC7Service.js"
 export * from "./NipEEService.js"
@@ -100,3 +55,4 @@ export * from "./WorkspaceProfileService.js"
 export * from "./ChannelWindowService.js"
 export * from "./DmVisibilityService.js"
 export * from "./PushLeaseService.js"
+export * from "./NipIAService.js"

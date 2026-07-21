@@ -50,14 +50,12 @@
     "./nip25": "./src/wrappers/nip25.ts",
     "./nip26": "./src/wrappers/nip26.ts",
     "./nip43": "./src/wrappers/nip43.ts",
-    "./nipIA": "./src/wrappers/nipIA.ts",
     "./nip72": "./src/wrappers/nip72.ts",
     "./nip84": "./src/wrappers/nip84.ts",
     "./nip85": "./src/wrappers/nip85.ts",
     "./nip90": "./src/core/Nip90.ts",
     "./nipA4": "./src/wrappers/nipA4.ts",
     "./nipAO": "./src/core/NipAO.ts",
-    "./nipAM": "./src/core/NipAM.ts",
     "./nip5a": "./src/wrappers/nip5a.ts",
     "./nipF4": "./src/wrappers/nipF4.ts",
     "./nipCC": "./src/wrappers/nipCC.ts",
@@ -100,7 +98,10 @@
     "./fakejson": "./src/wrappers/fakejson.ts",
     "./client": "./src/client/index.ts",
     "./services": "./src/services/index.ts",
-    "./core": "./src/core/index.ts"
+    "./core": "./src/core/index.ts",
+    "./nipAM": "./src/core/NipAM.ts",
+    "./nipAB": "./src/core/NipAB.ts",
+    "./nipIA": "./src/wrappers/nipIA.ts"
   },
   "scripts": {
     "prepare": "node scripts/prepare.mjs",
@@ -154,4 +155,3 @@
     "pako": "2.1.0"
   }
 }
-    "./nipAB": "./src/core/NipAB.ts",
