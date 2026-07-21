@@ -521,6 +521,13 @@ export const SandboxState = 31750
 export const SandboxHeartbeat = 27570
 
 // =============================================================================
+// Agent Engrams (NIP-AE)
+// =============================================================================
+
+/** Agent engram / memory record (NIP-AE) - addressable, NIP-44 agent↔owner */
+export const AgentEngram = 30174
+
+// =============================================================================
 // Agent Personas (NIP-AP)
 // =============================================================================
 
@@ -818,6 +825,8 @@ export const kinds = {
   SandboxPortForwardResult,
   SandboxState,
   SandboxHeartbeat,
+  // Agent Engrams (NIP-AE)
+  AgentEngram,
   // Agent Personas (NIP-AP)
   AgentPersona,
   AgentInstanceState,
