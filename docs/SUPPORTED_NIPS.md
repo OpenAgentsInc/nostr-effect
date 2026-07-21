@@ -140,3 +140,4 @@ reused by NIP-AA, NIP-GS, and NIP-IA.
 | NIP | Title | Spec | Code (service/module) | Tests |
 | --- | --- | --- | --- | --- |
 | OA | Owner Attestation | `~/work/projects/repos/buzz/docs/nips/NIP-OA.md` | `src/services/OwnerAttestationService.ts` | `src/services/OwnerAttestationService.test.ts` |
+| AP | Agent Personas | `~/work/projects/repos/buzz/docs/nips/NIP-AP.md` | `src/client/NipAPService.ts` (plaintext addressable `kind:30175` + `30177`), `src/wrappers/kinds.ts` (`AgentPersona`, `AgentInstanceState`) | `src/client/NipAPService.test.ts` |
