@@ -851,3 +851,15 @@ export const kinds = {
 }
 
 export default kinds
+// Channel Window overlays (NIP-CW)
+ * Channel thread summary overlay (NIP-CW) — relay-signed, parameterized-replaceable.
+ * One per returned top-level row that has replies. `d` = row event id.
+ * Note: upstream NIP-29 also uses 39005 for group pinned-events lists; NIP-CW
+ * overlays are distinguished by tag cardinality / JSON content and relay identity.
+export const ChannelThreadSummary = 39005
+ * Channel window bounds overlay (NIP-CW) — relay-signed, parameterized-replaceable.
+ * Exactly one per served window response. Carries `has_more` and `next_cursor`.
+export const ChannelWindowBounds = 39006
+  // Channel Window (NIP-CW)
+  ChannelThreadSummary,
+  ChannelWindowBounds,
