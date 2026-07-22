@@ -288,12 +288,13 @@ describe("Built-in Modules", () => {
   })
 
   describe("DefaultModules", () => {
-    it("should include NIP-01, NIP-11, and NIP-16", () => {
+    it("should include core and git forge NIPs", () => {
       const nips = getAllNips(DefaultModules)
       expect(nips).toContain(1)
       expect(nips).toContain(11)
       expect(nips).toContain(16)
       expect(nips).toContain(33)
+      expect(nips).toContain(34)
     })
   })
 })
@@ -312,7 +313,7 @@ describe("NipRegistry", () => {
 
     expect(registry.modules.length).toBeGreaterThanOrEqual(3)
     // Must include core NIPs
-    expect(registry.supportedNips).toEqual(expect.arrayContaining([1, 11, 16, 33]))
+    expect(registry.supportedNips).toEqual(expect.arrayContaining([1, 11, 16, 33, 34]))
   })
 
   it("should check if module exists", () => {
@@ -345,7 +346,7 @@ describe("NipRegistry", () => {
     )
 
     const info = registry.getRelayInfo()
-    expect(info.supported_nips).toEqual(expect.arrayContaining([1, 11, 16, 33]))
+    expect(info.supported_nips).toEqual(expect.arrayContaining([1, 11, 16, 33, 34]))
     expect(info.name).toBe("nostr-effect relay")
   })
 

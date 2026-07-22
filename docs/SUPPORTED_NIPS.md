@@ -42,7 +42,7 @@ Keep this file up to date whenever adding or removing support.
 | 31 | Unknown kinds (alt tag) | `~/code/nips/31.md` | `src/wrappers/nip31.ts` | `src/wrappers/nip31.test.ts` |
 | 32 | Labeling | `~/code/nips/32.md` | `src/client/Nip32Service.ts` | `src/client/Nip32Service.test.ts` |
 | 33 | Parameterized replaceable events | `~/code/nips/33.md` | `src/relay/core/nip/modules/Nip16Module.ts` | `src/relay/core/nip/NipRegistry.test.ts` |
-| 34 | Git collaboration | `~/code/nips/34.md` | `src/core/Nip34.ts` | `src/core/Nip34.test.ts` |
+| 34 | Git collaboration | `~/code/nips/34.md` | `src/core/Nip34.ts`, `src/relay/core/nip/modules/Nip34Module.ts` | `src/core/Nip34.test.ts`, `src/relay/core/nip/modules/Nip34Module.test.ts` |
 | 35 | Torrents | `~/code/nips/35.md` | `src/wrappers/nip35.ts` | `src/wrappers/nip35.test.ts` |
 | 36 | Sensitive content (content-warning) | `~/code/nips/36.md` | `src/wrappers/nip36.ts` | `src/wrappers/nip36.test.ts` |
 | 37 | Draft wraps | `~/code/nips/37.md` | `src/wrappers/nip37.ts` | `src/wrappers/nip37.test.ts` |
