@@ -10,6 +10,7 @@ import {
   PULL_REQUEST_KIND,
   PULL_REQUEST_UPDATE_KIND,
   ISSUE_KIND,
+  REPLY_KIND,
   STATUS_OPEN_KIND,
   STATUS_APPLIED_KIND,
   STATUS_CLOSED_KIND,
@@ -83,6 +84,7 @@ describe("NIP-34: Git Collaboration", () => {
       expect(PULL_REQUEST_KIND as number).toBe(1618)
       expect(PULL_REQUEST_UPDATE_KIND as number).toBe(1619)
       expect(ISSUE_KIND as number).toBe(1621)
+      expect(REPLY_KIND as number).toBe(1111)
       expect(STATUS_OPEN_KIND as number).toBe(1630)
       expect(STATUS_APPLIED_KIND as number).toBe(1631)
       expect(STATUS_CLOSED_KIND as number).toBe(1632)
@@ -511,6 +513,7 @@ describe("NIP-34: Git Collaboration", () => {
       expect(isGitEvent(createMockEvent(PULL_REQUEST_KIND, "", []))).toBe(true)
       expect(isGitEvent(createMockEvent(PULL_REQUEST_UPDATE_KIND, "", []))).toBe(true)
       expect(isGitEvent(createMockEvent(ISSUE_KIND, "", []))).toBe(true)
+      expect(isGitEvent(createMockEvent(REPLY_KIND, "", []))).toBe(true)
       expect(isGitEvent(createMockEvent(STATUS_OPEN_KIND, "", []))).toBe(true)
       expect(isGitEvent(createMockEvent(STATUS_APPLIED_KIND, "", []))).toBe(true)
       expect(isGitEvent(createMockEvent(STATUS_CLOSED_KIND, "", []))).toBe(true)

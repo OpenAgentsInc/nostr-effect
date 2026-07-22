@@ -664,7 +664,7 @@ export const GitPatch = 1617
 export const GitIssue = 1621
 
 /** Git reply (NIP-34) */
-export const GitReply = 1622
+export const GitReply = 1111
 
 /** Git status open */
 export const GitStatusOpen = 1630

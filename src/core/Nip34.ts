@@ -29,6 +29,9 @@ export const PULL_REQUEST_UPDATE_KIND = 1619 as EventKind
 /** Kind 1621: Issue */
 export const ISSUE_KIND = 1621 as EventKind
 
+/** Kind 1111: Reply (NIP-22 comment) */
+export const REPLY_KIND = 1111 as EventKind
+
 /** Kind 1630: Status - Open */
 export const STATUS_OPEN_KIND = 1630 as EventKind
 
@@ -899,6 +902,7 @@ export function isGitEvent(event: NostrEvent): boolean {
     event.kind === PULL_REQUEST_KIND ||
     event.kind === PULL_REQUEST_UPDATE_KIND ||
     event.kind === ISSUE_KIND ||
+    event.kind === REPLY_KIND ||
     event.kind === STATUS_OPEN_KIND ||
     event.kind === STATUS_APPLIED_KIND ||
     event.kind === STATUS_CLOSED_KIND ||
