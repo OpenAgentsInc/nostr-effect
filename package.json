@@ -21,10 +21,6 @@
       "types": "./src/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./relay/backends/cloudflare": "./src/relay/backends/cloudflare/index.ts",
-    "./relay/backends/cloudflare/worker": "./src/relay/backends/cloudflare/worker.ts",
-    "./relay/backends/cloudflare/NostrRelayDO": "./src/relay/backends/cloudflare/NostrRelayDO.ts",
-    "./relay/backends/cloudflare/mount": "./src/relay/backends/cloudflare/mount.ts",
     "./pure": "./src/wrappers/pure.ts",
     "./pool": "./src/wrappers/pool.ts",
     "./relay": "./src/relay/index.ts",
@@ -111,9 +107,6 @@
     "verify": "bun run typecheck && bun test",
     "build:check": "rm -rf /tmp/nostr-effect-build-check && bun build src/index.ts --outdir /tmp/nostr-effect-build-check --target node",
     "build": "bun build src/index.ts --outdir dist --target node",
-    "build:cloudflare": "bun build src/relay/backends/cloudflare/worker.ts --outdir dist/cloudflare --target browser --minify --external @cloudflare/workers-types",
-    "deploy:cloudflare": "bun run build:cloudflare && bunx wrangler deploy",
-    "dev:cloudflare": "bunx wrangler dev",
     "release": "bun run verify && git tag v$(bun -e \"console.log(require('./package.json').version)\") && git push && git push --tags",
     "publish:npm": "npm publish --provenance --access public"
   },
@@ -138,11 +131,9 @@
     "access": "public"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20241127.0",
     "@effect/language-service": "0.86.2",
     "@types/bun": "1.1.14",
-    "typescript": "6.0.3",
-    "wrangler": "4.51.0"
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "@noble/ciphers": "1.2.1",

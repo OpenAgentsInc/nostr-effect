@@ -1,30 +1,39 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
+description: Node 24 with pnpm and Vite Plus. Bun and Cloudflare are retired.
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
 alwaysApply: false
 ---
 
 **Note**: This project uses [bd (beads)](https://github.com/steveyegge/beads) for issue tracking. Use `bd` commands instead of markdown TODOs. See AGENTS.md for workflow details.
 
-Default to using Bun instead of Node.js.
+## Runtime: Node, not Bun (owner direction, 2026-07-24)
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- **Always use exact versions** when adding packages: `bun add package@1.2.3` (no `^` or `~` ranges)
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+OpenAgents has removed all dependence on, and usage of, Cloudflare and Bun.
+This repository serves Node only, on the Node and Vite Plus stack the
+`openagents` monorepo uses, deployed to Google Cloud.
 
-## APIs
+**The migration is in progress.** Read
+[`docs/2026-07-24-node-google-cloud-migration.md`](docs/2026-07-24-node-google-cloud-migration.md)
+before you touch the relay, the package scripts, or the test setup. Cloudflare
+is already removed. The Bun toolchain is still present and is Stage 4.
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+Rules for new work:
+
+- Target Node 24. Do not add a `bun:` import or a `Bun.*` API call.
+- Do not add Cloudflare Workers, Durable Objects, D1, or R2 as a runtime, a
+  store, a fallback, or a compatibility lane. They are retired.
+- Use pnpm for dependency work. **Always use exact versions**
+  (`pnpm add package@1.2.3`, no `^` or `~` ranges).
+- Prefer the platform: `node:http` plus `ws` for the server, `node:sqlite` for
+  local SQLite, Cloud SQL Postgres for production storage, `node:fs` for
+  files.
+- Production secrets come from Google Secret Manager at runtime. Never commit
+  a secret and never place one in an event, a tag, or a log.
+
+Until Stage 4 lands, existing `bun test` and `bun run` commands still work and
+are still the verification gate for changes to existing code. Do not convert
+files ad hoc. The conversion is one planned stage, not a per-pull-request
+cleanup.
 
 ## Code Style
 
@@ -32,7 +41,9 @@ Default to using Bun instead of Node.js.
 
 ## Testing
 
-Use `bun test` to run tests.
+The current runner is `bun test`, and it stays the gate until Stage 4 of the
+Node migration replaces it with Vite Plus. Match the surrounding file: a test
+beside `bun:test` tests keeps that import.
 
 ```ts#index.test.ts
 import { test, expect } from "bun:test";
@@ -41,6 +52,9 @@ test("hello world", () => {
   expect(1).toBe(1);
 });
 ```
+
+Do not add a second test runner before Stage 4. Two runners in one repository
+is the failure this plan avoids.
 
 ## Issue Tracking with bd (beads)
 

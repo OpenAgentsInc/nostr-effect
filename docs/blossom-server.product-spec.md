@@ -36,6 +36,15 @@ tool_metadata:
   openagents_related_client: "existing Blossom client (BUD-01/02/03/11/12 partial) in BlossomService"
 ---
 
+> **NEEDS REVISION (2026-07-24).** This specification predates the owner
+> direction that removed all dependence on Cloudflare and Bun. Its Cloudflare
+> R2 and Durable Object backends, and its Bun filesystem backend, are no
+> longer admissible targets. The Cloudflare relay backend was deleted on
+> 2026-07-24. Any future revision must target Node on Google Cloud with Cloud
+> Storage for blobs and Cloud SQL for metadata. See
+> [`2026-07-24-node-google-cloud-migration.md`](2026-07-24-node-google-cloud-migration.md).
+> Nothing here is admitted for implementation in its current form.
+
 ## Problem
 
 nostr-effect ships a production-shaped Nostr **relay** (WebSocket NIP-01, SQLite

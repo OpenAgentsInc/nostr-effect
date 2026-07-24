@@ -895,15 +895,14 @@ Implements the `EventStore` interface for event persistence.
 
 | Backend | Package/API | Status | Notes |
 |---------|-------------|--------|-------|
-| **BunSqlite** | `bun:sqlite` | ✅ Current | WAL mode, native performance |
-| **DoSqlite** | DO `storage.sql` | 🚧 Planned | Durable Object built-in SQLite |
 | **Memory** | `Map<EventId, NostrEvent>` | ✅ Current | Testing only |
-| **NodeSqlite** | `better-sqlite3` | 📋 Future | Node.js support |
-| **PostgreSQL** | `pg` / `Bun.sql` | 📋 Future | Production scale |
+| **BunSqlite** | `bun:sqlite` | ⚠️ Retiring | Removed by the Node migration |
+| **NodeSqlite** | `node:sqlite` | 📋 Planned | Local development and non-production proofs |
+| **PostgreSQL** | Cloud SQL over Node | 📋 Planned | Production target |
 
 All SQL-based backends share the same schema and query patterns. The `EventStore` interface abstracts the underlying database.
 
-**Note:** Cloudflare deployment uses Durable Object SQLite (`ctx.storage.sql`), NOT D1. DO SQLite is colocated with the DO instance for lower latency and provides both storage and state coordination in one primitive.
+**Note:** Cloudflare Workers, Durable Objects, D1, and R2 are retired. They must not return as a storage or runtime option. The production store is Cloud SQL Postgres reached from Node. See [the Node and Google Cloud migration](2026-07-24-node-google-cloud-migration.md).
 
 #### 2. Server Backend
 
@@ -911,9 +910,8 @@ Handles HTTP requests and WebSocket connections.
 
 | Backend | APIs | Status | Notes |
 |---------|------|--------|-------|
-| **BunServer** | `Bun.serve()` | ✅ Current | Native WebSocket, single binary |
-| **CloudflareWorker** | `fetch()` + WebSocket | 🚧 Planned | Edge deployment |
-| **NodeServer** | `http` + `ws` | 📋 Future | Traditional Node.js |
+| **BunServer** | `Bun.serve()` | ⚠️ Retiring | Removed by the Node migration |
+| **NodeServer** | `node:http` + `ws` | 📋 Planned | The only supported host |
 
 #### 3. State Backend
 
@@ -921,20 +919,15 @@ Manages per-connection state (subscriptions, rate limits).
 
 | Backend | Persistence | Status | Notes |
 |---------|-------------|--------|-------|
-| **InMemory** | Process lifetime | ✅ Current | Bun, Node, single CF Worker |
-| **DurableObject** | DO storage | 📋 Future | Full CF relay with broadcast |
-| **Redis** | External | 📋 Future | Distributed Node clusters |
+| **InMemory** | Process lifetime | ✅ Current | Single Node process |
+| **Postgres** | Cloud SQL | 📋 Planned | Multi-replica coordination |
 
-### Cloudflare Workers Strategy
+### Deployment strategy
 
-Cloudflare deployment uses **Durable Objects with built-in SQLite** (`storage.sql`) for both storage and state coordination. This provides:
+The relay runs on Node and deploys to Google Cloud. Cloud SQL Postgres is the
+event store. Secrets live in Google Secret Manager.
 
-- Full relay functionality (subscriptions, broadcast)
-- Colocated compute + storage (low latency)
-- Single-writer consistency
-- WebSocket connection management
-
-See **[CLOUDFLARE.md](CLOUDFLARE.md)** for detailed implementation guide.
+See **[the Node and Google Cloud migration](2026-07-24-node-google-cloud-migration.md)** for the migration plan and its gates.
 
 ### Proposed Directory Structure
 
@@ -954,23 +947,14 @@ src/relay/
 │   └── SqlQueries.ts        # Shared SQL query builders
 │
 ├── backends/
-│   ├── bun/
-│   │   ├── BunSqliteStore.ts   # bun:sqlite EventStore
-│   │   ├── BunServer.ts        # Bun.serve() wrapper
-│   │   └── index.ts
-│   │
-│   ├── cloudflare/
-│   │   ├── DoSqliteStore.ts    # DO storage.sql EventStore
-│   │   ├── NostrRelayDO.ts     # Durable Object class
-│   │   ├── worker.ts           # Worker routing entrypoint
-│   │   └── wrangler.toml       # Deployment config
-│   │
-│   └── node/  (future)
-│       ├── NodeSqliteStore.ts
-│       └── NodeServer.ts
+│   └── node/
+│       ├── NodeSqliteStore.ts  # node:sqlite EventStore (development)
+│       ├── PostgresStore.ts    # Cloud SQL EventStore (production)
+│       ├── NodeServer.ts       # node:http + ws WebSocket host
+│       └── index.ts
 │
-├── index.ts                 # Default exports (Bun)
-└── main.ts                  # Bun CLI entrypoint
+├── index.ts                 # Default exports
+└── main.ts                  # Node CLI entrypoint
 ```
 
 ### Implementation Plan
@@ -982,36 +966,38 @@ src/relay/
 3. Create `relay/backends/bun/` with current Bun implementations
 4. Ensure all imports use the new structure
 
-#### Phase 2: Cloudflare Durable Object Backend
+#### Phase 2: Node backend
 
-1. Implement `DoSqliteStore` using DO `storage.sql` API
-2. Create `NostrRelayDO` Durable Object class
-3. Create `worker.ts` routing entrypoint
-4. Add `wrangler.toml` with `new_sqlite_classes` migration
-5. Test with Wrangler local dev
+1. Move `RelayServer`, `RelayConfig`, `RelayHandle`, and `MemoryEventStore` out
+   of the Bun backend into platform-agnostic core
+2. Implement `NodeServer` on `node:http` plus `ws`
+3. Implement `NodeSqliteStore` on `node:sqlite` for development
+4. Implement `PostgresStore` against Cloud SQL for production
+5. Delete the Bun backend and the Bun test runner
 
-#### Phase 3: Production Hardening
+#### Phase 3: Production hardening
 
 1. Add connection-scoped rate limiting
 2. Implement graceful WebSocket close handling
-3. Add metrics/logging for Cloudflare Analytics
-4. Document deployment process
-5. Consider sharding strategy for high-traffic relays
+3. Add metrics and logging for Google Cloud observability
+4. Document the Cloud Run deployment process
+5. Consider a sharding strategy for high-traffic relays
 
 ### Backend Selection
 
 The backend is selected at build/deploy time, not runtime:
 
 ```typescript
-// Bun entrypoint
+// Development entrypoint
 const RelayLayers = RelayCoreLive.pipe(
-  Layer.provide(BunSqliteStoreLive(dbPath)),
-  Layer.provide(BunServerLive)
+  Layer.provide(NodeSqliteStoreLive(dbPath)),
+  Layer.provide(NodeServerLive)
 )
 
-// Cloudflare entrypoint (see CLOUDFLARE.md)
+// Production entrypoint (Cloud Run + Cloud SQL)
 const RelayLayers = RelayCoreLive.pipe(
-  Layer.provide(DoSqliteStoreLive(state.storage.sql))
+  Layer.provide(PostgresStoreLive(connectionString)),
+  Layer.provide(NodeServerLive)
 )
 ```
 
@@ -1257,75 +1243,43 @@ Prevents pushing code that doesn't compile or pass tests.
 
 See [Backend Abstraction](#backend-abstraction) for the architectural approach to multi-platform support.
 
-### Bun Runtime (Current Default)
+### Node on Google Cloud (target)
 
-**Status:** ✅ Fully supported
+**Status:** 📋 Planned — see
+[the Node and Google Cloud migration](2026-07-24-node-google-cloud-migration.md)
 
-**Backend:** `backends/bun/`
+**Backend:** `backends/node/`
 
 **Requirements:**
-- Bun 1.0+ runtime
-- File system access (for SQLite)
+- Node 24
+- Cloud SQL Postgres for production storage
 - Network access (WebSocket)
 
 **Components:**
 | Component | Implementation |
 |-----------|----------------|
-| Storage | `BunSqliteStore` → `bun:sqlite` |
-| Server | `BunServer` → `Bun.serve()` |
+| Storage (production) | `PostgresStore` → Cloud SQL |
+| Storage (development) | `NodeSqliteStore` → `node:sqlite` |
+| Server | `NodeServer` → `node:http` + `ws` |
 | State | In-memory `SubscriptionManager` |
+| Secrets | Google Secret Manager |
 
-**Deployment:**
-```dockerfile
-FROM oven/bun:latest
-COPY . /app
-WORKDIR /app
-RUN bun install
-CMD ["bun", "run", "src/relay/main.ts"]
-```
+**Deployment:** Cloud Run in project `openagentsgemini`, with Cloud SQL
+attached and secrets mounted from Secret Manager.
 
-**Characteristics:**
-- Single binary, no external dependencies
-- Native SQLite with WAL mode
-- Low memory footprint (~50MB idle)
-- Sub-millisecond WebSocket latency
+### Bun runtime (retiring)
 
-### Cloudflare Workers + Durable Objects (Planned)
+**Status:** ⚠️ Removed by the Node migration
 
-**Status:** 🚧 In development
+The Bun backend and the Bun test runner are the migration's targets. Do not
+add new Bun code. Do not add a new `Bun.*` API call or a `bun:` import.
 
-**Backend:** `backends/cloudflare/`
+### Retired hosts
 
-Uses Durable Objects with built-in SQLite for storage and WebSocket state management. Full relay functionality with broadcast support.
-
-See **[CLOUDFLARE.md](CLOUDFLARE.md)** for complete deployment guide.
-
-### Node.js (Future)
-
-**Status:** 📋 Planned
-
-**Backend:** `backends/node/`
-
-**Components:**
-| Component | Implementation |
-|-----------|----------------|
-| Storage | `NodeSqliteStore` → `better-sqlite3` |
-| Server | `http` + `ws` library |
-| State | In-memory `SubscriptionManager` |
-
-**Use Cases:**
-- Existing Node.js infrastructure
-- Docker/Kubernetes deployments
-- Platforms without Bun support
-
-### Deno (Future)
-
-**Status:** 📋 Planned
-
-**Considerations:**
-- Use Deno's SQLite module or Deno KV
-- Native WebSocket support
-- Different module resolution (URL imports)
+Cloudflare Workers, Durable Objects, D1, and R2 are retired. The Cloudflare
+backend, its worker entrypoint, and `wrangler.toml` were deleted on
+2026-07-24. Do not reintroduce them as a runtime, a store, a fallback, or a
+compatibility lane. Deno is not a supported target.
 
 ### Portable Client Library
 
@@ -1333,11 +1287,8 @@ The client library (`src/client/`) works on all JavaScript runtimes:
 
 | Runtime | WebSocket | Tested |
 |---------|-----------|--------|
-| Bun | Built-in | ✅ |
-| Node.js | `ws` or native (v22+) | 📋 |
-| Deno | Built-in | 📋 |
+| Node 24 | native or `ws` | 📋 |
 | Browser | Built-in | 📋 |
-| Cloudflare Workers | Built-in | 📋 |
 
 **No platform-specific code required** - the client uses standard WebSocket APIs.
 

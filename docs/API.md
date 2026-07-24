@@ -7,7 +7,7 @@ nostr-effect provides a **dual API**:
 1. **Promise API** - nostr-tools-compatible, no Effect knowledge required
 2. **Effect API** - Full Effect-based services for advanced use cases
 
-Both APIs work on **Bun and Cloudflare Workers** (Tier 1 support).
+Both APIs target **Node 24** (Tier 1 support).
 
 ---
 
@@ -25,11 +25,11 @@ Both APIs work on **Bun and Cloudflare Workers** (Tier 1 support).
 
 | Runtime | Support Level | Notes |
 |---------|---------------|-------|
-| Bun | Tier 1 (full) | Primary development target |
-| Cloudflare Workers | Tier 1 (full) | Native WebSocket, Durable Objects |
+| Node 24 | Tier 1 (full) | The supported target |
 | Modern Browsers | Tier 2 (should work) | Standard WebSocket API |
-| Deno | Tier 2 (should work) | Standard WebSocket API |
-| Node.js 18+ | Tier 3 (best effort) | May need `setWebSocket(ws)` |
+| Bun | Retiring | Removed by the Node migration |
+
+Cloudflare Workers and Deno are not supported targets.
 
 ---
 
@@ -279,10 +279,8 @@ yield* pool.publish(event).pipe(
 
 **Decision**: Use standard WebSocket API. No special setup for Tier 1 runtimes.
 
-- Bun: Native WebSocket ✓
-- Cloudflare Workers: Native WebSocket ✓
+- Node 24: Native WebSocket ✓, with a `setWebSocket(ws)` escape hatch
 - Browsers: Native WebSocket ✓
-- Node.js: Provide `setWebSocket(ws)` escape hatch
 
 ```typescript
 // Only needed for Node.js

@@ -113,7 +113,12 @@ export async function uploadFile(
 ): Promise<Nip96UploadResponse> {
   const auth = await buildAuthorizationHeader(apiUrl, "POST", sign)
   const form = new FormData()
-  const blob = file instanceof Blob ? file : new Blob([file])
+  // Copy into a fresh ArrayBuffer-backed view: a Uint8Array over a
+  // SharedArrayBuffer is not a valid BlobPart under the DOM lib.
+  const blob =
+    file instanceof Blob
+      ? file
+      : new Blob([Uint8Array.from(file).buffer as ArrayBuffer])
   // Prefer File if available to set filename explicitly
   form.append("file", blob, filename)
 

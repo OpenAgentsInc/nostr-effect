@@ -2,7 +2,7 @@
  * EventStore Interface
  *
  * Platform-agnostic event storage interface.
- * Implementations provided by backend modules (bun, cloudflare, etc.)
+ * Implementations provided by backend modules under backends/.
  */
 import { Context, Effect } from "effect"
 import { StorageError, DuplicateEvent } from "../../core/Errors.js"

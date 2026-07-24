@@ -2,7 +2,7 @@
  * Relay Core Module
  *
  * Platform-agnostic relay components.
- * These work unchanged across Bun, Cloudflare Workers, Node.js, etc.
+ * These work unchanged across any JavaScript host.
  */
 
 // Message handling
