@@ -28,6 +28,17 @@ export interface RelayConfig {
   readonly relayInfo?: Partial<RelayInfo>
   /** NIP-29 LiveKit AV chat support */
   readonly livekit?: LivekitConfig
+  /**
+   * Host connection discipline (Node host; Bun may ignore).
+   * Defaults are applied by the Node backend when unset.
+   */
+  readonly maxConnections?: number
+  /** WebSocket ping interval in ms (heartbeat) */
+  readonly heartbeatIntervalMs?: number
+  /** Consecutive missed pongs before the host terminates the socket */
+  readonly heartbeatMissLimit?: number
+  /** Close slow consumers when buffered outbound bytes exceed this */
+  readonly slowClientBufferedBytes?: number
 }
 
 export interface ConnectionData {

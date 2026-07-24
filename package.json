@@ -25,6 +25,7 @@
     "./pool": "./src/wrappers/pool.ts",
     "./relay": "./src/relay/index.ts",
     "./relay/bun": "./src/relay/backends/bun/index.ts",
+    "./relay/node": "./src/relay/backends/node/index.ts",
     "./relay-client": "./src/wrappers/relay.ts",
     "./wrappers/relay": "./src/wrappers/relay.ts",
     "./kinds": "./src/wrappers/kinds.ts",
@@ -134,6 +135,7 @@
   "devDependencies": {
     "@effect/language-service": "0.86.2",
     "@types/bun": "1.1.14",
+    "@types/ws": "8.18.1",
     "typescript": "6.0.3"
   },
   "dependencies": {
@@ -144,6 +146,7 @@
     "@scure/bip32": "1.6.2",
     "@scure/bip39": "1.5.4",
     "effect": "4.0.0-beta.94",
-    "pako": "2.1.0"
+    "pako": "2.1.0",
+    "ws": "8.21.1"
   }
 }
