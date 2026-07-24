@@ -49,6 +49,7 @@ export * as NipAO from "./core/NipAO.js"
 export * as NipAA from "./core/NipAA.js"
 export * as NipAM from "./core/NipAM.js"
 export * as NipAB from "./core/NipAB.js"
+export * as Nip29GroupPolicy from "./core/Nip29GroupPolicy.js"
 
 // Identity façade (OpenAgents #9092 Phase B)
 export {

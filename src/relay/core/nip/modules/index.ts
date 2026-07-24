@@ -24,7 +24,13 @@ export { NipA0Module } from "./NipA0Module.js"
 export { NipB0Module } from "./NipB0Module.js"
 export { NipIAModule } from "./NipIAModule.js"
 export { Nip67Module } from "./Nip67Module.js"
-export { Nip29Module } from "./Nip29Module.js"
+export {
+  Nip29Module,
+  createNip29GroupPolicyModule,
+  type Nip29GroupPolicyModuleConfig,
+  type Nip29GroupPolicyController,
+  type Nip29GroupPolicyModuleBundle,
+} from "./Nip29Module.js"
 export { Nip34Module } from "./Nip34Module.js"
 export {
   createNip42Module,
