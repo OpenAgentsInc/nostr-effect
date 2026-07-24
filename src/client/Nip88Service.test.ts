@@ -81,8 +81,9 @@ describe("Nip88Service (NIP-88)", () => {
       // Voter1 responds twice; latest should win
       const r1 = yield* svc.publishResponse({ pollEventId: pollId, selectedOptionIds: ["yay"] }, voter1)
       expect(r1.accepted).toBe(true)
-      // Small delay to ensure created_at difference
-      yield* Effect.sleep(50)
+      // Kind 1018 is replaceable; created_at is second-granularity, so wait
+      // past one second or the newer vote can lose the NIP-16 tie-break.
+      yield* Effect.sleep(1100)
       const r1b = yield* svc.publishResponse({ pollEventId: pollId, selectedOptionIds: ["nay"] }, voter1)
       expect(r1b.accepted).toBe(true)
 
