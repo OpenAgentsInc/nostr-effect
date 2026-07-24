@@ -2,7 +2,7 @@
  * NIP-77 Negentropy minimal handshake tests
  */
 import { describe, test, expect, beforeAll, afterAll } from "bun:test"
-import { startTestRelay, type RelayHandle } from "./index.js"
+import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
 import { encodeIdListMessage } from "./core/negentropy/Codec.js"
 
 describe("NIP-77 Negentropy", () => {

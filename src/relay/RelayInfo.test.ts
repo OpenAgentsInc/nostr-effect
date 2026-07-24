@@ -8,7 +8,7 @@ import {
   mergeRelayInfo,
   type RelayInfo,
 } from "./core/RelayInfo.js"
-import { startTestRelay, startRelay, type RelayHandle } from "./index.js"
+import { startTestRelay, startRelay, type RelayHandle } from "./backends/bun/index.js"
 
 describe("RelayInfo", () => {
   describe("defaultRelayInfo", () => {

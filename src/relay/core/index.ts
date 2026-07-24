@@ -57,6 +57,15 @@ export {
   type RetentionSpec,
 } from "./RelayInfo.js"
 
+// Relay server contract
+export {
+  RelayServer,
+  type RelayConfig,
+  type RelayHandle,
+  type ConnectionData,
+  type LivekitConfig,
+} from "./RelayServer.js"
+
 // Policy module
 export * from "./policy/index.js"
 

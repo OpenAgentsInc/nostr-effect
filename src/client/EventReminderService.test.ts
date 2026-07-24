@@ -16,7 +16,7 @@ import {
   type DecodedReminder,
 } from "./EventReminderService.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { Nip44ServiceLive } from "../services/Nip44Service.js"

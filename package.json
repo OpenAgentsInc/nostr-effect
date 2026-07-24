@@ -24,6 +24,7 @@
     "./pure": "./src/wrappers/pure.ts",
     "./pool": "./src/wrappers/pool.ts",
     "./relay": "./src/relay/index.ts",
+    "./relay/bun": "./src/relay/backends/bun/index.ts",
     "./relay-client": "./src/wrappers/relay.ts",
     "./wrappers/relay": "./src/wrappers/relay.ts",
     "./kinds": "./src/wrappers/kinds.ts",

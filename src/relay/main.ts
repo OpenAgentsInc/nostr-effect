@@ -2,7 +2,7 @@
  * Standalone relay entry point
  * Usage: bun src/relay/main.ts
  */
-import { startRelay } from "./index.js"
+import { startRelay } from "./backends/bun/index.js"
 
 const port = Number(process.env.PORT) || 8080
 const dbPath = process.env.DB_PATH || "./relay.db"

@@ -3,7 +3,7 @@
  */
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer } from "effect"
-import { startTestRelay, type RelayHandle } from "./index.js"
+import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
 import { RelayService, makeRelayService } from "../client/RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"

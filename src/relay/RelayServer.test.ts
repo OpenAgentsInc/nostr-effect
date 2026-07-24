@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer } from "effect"
 import { Schema } from "effect"
-import { startTestRelay, type RelayHandle } from "./index"
+import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService"
 import { EventService, EventServiceLive } from "../services/EventService"
 import { EventKind, Tag, type NostrEvent, type RelayMessage, type PrivateKey } from "../core/Schema"

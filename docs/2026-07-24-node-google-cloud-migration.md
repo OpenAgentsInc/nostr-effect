@@ -2,7 +2,7 @@
 
 - Class: migration plan
 - Date: 2026-07-24
-- Status: Stage 1 done, Stages 2 to 5 planned
+- Status: Stages 1–2 done, Stages 3 to 5 planned
 - Direction: owner, 2026-07-24
 - Consumer plan: `openagents` `docs/omega/2026-07-24-sarah-workroom-mvp-spec.md`
   Part 2
@@ -56,28 +56,20 @@ real fix, because a `Uint8Array` over a `SharedArrayBuffer` is not a valid
 Verification: `npx tsc --noEmit -p tsconfig.check.json` is clean, and
 `bun test` gives 1430 pass and 0 fail across 146 files.
 
-## Stage 2: make the relay core platform-agnostic
+## Stage 2: make the relay core platform-agnostic — DONE (SARAH-NR-01b)
 
-The relay core is not portable today, and the directory layout hides it.
+The relay core is now portable. The Bun host remains a thin adapter.
 
-`RelayServer`, `RelayServerLive`, `RelayConfig`, `RelayHandle`, and
-`ConnectionData` live in `src/relay/backends/bun/BunServer.ts`.
-`MemoryEventStoreLive` lives in `src/relay/backends/bun/BunSqliteStore.ts`.
-`src/relay/index.ts` imports all of them from the Bun backend.
+1. `RelayServer`, `RelayConfig`, `RelayHandle`, `ConnectionData`, and
+   `LivekitConfig` live in `src/relay/core/RelayServer.ts`.
+2. `MemoryEventStoreLive` is a pure Map store in
+   `src/relay/storage/MemoryEventStore.ts` (no `bun:sqlite`).
+3. `src/relay/index.ts` imports no backend.
+4. `Bun.serve` and `bun:sqlite` stay under `src/relay/backends/bun/`, exported
+   as `nostr-effect/relay/bun`, until Stage 4 deletes them.
 
-The consequence is exact. The `nostr-effect/relay` entry point cannot be
-imported from Node at all, because the import graph reaches `bun:sqlite`.
-
-Work:
-
-1. Move the `RelayServer` service contract and its types into
-   `src/relay/core/`.
-2. Move `MemoryEventStore` into `src/relay/storage/`.
-3. Rewrite `src/relay/index.ts` so it imports no backend directly.
-4. Keep the Bun backend as a thin adapter until Stage 4 deletes it.
-
-Exit: `nostr-effect/relay` type-checks and imports under Node with no `bun:`
-specifier in its import graph.
+Exit met: `nostr-effect/relay` imports under Node with no `bun:` specifier in
+its import graph.
 
 ## Stage 3: the Node backend
 

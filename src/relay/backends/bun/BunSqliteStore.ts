@@ -331,10 +331,5 @@ export const BunSqliteStoreLive = (dbPath: string) =>
     })
   )
 
-/**
- * In-memory SQLite for testing
- */
-export const MemoryEventStoreLive = BunSqliteStoreLive(":memory:")
-
 // Legacy aliases for backwards compatibility
 export const SqliteEventStoreLive = BunSqliteStoreLive

@@ -5,7 +5,7 @@ import { test, expect, describe, beforeAll, afterAll } from "bun:test"
 import { Effect, Layer } from "effect"
 import { Nip52Service, Nip52ServiceLive } from "./Nip52Service.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 

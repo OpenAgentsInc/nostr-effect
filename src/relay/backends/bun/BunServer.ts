@@ -1,11 +1,15 @@
 /**
  * BunServer
  *
- * WebSocket server using Bun.serve for NIP-01 relay protocol.
+ * Thin Bun.serve adapter for the platform-agnostic RelayServer contract.
  * Wires together EventStore, SubscriptionManager, and MessageHandler.
  */
-import { Context, Effect, Layer } from "effect"
+import { Effect, Layer } from "effect"
 import { MessageHandler, type BroadcastMessage } from "../../core/MessageHandler.js"
+import {
+  RelayServer,
+  type ConnectionData,
+} from "../../core/RelayServer.js"
 import { SubscriptionManager } from "../../core/SubscriptionManager.js"
 import type { RelayMessage } from "../../../core/Schema.js"
 import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "../../core/RelayInfo.js"
@@ -15,61 +19,13 @@ import { hmac } from "@noble/hashes/hmac"
 import { sha256 } from "@noble/hashes/sha256"
 import { bytesToHex } from "@noble/hashes/utils"
 
-// =============================================================================
-// Types
-// =============================================================================
-
-export interface LivekitConfig {
-  /** LiveKit server WebSocket URL returned to clients */
-  readonly url: string
-  /** Optional HS256 secret for JWT minting (dev/test). Production should use LiveKit API keys. */
-  readonly jwtSecret?: string
-  /** Token TTL seconds (default 3600) */
-  readonly tokenTtlSeconds?: number
-}
-
-export interface RelayConfig {
-  readonly port: number
-  readonly host?: string
-  readonly dbPath?: string
-  /** NIP-11 relay info configuration */
-  readonly relayInfo?: Partial<RelayInfo>
-  /** NIP-29 LiveKit AV chat support */
-  readonly livekit?: LivekitConfig
-}
-
-export interface ConnectionData {
-  readonly connectionId: string
-}
-
-// =============================================================================
-// Service Interface
-// =============================================================================
-
-export interface RelayServer {
-  readonly _tag: "RelayServer"
-
-  /**
-   * Start the relay server
-   */
-  start(config: RelayConfig): Effect.Effect<RelayHandle>
-
-  /**
-   * Get connection count
-   */
-  connectionCount(): Effect.Effect<number>
-}
-
-export interface RelayHandle {
-  readonly port: number
-  readonly stop: () => Effect.Effect<void>
-}
-
-// =============================================================================
-// Service Tag
-// =============================================================================
-
-export const RelayServer = Context.Service<RelayServer>("RelayServer")
+export type {
+  ConnectionData,
+  LivekitConfig,
+  RelayConfig,
+  RelayHandle,
+} from "../../core/RelayServer.js"
+export { RelayServer } from "../../core/RelayServer.js"
 
 // =============================================================================
 // Service Implementation
