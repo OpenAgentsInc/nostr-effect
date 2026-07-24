@@ -1,12 +1,13 @@
 /**
  * Node Backend
  *
- * Node-specific host for the relay (node:http + ws).
+ * Node-specific host for the relay (node:http + ws) plus durable EventStore
+ * adapters (node:sqlite for local/dev, Postgres for Cloud SQL).
  * The public `nostr-effect/relay` entry does not import this module.
- * Prefer `nostr-effect/relay/node` when you need a Node 24 host.
+ * Prefer `nostr-effect/relay/node` when you need a Node 24 host or stores.
  *
- * Durable stores (node:sqlite / Postgres) land in SARAH-NR-01d (#166).
- * This package uses MemoryEventStoreLive for local and test relays.
+ * `startTestRelay` keeps MemoryEventStoreLive for zero-dep local tests.
+ * Pass a NodeSqliteStoreLive or PostgresStoreLive layer for durable runs.
  */
 import { Effect, Layer } from "effect"
 import { CryptoServiceLive } from "../../../services/CryptoService.js"
@@ -53,6 +54,11 @@ export {
   type ConnectionData,
   type LivekitConfig,
 }
+
+// Durable stores are separate entry points so this host barrel stays free of
+// `node:sqlite` / `postgres` and can load under bun:test:
+//   nostr-effect/relay/node/sqlite
+//   nostr-effect/relay/node/postgres
 
 const defaultNip42Config = (port: number): Nip42Config => ({
   relayUrls: [
@@ -126,7 +132,7 @@ export const startTestRelay = async (
 
 /**
  * Start a Node relay with in-memory storage (development / local dogfood).
- * Pass `dbPath` only as a reserved field — durable Node stores are #166.
+ * For durable local storage, compose RelayServerLive with NodeSqliteStoreLive.
  */
 export const startRelay = async (
   config: RelayConfig & { modules?: readonly NipModule[]; nip42?: Nip42Config }

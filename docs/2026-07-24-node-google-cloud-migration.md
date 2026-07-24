@@ -2,8 +2,7 @@
 
 - Class: migration plan
 - Date: 2026-07-24
-- Status: Stages 1–2 done, Stage 3 host (SARAH-NR-02) done, Stage 3 stores
-  and Stages 4–5 planned
+- Status: Stages 1–3 done (host + Node/Cloud SQL stores), Stages 4–5 planned
 - Direction: owner, 2026-07-24
 - Consumer plan: `openagents` `docs/omega/2026-07-24-sarah-workroom-mvp-spec.md`
   Part 2
@@ -83,21 +82,21 @@ Add `src/relay/backends/node/`:
   `startTestRelay` uses `MemoryEventStoreLive` so a local Node relay runs
   without Bun or Cloudflare.
 - `NodeSqliteStore.ts` on `node:sqlite` for development and non-production
-  proofs. **Planned under SARAH-NR-01d / #166.**
+  proofs. **Done (SARAH-NR-01d / #166).**
 - `PostgresStore.ts` implementing the seven-method `EventStore` interface
   against Cloud SQL Postgres, with append, replaceable, and parameterized
   replaceable storage plus the tag-filter grammar the clients use.
-  **Planned under SARAH-NR-01d / #166.**
+  **Done (SARAH-NR-01d / #166).** Exported via `nostr-effect/relay/node`.
 
 Export the Node backend from `package.json` (`./relay/node`).
 
 Exit for the host half (#165): the relay runs on Node 24 with no Bun and no
 Cloudflare import in the served path, and `startTestRelay` works under Node.
 
-Exit for the store half (#166): the existing relay test suites pass against
-the Node durable backends, a durable append survives a process restart, a
-duplicate insert is idempotent, and a replaceable event replaces only an
-older event.
+Exit for the store half (#166): NodeSqliteStore proof covers durable append
+surviving process restart, duplicate insert idempotency, and replaceable
+events replacing only older events. PostgresStore tests run when
+DATABASE_URL is set.
 
 ## Stage 4: replace the Bun toolchain
 
