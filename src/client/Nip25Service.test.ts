@@ -1,7 +1,7 @@
 /**
  * NIP-25: Reactions Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { Nip25Service, Nip25ServiceLive, REACTION_KIND } from "./Nip25Service.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"

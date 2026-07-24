@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-26 Delegated Event Signing
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, getPublicKey, finalizeEvent, verifyEvent } from "./pure.js"
 import {
   createDelegationTag,

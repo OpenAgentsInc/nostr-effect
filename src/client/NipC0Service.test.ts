@@ -1,9 +1,9 @@
 /**
  * NipC0Service tests (NIP-C0 Code Snippets)
  */
-import { describe, test, expect, beforeAll, afterAll } from "bun:test"
+import { describe, test, expect, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"

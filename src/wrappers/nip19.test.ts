@@ -3,7 +3,7 @@
  *
  * These tests verify nostr-tools compatibility for bech32 encoding/decoding.
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   npubEncode,
   nsecEncode,

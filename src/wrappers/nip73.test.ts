@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-73 External Content IDs
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { buildIAndKTags, signExternalIdEvent } from "./nip73.js"
 

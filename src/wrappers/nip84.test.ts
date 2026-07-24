@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-84 Highlights
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { signHighlight } from "./nip84.js"
 

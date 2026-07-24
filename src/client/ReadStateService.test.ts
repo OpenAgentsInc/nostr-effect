@@ -1,7 +1,7 @@
 /**
  * Tests for ReadStateService (NIP-RS: Cross-Device Read State Sync)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test";
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test";
 import { Effect, Layer } from "effect";
 import {
   ReadStateService,
@@ -30,7 +30,7 @@ import {
   type ReadStateBlob,
 } from "./ReadStateService.js";
 import { RelayService, makeRelayService } from "./RelayService.js";
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js";
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js";
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js";
 import { EventServiceLive } from "../services/EventService.js";
 import { Nip44Service, Nip44ServiceLive } from "../services/Nip44Service.js";

@@ -1,0 +1,12 @@
+# Single-package workspace so pnpm 11 reads overrides here
+# (package.json "pnpm" field is no longer honored).
+packages:
+  - .
+
+overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.4
+
+packageExtensions:
+  vite-plus@*:
+    dependencies:
+      vite: npm:@voidzero-dev/vite-plus-core@0.2.4

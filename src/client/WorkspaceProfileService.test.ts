@@ -1,7 +1,7 @@
 /**
  * WorkspaceProfileService tests (NIP-WP Workspace Profile)
  */
-import { describe, test, expect, afterEach } from "bun:test"
+import { describe, test, expect, afterEach } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { makeRelayService } from "./RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"

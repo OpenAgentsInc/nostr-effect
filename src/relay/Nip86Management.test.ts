@@ -1,8 +1,8 @@
 /**
  * NIP-86 Management API tests
  */
-import { describe, test, expect, beforeAll, afterAll } from "bun:test"
-import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
+import { describe, test, expect, beforeAll, afterAll } from "vite-plus/test"
+import { startTestRelay, type RelayHandle } from "./backends/node/index.js"
 import { sha256 } from "@noble/hashes/sha256"
 import { bytesToHex, randomBytes } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"

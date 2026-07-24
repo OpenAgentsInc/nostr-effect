@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-68 Picture-first feeds (kind 20)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { buildImetaTag, signPictureEvent, parseImetaTag, AllowedMediaTypes, PictureEventKind } from "./nip68.js"
 

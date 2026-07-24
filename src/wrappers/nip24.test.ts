@@ -1,7 +1,7 @@
 /**
  * NIP-24: Extra metadata fields and tags
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   stringifyMetadata,
   normalizeMetadata,

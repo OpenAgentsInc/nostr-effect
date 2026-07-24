@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-69 Peer-to-peer Order events (kind 38383)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { signP2POrder, P2POrderKind } from "./nip69.js"
 

@@ -1,7 +1,7 @@
 /**
  * Tests for ChannelWindowService (NIP-CW: Channel Window)
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import {
   ChannelWindowService,

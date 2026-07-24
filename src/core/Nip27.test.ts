@@ -1,7 +1,7 @@
 /**
  * NIP-27: Content Parsing Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   parse,
   parseToArray,

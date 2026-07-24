@@ -4,8 +4,7 @@
  * Effect-based NIP-01 relay implementation.
  * This entry point is host-agnostic: no Bun or Cloudflare imports.
  *
- * For a running Bun host use `nostr-effect/relay/bun`.
- * For a running Node host use `nostr-effect/relay/node` (SARAH-NR-02).
+ * For a running Node host use `nostr-effect/relay/node`.
  *
  * @example
  * ```ts

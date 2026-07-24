@@ -1,7 +1,7 @@
 /**
  * NIP-99: Classified Listings Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   validateEvent,
   parseEvent,

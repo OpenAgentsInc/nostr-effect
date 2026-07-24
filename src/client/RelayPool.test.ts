@@ -1,11 +1,11 @@
 /**
  * Tests for RelayPool
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer, Stream } from "effect"
 import { Schema } from "effect"
 import { RelayPool, makeRelayPool } from "./RelayPool.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { EventKind, Filter } from "../core/Schema.js"
@@ -323,7 +323,7 @@ describe("RelayPool", () => {
           Effect.ignore // Ignore any errors from timeout
         )
       )
-    }, { timeout: 5000 })
+    }, 5000)
 
     test("deduplicates events by ID", async () => {
       const program = Effect.gen(function* () {
@@ -356,7 +356,7 @@ describe("RelayPool", () => {
           Effect.ignore
         )
       )
-    }, { timeout: 3000 })
+    }, 3000)
 
     test("unsubscribes from all relays", async () => {
       const program = Effect.gen(function* () {

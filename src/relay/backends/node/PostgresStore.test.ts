@@ -4,7 +4,7 @@
  * Skips when DATABASE_URL is unset. Against a live Postgres URL, exercises the
  * same EventStore exit criteria as NodeSqliteStore.
  */
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vite-plus/test"
 import { Effect, Layer, Schema } from "effect"
 import { DuplicateEvent } from "../../../core/Errors.js"
 import {

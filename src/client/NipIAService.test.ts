@@ -3,7 +3,7 @@
  *
  * Spec vectors from ~/work/projects/repos/buzz/docs/nips/NIP-IA.md
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { schnorr } from "@noble/curves/secp256k1"
 import { bytesToHex } from "@noble/hashes/utils"

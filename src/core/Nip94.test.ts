@@ -1,7 +1,7 @@
 /**
  * NIP-94: File Metadata Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   generateEventTemplate,
   validateEvent,

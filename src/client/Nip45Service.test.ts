@@ -1,11 +1,11 @@
 /**
  * Tests for Nip45Service (NIP-45 Event Counts)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Nip45Service, Nip45ServiceLive } from "./Nip45Service.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { Schema } from "effect"

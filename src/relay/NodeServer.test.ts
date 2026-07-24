@@ -1,10 +1,10 @@
 /**
  * Node WebSocket relay host tests (SARAH-NR-02)
  *
- * Runs under bun:test against the Node host (node:http + ws) so existing
+ * Runs under vite-plus/test against the Node host (node:http + ws) so existing
  * suites can add a node-backed path before the Stage 4 runner migration.
  */
-import { describe, test, expect, beforeAll, afterAll } from "bun:test"
+import { describe, test, expect, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Schema } from "effect"
 import WebSocket from "ws"
@@ -24,33 +24,81 @@ const ServiceLayer = Layer.merge(
   EventServiceLive.pipe(Layer.provide(CryptoServiceLive))
 )
 
-const connect = (port: number): Promise<WebSocket> =>
+/**
+ * Buffered ws client. The Node host may send AUTH on open before the test
+ * attaches a waiter; the `ws` package does not queue those frames.
+ */
+type BufferedSocket = {
+  readonly ws: WebSocket
+  waitForMessage: (
+    timeout?: number,
+    predicate?: (msg: RelayMessage) => boolean
+  ) => Promise<RelayMessage>
+  close: () => void
+}
+
+const connect = (port: number): Promise<BufferedSocket> =>
   new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://127.0.0.1:${port}`)
+    const queue: RelayMessage[] = []
+    const waiters: Array<{
+      predicate: (msg: RelayMessage) => boolean
+      resolve: (msg: RelayMessage) => void
+      reject: (err: Error) => void
+      timer: ReturnType<typeof setTimeout>
+    }> = []
+
     // Keep a permanent error listener so terminate/close during teardown
-    // never surfaces as an unhandled ErrorEvent under bun:test.
+    // never surfaces as an unhandled ErrorEvent under vite-plus/test.
     ws.on("error", () => {
       /* swallow post-open socket errors */
     })
-    ws.once("open", () => resolve(ws))
-    ws.once("error", (error) => reject(error))
-  })
-
-const waitForMessage = (
-  ws: WebSocket,
-  timeout = 3000,
-  predicate: (msg: RelayMessage) => boolean = () => true
-): Promise<RelayMessage> =>
-  new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Timeout waiting for message")), timeout)
-    const onMessage = (data: WebSocket.RawData) => {
+    ws.on("message", (data: WebSocket.RawData) => {
       const msg = JSON.parse(data.toString()) as RelayMessage
-      if (!predicate(msg)) return
-      clearTimeout(timer)
-      ws.off("message", onMessage)
-      resolve(msg)
+      const idx = waiters.findIndex((w) => w.predicate(msg))
+      if (idx >= 0) {
+        const [waiter] = waiters.splice(idx, 1)
+        if (!waiter) return
+        clearTimeout(waiter.timer)
+        waiter.resolve(msg)
+        return
+      }
+      queue.push(msg)
+    })
+
+    const waitForMessage = (
+      timeout = 3000,
+      predicate: (msg: RelayMessage) => boolean = () => true
+    ): Promise<RelayMessage> => {
+      const queuedIdx = queue.findIndex(predicate)
+      if (queuedIdx >= 0) {
+        const [msg] = queue.splice(queuedIdx, 1)
+        return Promise.resolve(msg as RelayMessage)
+      }
+      return new Promise((res, rej) => {
+        const timer = setTimeout(() => {
+          const i = waiters.findIndex((w) => w.timer === timer)
+          if (i >= 0) waiters.splice(i, 1)
+          rej(new Error("Timeout waiting for message"))
+        }, timeout)
+        waiters.push({ predicate, resolve: res, reject: rej, timer })
+      })
     }
-    ws.on("message", onMessage)
+
+    ws.once("open", () =>
+      resolve({
+        ws,
+        waitForMessage,
+        close: () => {
+          try {
+            ws.terminate()
+          } catch {
+            ws.close()
+          }
+        },
+      })
+    )
+    ws.once("error", (error) => reject(error))
   })
 
 const createTestEvent = async (): Promise<NostrEvent> =>
@@ -80,26 +128,26 @@ describe("Node RelayServer host", () => {
   })
 
   test("sends a proactive NIP-42 AUTH challenge on connect", async () => {
-    const ws = await connect(port)
-    const msg = await waitForMessage(ws, 3000, (m) => m[0] === "AUTH")
+    const client = await connect(port)
+    const msg = await client.waitForMessage(3000, (m) => m[0] === "AUTH")
     expect(msg[0]).toBe("AUTH")
     expect(typeof msg[1]).toBe("string")
     expect((msg[1] as string).length).toBeGreaterThan(0)
-    ws.close()
+    client.close()
   })
 
   test("accepts EVENT and returns OK", async () => {
-    const ws = await connect(port)
+    const client = await connect(port)
     // Drain AUTH
-    await waitForMessage(ws, 3000, (m) => m[0] === "AUTH")
+    await client.waitForMessage(3000, (m) => m[0] === "AUTH")
 
     const event = await createTestEvent()
-    ws.send(JSON.stringify(["EVENT", event]))
-    const ok = await waitForMessage(ws, 3000, (m) => m[0] === "OK")
+    client.ws.send(JSON.stringify(["EVENT", event]))
+    const ok = await client.waitForMessage(3000, (m) => m[0] === "OK")
     expect(ok[0]).toBe("OK")
     expect(ok[1]).toBe(event.id)
     expect(ok[2]).toBe(true)
-    ws.close()
+    client.close()
   })
 
   test("serves NIP-11 application/nostr+json", async () => {
@@ -161,10 +209,10 @@ describe("Node RelayServer connection limit", () => {
   test("rejects upgrades beyond maxConnections", async () => {
     const net = await import("node:net")
     const first = await connect(port)
-    await waitForMessage(first, 3000, (m) => m[0] === "AUTH")
+    await first.waitForMessage(3000, (m) => m[0] === "AUTH")
 
-    // Real Node returns HTTP 503 bytes on the upgrade socket. Bun closes the
-    // socket without delivering those bytes. Either outcome proves the limit.
+    // Real Node returns HTTP 503 bytes on the upgrade socket when the
+    // connection limit is hit. Either 503 or a hard close proves the limit.
     const outcome = await new Promise<"rejected">((resolve, reject) => {
       const socket = net.connect({ host: "127.0.0.1", port }, () => {
         socket.write(
@@ -202,12 +250,8 @@ describe("Node RelayServer connection limit", () => {
 
     expect(outcome).toBe("rejected")
     await new Promise<void>((resolve) => {
-      first.once("close", () => resolve())
-      try {
-        first.terminate()
-      } catch {
-        first.close()
-      }
+      first.ws.once("close", () => resolve())
+      first.close()
       setTimeout(resolve, 500)
     })
   })

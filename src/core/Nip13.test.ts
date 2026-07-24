@@ -2,7 +2,7 @@
  * NIP-13: Proof of Work Tests
  * Tests ported from nostr-tools for 100% parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { getPow, minePow } from "./Nip13.js"
 import type { PublicKey, UnixTimestamp, EventKind } from "./Schema.js"
 

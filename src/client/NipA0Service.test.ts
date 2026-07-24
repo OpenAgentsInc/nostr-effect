@@ -1,7 +1,7 @@
 /**
  * NipA0Service tests (lettered spec placeholder)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { NipA0Service, NipA0ServiceLive } from "./NipA0Service.js"
 

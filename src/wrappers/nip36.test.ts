@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { withContentWarning, getContentWarningReason, withContentWarningLabels } from "./nip36.js"
 
 describe("NIP-36 content warning helpers", () => {

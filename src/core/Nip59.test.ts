@@ -2,7 +2,7 @@
  * NIP-59: Gift Wrap Tests
  * Tests ported from nostr-tools for 100% parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   createRumor,
   wrapEvent,

@@ -1,7 +1,7 @@
 /**
  * NIP-17: Private Direct Messages Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { wrapEvent, wrapManyEvents, unwrapEvent, PRIVATE_DIRECT_MESSAGE_KIND } from "./Nip17.js"
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"

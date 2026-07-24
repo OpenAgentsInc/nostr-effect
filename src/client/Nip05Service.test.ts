@@ -1,7 +1,7 @@
 /**
  * NIP-05: DNS-based Identity Verification Tests
  */
-import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test"
+import { describe, test, expect, beforeEach, afterEach, vi } from "vite-plus/test"
 import { Effect } from "effect"
 import { 
   Nip05Service, 
@@ -72,10 +72,10 @@ describe("NIP-05: DNS Identity Verification", () => {
 })
 
 describe("Nip05Service (Effect layer)", () => {
-  let fetchSpy: ReturnType<typeof spyOn>
+  let fetchSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    fetchSpy = spyOn(global, "fetch")
+    fetchSpy = vi.spyOn(global, "fetch")
   })
 
   afterEach(() => {

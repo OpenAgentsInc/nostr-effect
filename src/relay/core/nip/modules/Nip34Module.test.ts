@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vite-plus/test"
 import { getAllNips, handlesKind } from "../NipModule.js"
 import { DefaultModules, Nip34Module } from "./index.js"
 

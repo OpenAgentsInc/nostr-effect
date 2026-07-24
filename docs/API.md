@@ -27,7 +27,7 @@ Both APIs target **Node 24** (Tier 1 support).
 |---------|---------------|-------|
 | Node 24 | Tier 1 (full) | The supported target |
 | Modern Browsers | Tier 2 (should work) | Standard WebSocket API |
-| Bun | Retiring | Removed by the Node migration |
+| Bun | Removed | Deleted in Stage 4 (#167) |
 
 Cloudflare Workers and Deno are not supported targets.
 

@@ -11,7 +11,7 @@
  * - ephemeral no-store behavior via the relay's NIP-16 handling
  * - the recommended subscription filter shape
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer, Stream, Option } from "effect"
 import {
   AgentObservabilityService,
@@ -20,7 +20,7 @@ import {
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { OBSERVER_FRAME_KIND, type ControlMessage, type ObserverEvent } from "../core/NipAO.js"
 import { Schema } from "effect"
 import { Filter } from "../core/Schema.js"

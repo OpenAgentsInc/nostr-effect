@@ -1,11 +1,11 @@
 /**
  * Tests for RelayService
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Schema } from "effect"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { EventKind, Filter, SubscriptionId, type NostrEvent } from "../core/Schema.js"

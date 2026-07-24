@@ -1,7 +1,7 @@
 /**
  * ConnectionManager Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { ConnectionManager, ConnectionManagerLive } from "./ConnectionManager.js"
 import type { PublicKey } from "../../core/Schema.js"

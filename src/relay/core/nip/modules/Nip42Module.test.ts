@@ -1,7 +1,7 @@
 /**
  * NIP-42 Module Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import {
   verifyAuthEvent,

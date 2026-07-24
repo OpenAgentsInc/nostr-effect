@@ -1,14 +1,14 @@
 /**
  * Tests for RelayInfo (NIP-11)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect } from "effect"
 import {
   defaultRelayInfo,
   mergeRelayInfo,
   type RelayInfo,
 } from "./core/RelayInfo.js"
-import { startTestRelay, startRelay, type RelayHandle } from "./backends/bun/index.js"
+import { startTestRelay, startRelay, type RelayHandle } from "./backends/node/index.js"
 
 describe("RelayInfo", () => {
   describe("defaultRelayInfo", () => {

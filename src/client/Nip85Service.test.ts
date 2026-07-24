@@ -1,7 +1,7 @@
 /**
  * NIP-85: Trusted Assertions tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   makeNip85Service,
   ASSERTION_USER_KIND,

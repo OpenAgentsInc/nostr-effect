@@ -1,10 +1,14 @@
-# dependencies (bun install)
+# dependencies
 node_modules
 
 # output
 out
 dist
 *.tgz
+
+# vite / vp
+.vite
+.vp
 
 # code coverage
 coverage

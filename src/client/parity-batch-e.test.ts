@@ -1,7 +1,7 @@
 /**
  * Parity batch E: A4, 5A, F4, CC, NIP-25 k/a, NIP-29 flags, NIP-50 search
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { makeNipA4Service, PUBLIC_MESSAGE_KIND } from "./NipA4Service.js"
 import { makeNip5AService, NSITE_ROOT_KIND, NSITE_NAMED_KIND } from "./Nip5AService.js"
 import { makeNipF4Service, PODCAST_EPISODE_KIND, PODCAST_METADATA_KIND } from "./NipF4Service.js"

@@ -1,7 +1,7 @@
 /**
  * NIP-98: HTTP Auth Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { sha256 } from "@noble/hashes/sha256"
 import { bytesToHex, randomBytes } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"

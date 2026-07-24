@@ -1,7 +1,7 @@
 /**
  * NIP-40 Module Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Nip40Module } from "./Nip40Module.js"
 import { EventServiceLive } from "../../../../services/EventService.js"

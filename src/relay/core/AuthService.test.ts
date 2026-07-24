@@ -1,7 +1,7 @@
 /**
  * AuthService Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { AuthService, makeAuthServiceLayer } from "./AuthService.js"
 import { ConnectionManager, ConnectionManagerLive } from "./ConnectionManager.js"

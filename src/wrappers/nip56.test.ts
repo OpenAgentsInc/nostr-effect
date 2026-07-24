@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-56 Reporting (kind 1984)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, getPublicKey, verifyEvent } from "./pure.js"
 import {
   buildProfileReportTemplate,

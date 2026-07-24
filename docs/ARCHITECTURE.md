@@ -27,11 +27,11 @@ This document provides a comprehensive technical overview of nostr-effect's arch
 
 | Aspect | Choice | Rationale |
 |--------|--------|-----------|
-| **Runtime** | Bun | Native TypeScript, fast startup, built-in SQLite/WebSocket |
+| **Runtime** | Node 24 | pnpm + Vite Plus; matches openagents monorepo |
 | **Type System** | Effect Schema + Branded Types | Compile-time safety, runtime validation |
 | **Architecture** | Effect Services + Layers | Dependency injection, testability, composition |
 | **Crypto** | @noble/* libraries | Audited, pure JS, no native bindings |
-| **Database** | SQLite (bun:sqlite) | Zero config, embedded, WAL mode |
+| **Database** | node:sqlite (dev) / Cloud SQL Postgres (prod) | Platform SQLite + Cloud SQL |
 | **Protocol** | NIP-01 + extensions | Full Nostr compatibility |
 
 ### Codebase Statistics
@@ -1201,12 +1201,12 @@ ws.close()
 ### Package Scripts
 
 ```bash
-bun run prepare      # Setup language service and git hooks
-bun run setup:hooks  # Install pre-push hook
-bun test             # Run all tests
-bun run typecheck    # Type check only (tsc --noEmit)
-bun run verify       # Typecheck + tests (used by pre-push)
-bun run build        # Bundle to dist/
+pnpm run prepare     # Setup language service and git hooks
+pnpm run setup:hooks # Install pre-push hook
+pnpm test            # Run all tests (vp test --run)
+pnpm run typecheck   # Type check only (tsc --noEmit)
+pnpm run verify      # Typecheck + tests (used by pre-push)
+pnpm run build       # Bundle with vp pack
 ```
 
 ### TypeScript Configuration
@@ -1232,7 +1232,7 @@ bun run build        # Bundle to dist/
 
 ```bash
 #!/bin/bash
-bun run typecheck && bun test
+pnpm run verify
 ```
 
 Prevents pushing code that doesn't compile or pass tests.
@@ -1272,7 +1272,7 @@ attached and secrets mounted from Secret Manager.
 **Status:** ⚠️ Removed by the Node migration
 
 The Bun backend and the Bun test runner are the migration's targets. Do not
-add new Bun code. Do not add a new `Bun.*` API call or a `bun:` import.
+add Bun or Cloudflare code. Do not add a `Bun.*` API call, a `bun:` import, or `/bun`.
 
 ### Retired hosts
 

@@ -2,8 +2,8 @@
 // Lifecycle `prepare` guard.
 //
 // `prepare` runs in three situations:
-//   1. local dev install inside this source repo (`bun install` here)
-//   2. `npm publish` / `bun pm pack` packing of this package
+//   1. local dev install inside this source repo (`pnpm install` here)
+//   2. `npm publish` / packing of this package
 //   3. a CONSUMER installing this package as a git dependency
 //      (e.g. `github:OpenAgentsInc/nostr-effect#<sha>`), which is how
 //      `@openagentsinc/nip90` -> `@openagentsinc/pylon` pull it in.
@@ -12,15 +12,11 @@
 // TypeScript (`effect-language-service patch`) and installing a git
 // pre-push hook (`setup:hooks`). Doing so previously hard-required `bun`
 // and crashed `npx @openagentsinc/pylon` on any machine without bun
-// preinstalled (e.g. a clean Ubuntu/Node box):
+// preinstalled (e.g. a clean Ubuntu/Node box).
 //
-//   sh: bun: command not found
-//   npm error code 127  (git dep preparation failed)
-//
-// This script runs under plain Node (no bun needed) and only performs the
-// dev-only setup when we are genuinely in the source working tree AND bun
-// is available. In every other case it exits 0 silently so consumer
-// installs always succeed.
+// This script runs under plain Node and only performs the dev-only setup
+// when we are genuinely in the source working tree. In every other case it
+// exits 0 silently so consumer installs always succeed.
 
 import { existsSync } from "node:fs"
 import { spawnSync } from "node:child_process"
@@ -44,30 +40,24 @@ const nestedInNodeModules = repoRoot.split(/[\\/]/).includes("node_modules")
 
 if (!inSourceRepo || nestedInNodeModules) {
   // Consumer install or packed tarball: nothing to do. Exit cleanly so
-  // `npm install` / `npx` succeed without bun.
+  // `npm install` / `npx` succeed without a package manager bootstrap.
   process.exit(0)
 }
 
-// 3) Dev setup needs bun. If bun is missing, skip with a clear note rather
-//    than crashing the install.
-const bunCheck = spawnSync(process.platform === "win32" ? "bun.exe" : "bun", ["--version"], {
-  stdio: "ignore"
-})
-if (bunCheck.status !== 0) {
-  log("bun not found; skipping dev hook/type-service setup. Install bun (https://bun.sh) for the full dev experience.")
-  process.exit(0)
-}
-
-// In-repo dev install with bun present: run the real dev setup, but never
-// let a failure here break `bun install`.
+// In-repo dev install: run the real dev setup, but never let a failure
+// here break `pnpm install`.
 const run = (cmd, args) => {
-  const r = spawnSync(cmd, args, { stdio: "inherit", cwd: repoRoot })
+  const r = spawnSync(cmd, args, {
+    stdio: "inherit",
+    cwd: repoRoot,
+    shell: process.platform === "win32",
+  })
   if (r.status !== 0) {
     log(`'${cmd} ${args.join(" ")}' exited ${r.status ?? "null"} (non-fatal; continuing).`)
   }
 }
 
-run("bunx", ["effect-language-service", "patch"])
-run("bun", ["run", "setup:hooks"])
+run("pnpm", ["exec", "effect-language-service", "patch"])
+run("pnpm", ["run", "setup:hooks"])
 
 process.exit(0)

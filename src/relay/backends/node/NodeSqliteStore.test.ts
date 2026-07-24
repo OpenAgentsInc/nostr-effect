@@ -2,9 +2,9 @@
  * NodeSqliteStore tests.
  *
  * Bun cannot load `node:sqlite`, so this file spawns Node to run the proof
- * harness. That keeps `bun test` as the gate while verifying the Node store.
+ * harness under Vite Plus. Verifies the Node store on Node 24.
  */
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vite-plus/test"
 import { spawnSync } from "node:child_process"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"

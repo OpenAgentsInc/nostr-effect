@@ -1,7 +1,7 @@
 /**
  * NIP-46 Remote Signing Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect, Exit } from "effect"
 import {
   parseBunkerUrl,

@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-03 OpenTimestamps Attestations
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { signOpenTimestampsEvent, OpenTimestampsKind } from "./nip03.js"
 

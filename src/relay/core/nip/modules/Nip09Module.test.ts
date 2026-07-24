@@ -3,7 +3,7 @@
  *
  * Event Deletion (kind 5)
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Nip09Module } from "./Nip09Module.js"
 
 describe("Nip09Module", () => {

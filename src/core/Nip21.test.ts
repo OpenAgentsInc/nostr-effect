@@ -1,7 +1,7 @@
 /**
  * NIP-21: nostr: URI Scheme Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   test as testUri,
   parse,

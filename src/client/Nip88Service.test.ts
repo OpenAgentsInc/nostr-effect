@@ -1,11 +1,11 @@
 /**
  * Tests for Nip88Service (NIP-88 Polls)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer, Stream, Option } from "effect"
 import { Nip88Service, Nip88ServiceLive } from "./Nip88Service.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { Schema } from "effect"

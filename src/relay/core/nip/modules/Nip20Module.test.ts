@@ -1,7 +1,7 @@
 /**
  * NIP-20 Module Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Nip20Module } from "./Nip20Module.js"
 import type { NipModule } from "../NipModule.js"
 

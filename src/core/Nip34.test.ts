@@ -1,7 +1,7 @@
 /**
  * NIP-34: Git Collaboration Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   // Event Kinds
   REPOSITORY_KIND,

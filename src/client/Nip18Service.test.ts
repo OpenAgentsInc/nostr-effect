@@ -2,7 +2,7 @@
  * NIP-18: Reposts Tests
  * Tests ported from nostr-tools for 100% parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import {
   REPOST_KIND,

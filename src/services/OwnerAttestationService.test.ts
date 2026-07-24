@@ -3,7 +3,7 @@
  *
  * Test vectors are from the canonical NIP-OA spec.
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect } from "effect"
 import { schnorr } from "@noble/curves/secp256k1"
 import { sha256 } from "@noble/hashes/sha256"

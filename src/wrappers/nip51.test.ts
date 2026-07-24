@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-51 pure helpers
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { parsePublicItems, getLatestList } from "./nip51.js"
 import type { Event as NostrEvent } from "./pure.js"
 

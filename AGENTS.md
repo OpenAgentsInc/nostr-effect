@@ -7,20 +7,22 @@ alwaysApply: false
 **Note**: Issue tracking is GitHub Issues on `OpenAgentsInc/nostr-effect`.
 Do not use beads/`bd` — that system is retired.
 
-## Runtime: Node, not Bun (owner direction, 2026-07-24)
+## Runtime: Node 24, pnpm, Vite Plus (owner direction, 2026-07-24)
 
 OpenAgents has removed all dependence on, and usage of, Cloudflare and Bun.
 This repository serves Node only, on the Node and Vite Plus stack the
 `openagents` monorepo uses, deployed to Google Cloud.
 
-**The migration is in progress.** Read
+Read
 [`docs/2026-07-24-node-google-cloud-migration.md`](docs/2026-07-24-node-google-cloud-migration.md)
-before you touch the relay, the package scripts, or the test setup. Cloudflare
-is already removed. The Bun toolchain is still present and is Stage 4.
+for the migration history. Stages 1–4 are done (Cloudflare removed, portable
+relay core, Node host and stores, pnpm / Vite Plus toolchain). Stage 5 is
+Google Cloud deploy.
 
-Rules for new work:
+Rules for all work:
 
-- Target Node 24. Do not add a `bun:` import or a `Bun.*` API call.
+- Target Node 24. Do not add a `bun:` import, a `Bun.*` API call, or a Bun
+  dependency (`@types/bun`, `bun.lock`, or a package script that invokes `bun`).
 - Do not add Cloudflare Workers, Durable Objects, D1, or R2 as a runtime, a
   store, a fallback, or a compatibility lane. They are retired.
 - Use pnpm for dependency work. **Always use exact versions**
@@ -31,10 +33,11 @@ Rules for new work:
 - Production secrets come from Google Secret Manager at runtime. Never commit
   a secret and never place one in an event, a tag, or a log.
 
-Until Stage 4 lands, existing `bun test` and `bun run` commands still work and
-are still the verification gate for changes to existing code. Do not convert
-files ad hoc. The conversion is one planned stage, not a per-pull-request
-cleanup.
+Verification gate for every change:
+
+```bash
+pnpm run verify   # typecheck + vp test --run
+```
 
 ## Code Style
 
@@ -42,20 +45,28 @@ cleanup.
 
 ## Testing
 
-The current runner is `bun test`, and it stays the gate until Stage 4 of the
-Node migration replaces it with Vite Plus. Match the surrounding file: a test
-beside `bun:test` tests keeps that import.
+The only test runner is Vite Plus (`vp test`), which re-exports Vitest.
+Import test APIs from `vite-plus/test`. Do not add a second runner.
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+```ts
+import { describe, test, expect } from "vite-plus/test"
 
 test("hello world", () => {
-  expect(1).toBe(1);
-});
+  expect(1).toBe(1)
+})
 ```
 
-Do not add a second test runner before Stage 4. Two runners in one repository
-is the failure this plan avoids.
+For spies and mocks use `vi` from the same import:
+
+```ts
+import { describe, test, expect, vi, beforeEach, afterEach } from "vite-plus/test"
+
+const fetchSpy = vi.spyOn(globalThis, "fetch")
+const callback = vi.fn()
+```
+
+Use `startTestRelay(port)` from `nostr-effect/relay/node` (or
+`./relay/backends/node/index.js` inside this repo) for an in-memory Node host.
 
 ## Issue Tracking
 
@@ -72,88 +83,34 @@ gh issue close <n> --reason completed
 Program work for the Sarah workroom is coordinated from
 `OpenAgentsInc/omega#31`.
 
-## Frontend
+## Relay host
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+The supported host is Node 24:
 
-Server:
+```ts
+import { startRelay } from "nostr-effect/relay/node"
 
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
+const relay = await startRelay({ port: 8080 })
+// Durable local store: compose NodeSqliteStoreLive from nostr-effect/relay/node/sqlite
+// Production store: PostgresStoreLive from nostr-effect/relay/node/postgres
 ```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
+Standalone entry:
 
 ```sh
-bun --hot ./index.ts
+pnpm exec tsx src/relay/main.ts
+# PORT=8080 optional
 ```
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+There is no Bun host and no `nostr-effect/relay/bun` export.
 
 ## Pull Request Policy
 
 **NEVER open a PR until:**
-1. `bunx tsc --noEmit` passes with no errors
-2. `bun test` passes with no failures
+1. `pnpm run typecheck` passes with no errors
+2. `pnpm run test` passes with no failures
 
-Always verify both before pushing and creating PRs.
+Or simply: `pnpm run verify`. Always verify both before pushing and creating PRs.
 
 ## Buildout Plan
 
@@ -175,7 +132,7 @@ Always verify both before pushing and creating PRs.
 4. **Implement the feature**:
    - Follow the existing code patterns (Effect services, branded types, etc.)
    - Write tests alongside the implementation
-   - Ensure `bun run verify` passes (typecheck + tests)
+   - Ensure `pnpm run verify` passes (typecheck + tests)
 
 5. **Open a PR**:
    ```bash
@@ -308,15 +265,15 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
   - File under `src/client/<Name>Service.ts`
   - Define `export interface <Name>Service` methods, `export const <Name>Service = Context.GenericTag<...>()`, and `export const <Name>ServiceLive = Layer.effect(..., make)`
   - Compose with `RelayService`, `EventService`, and `CryptoService` (only when needed).
-  - Use `@effect/schema` decoders (`decodeKind`, `decodeFilter`, `decodeTag`) to build safe event/filter payloads.
+  - Use Effect Schema decoders (`decodeKind`, `decodeFilter`, `decodeTag`) to build safe event/filter payloads.
 
 - Kinds and tags
   - Add constants in `src/wrappers/kinds.ts` with clear comments and NIP numbers.
   - For parameterized‑replaceable events (NIP‑33), always include `d` tag; query with `#d` filters.
   - Follow tag semantics from the spec (e.g., for NIP‑87: `k`, `d`, `u`, `a`, `nuts`, `modules`, `n`).
 
-- Tests (bun test)
-  - Use `startTestRelay(port)` for in‑memory relay; layer composition via `makeRelayService()`.
+- Tests (Vite Plus / `vp test`)
+  - Use `startTestRelay(port)` from the Node host for an in‑memory relay; layer composition via `makeRelayService()`.
   - Prefer `Effect.race(Stream.runHead, Effect.sleep(...))` for bounded subscriptions.
   - Structure tests similar to existing service tests (create/publish, query/parse, negatives).
 
@@ -326,7 +283,7 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
   - Ensure `nips: [ .. ]` is accurate; contribute relay info via `limitations` when applicable.
 
 - PR checklist
-  - `bun run verify` passes (typecheck + tests).
+  - `pnpm run verify` passes (typecheck + tests).
   - Update `docs/SUPPORTED_NIPS.md`.
   - Link PR to the appropriate issue(s).
   - Add export mapping in `package.json` (e.g., `"./nipXX": "./src/wrappers/nipXX.ts"`).
@@ -347,103 +304,20 @@ When adding or updating a NIP, follow these patterns to move fast and keep consi
 - Quick filter: `decodeFilter({ kinds: [decodeKind(K)], "#d": [d], limit: 1 })`.
 - Recommendation pointers: encode `'a'` as `${kind}:${pubkey}:${d}` and include optional relay hints.
 
-### NIP‑87 Tips
+## Compression
 
-- Kinds: 38000 (recommendation), 38172 (Cashu info), 38173 (Fedimint info). Add constants in `src/wrappers/kinds.ts` and use schema decoders.
-- Tags: `k` (recommended kind), `d` (identifier), `u` (URL or invite), `a` (pointer `${kind}:${pubkey}:${d}` with optional relay/label), `nuts`, `modules`, `n` (network).
-- Queries: filter recommendations with `{ kinds: [38000], '#k': ['38172'|'38173'], authors?, limit? }`.
-- Tests: cover authors filter, multiple `a` pointers, and negative cases (missing `d` or invalid `k`).
+- Use `pako@2.1.0` for DEFLATE/INFLATE to keep bundles small and portable under Node.
 
-### NIP‑26 Tips
+## Development Commands
 
-- Message: `nostr:delegation:${delegatePubkey}:${conditions}`; sign sha256(message) with delegator secret key.
-- Tag: `["delegation", delegatorPubkey, conditions, signature]`.
-- Delegate signs the actual event; include the delegation tag in `tags`.
-- Helpers live in `src/wrappers/nip26.ts`; tests in `src/wrappers/nip26.test.ts`.
-
-### NIP‑56 Tips
-
-
-### NIP‑77 Client Tips
-
-- Use `RelayService.negOpen(filter, initialHex?)` to open a session; it returns `{ id, messages, send, close }`.
-- Encode/decode IdList payloads via `encodeIdListMessage` / `decodeIdListMessage` from `src/relay/core/negentropy/Codec.ts`.
-- For IdList mode, the relay responds with server-only IDs (serverIds − clientIds). Iterate until the returned list is empty.
-- Message schemas for `NEG-OPEN`, `NEG-MSG`, `NEG-ERR` are defined in `src/core/Schema.ts`.
-- Keep all imports at the top of files (no dynamic imports).
-
-- Kind 1984 with report type in third position of `p`/`e`/`x` tag: e.g., `["p", pubkey, "impersonation"]`.
-- Blob reports: include `x` (hash), optional `e` (event containing blob), and optional `server` URL.
-- Helpers live in `src/wrappers/nip56.ts`; tests in `src/wrappers/nip56.test.ts`.
-
-
-### NIP‑B0 Tips
-
-- Kind: 39701. Parameterized replaceable by `d` tag (URL without scheme).
-- Testing replacement reliably: allow `createdAt` override in service so tests can publish v1/v2 with distinct seconds; tie‑breaking at same second is by id.
-- Minimal relay module advertises support and kind; replacement behavior rides on NIP‑16/33 in the pipeline.
-
-### NIP‑B7 Tips (Blossom)
-
-- Client service: `src/client/BlossomService.ts` provides upload, download, list, delete. Wrapper: `src/wrappers/nipb7.ts` exposes a Promise API (`BlossomClient`).
-- Auth: sign kind `24242` event and send as `Authorization: Nostr <base64(event)>` per BUD‑02; helper builds this in the service.
-- Server discovery: BUD‑03 uses kind `10063` (User Server List). If adding discovery helpers, define a constant for 10063 and use `RelayService` + `EventService` to publish/query `["server", url]` tags.
-- Relation to NIP‑96: `10096` (FileServerPreference) is deprecated for Blossom; prefer `10063`.
-- Keep SUPPORTED_NIPS lettered section updated with spec/code/tests; no duplicate lists elsewhere.
-
-### NIP‑BE Tips (BLE Transport)
-
-- This spec is a client transport. Implement fragmentation + DEFLATE per spec; avoid platform BLE APIs in tests by mocking chunk streams.
-- Framing: two‑byte big‑endian chunk index at head, one byte tail last‑flag (1 final, 0 otherwise).
-- Enforce 64KiB max uncompressed message length before compression.
-- Default chunk size ~200 bytes (fits BLE 4.2 safely); make configurable.
-- Use `pako@2.1.0` for DEFLATE/INFLATE to keep bundles small and portable under Bun.
-- Half‑duplex NEG sync (NIP‑77) can be layered on top of the chunking helpers; prefer to keep it in a small adapter rather than in the core service.
-
-### NIP‑C0 Tips (Code Snippets)
-
-- Kind 1337. Suggested tags: `l` (language, lowercase), `name` (filename), `extension` (lowercase), `description`, `runtime`, `license` (repeatable; SPDX id with optional URL/ref), `dep` (repeatable), `repo` (URL or NIP‑34 repo address).
-- Relay filters only support `#e/#p/#a/#d/#t`. You can’t filter by `name` or `l` directly; prefer author + kind filtering and client‑side tag checks, or NIP‑50 `search` when available.
-- Keep SUPPORTED_NIPS updated; this is a client‑only NIP (no registry module needed).
-- Add a constant for the kind in `src/wrappers/kinds.ts` (CodeSnippet = 1337).
-
-### NIP‑C7 Tips (Chats)
-
-- Kind 9 with quote replies via `q` tag: `["q", <event-id>, <relay-url>, <pubkey>]`.
-- Service can default `relay-url` to the current RelayService URL; allow override.
-- Filters don’t include `#q`; list by author + kind, then inspect tags client‑side.
-- Use `createdAt` overrides in tests to ensure reply fetches as latest.
-- Kind 9 is separate from the numeric NIPs (e.g., NIP‑09 is deletion with kind 5); there is no conflict.
-
-### NIP‑EE Tips (MLS)
-
-- Kinds: 443 (KeyPackage), 444 (Welcome), 10051 (KeyPackage relays list). Use constants in `wrappers/kinds.ts`.
-- KeyPackage (443): `content` is hex of serialized KeyPackageBundle. Tags:
-  - `mls_protocol_version` (e.g., `1.0`), `ciphersuite` (e.g., `0x0001`),
-  - `extensions` as a multi‑param tag: `["extensions", "0x0001", "0x0002"]`
-  - optional `client` `["client", name, handler_event_id, relay?]`
-  - `relays` as multi‑param list `["relays", "wss://...", ...]`
-- Welcome (444): MUST NOT be signed. Build an unsigned rumor and wrap using NIP‑59 helpers (`wrapEvent`), then publish the gift wrap (1059).
-- Relays list (10051): repeat `["relay", url]` tags.
-- Tests should exercise: publish keypackage, publish relays list, wrap/unwrap welcome; avoid signing rumor for 444.
-
-### NIP‑7D Tips (Threads)
-
-- Kind 11 base thread with optional `title` tag; replies MUST be NIP‑22 kind 1111 pointing to the root.
-- Use uppercase root pointers/tags (`E`, `K`, `P`) and matching lowercase parent (`e`, `k`, `p`) as in our NIP‑22 helpers.
-- Favor replying to the root only (avoid nested hierarchies); include `relay-url` in pointers for portability.
-- Provide `createdAt` overrides in tests to control ordering.
-
-
-
-<!-- effect-solutions:start -->
-## Effect Solutions Usage
-
-The Effect Solutions CLI provides curated best practices and patterns for Effect TypeScript. Before working on Effect code, check if there's a relevant topic that covers your use case.
-
-- `effect-solutions list` - List all available topics
-- `effect-solutions show <slug...>` - Read one or more topics
-- `effect-solutions search <term>` - Search topics by keyword
-
-**Local Effect Source:** The Effect repository is cloned to `~/.local/share/effect-solutions/effect` for reference. Use this to explore APIs, find usage examples, and understand implementation details when the documentation isn't enough.
-<!-- effect-solutions:end -->
+```bash
+pnpm install         # Install dependencies (generates pnpm-lock.yaml)
+pnpm run prepare     # Setup language service and git hooks
+pnpm run setup:hooks # Install pre-push hook
+pnpm test            # Run all tests (vp test --run)
+pnpm run typecheck   # Type check only (tsc --noEmit)
+pnpm run verify      # Typecheck + tests (used by pre-push)
+pnpm run build       # Bundle entry with Vite Plus pack
+pnpm run fmt         # Format with vp fmt
+pnpm run lint        # Lint with vp lint
+```

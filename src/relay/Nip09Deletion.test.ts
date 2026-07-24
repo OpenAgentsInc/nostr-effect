@@ -1,9 +1,9 @@
 /**
  * NIP-09 Deletion (kind 5) integration test
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer, Stream, Option } from "effect"
-import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "./backends/node/index.js"
 import { RelayService, makeRelayService } from "../client/RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"

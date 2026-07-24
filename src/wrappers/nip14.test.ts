@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { withSubject, getSubject, replySubject } from "./nip14.js"
 
 describe("NIP-14 subject tag helpers", () => {

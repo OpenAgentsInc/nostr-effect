@@ -1,7 +1,7 @@
 /**
  * NIP Module System Tests
  */
-import { describe, it, expect } from "bun:test"
+import { describe, it, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import {
   type NipModule,

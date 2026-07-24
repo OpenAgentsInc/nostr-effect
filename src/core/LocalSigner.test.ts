@@ -1,7 +1,7 @@
 /**
  * LocalKeySigner / LocalSignerPort tests (OpenAgents #9092 Phase B)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { LocalKeySigner } from "./LocalSigner.js"
 import { privateKeyFromSeedWords } from "./Nip06.js"
 import { getPublicKey, verifyEvent } from "../wrappers/pure.js"

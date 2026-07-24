@@ -1,7 +1,7 @@
 /**
  * NIP-A0 module registration test (lettered spec)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { NipRegistry, NipRegistryLive } from "./core/nip/NipRegistry.js"
 import { DefaultModules } from "./core/nip/modules/index.js"

@@ -4,7 +4,7 @@
  * Covers: virtual membership happy path, missing/bad auth, non-member owner,
  * direct member bypass, and kind= not evaluated at admission.
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { schnorr } from "@noble/curves/secp256k1"
 import { bytesToHex } from "@noble/hashes/utils"

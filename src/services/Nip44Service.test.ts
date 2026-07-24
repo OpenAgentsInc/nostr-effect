@@ -3,7 +3,7 @@
  *
  * Test vectors from nostr-tools nip44.vectors.json
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import {
   Nip44Service,

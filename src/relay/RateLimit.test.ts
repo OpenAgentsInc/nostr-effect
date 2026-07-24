@@ -1,9 +1,9 @@
 /**
  * Relay rate limiting tests
  */
-import { describe, test, expect, beforeAll, afterAll } from "bun:test"
+import { describe, test, expect, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
-import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "./backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"
 import { makeRelayService, RelayService } from "../client/RelayService.js"

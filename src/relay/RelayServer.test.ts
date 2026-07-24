@@ -1,7 +1,7 @@
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Schema } from "effect"
-import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "./backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService"
 import { EventService, EventServiceLive } from "../services/EventService"
 import { EventKind, Tag, type NostrEvent, type RelayMessage, type PrivateKey } from "../core/Schema"
@@ -9,7 +9,9 @@ import { EventKind, Tag, type NostrEvent, type RelayMessage, type PrivateKey } f
 const decodeKind = Schema.decodeSync(EventKind)
 const decodeTag = Schema.decodeSync(Tag)
 
-// Helpers for WebSocket testing
+// Helpers for WebSocket testing.
+// The Node host may send a proactive NIP-42 AUTH frame on open. Skip AUTH
+// unless the caller explicitly wants the next frame of any type that matches.
 const connectToRelay = (port: number): Promise<WebSocket> => {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://localhost:${port}`)
@@ -22,13 +24,21 @@ const sendMessage = (ws: WebSocket, message: unknown): void => {
   ws.send(JSON.stringify(message))
 }
 
-const waitForMessage = (ws: WebSocket, timeout = 2000): Promise<RelayMessage> => {
+const waitForMessage = (
+  ws: WebSocket,
+  timeout = 2000,
+  accept: (msg: RelayMessage) => boolean = (msg) => msg[0] !== "AUTH"
+): Promise<RelayMessage> => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("Timeout")), timeout)
-    ws.onmessage = (event) => {
+    const onMessage = (event: MessageEvent) => {
+      const msg = JSON.parse(String(event.data)) as RelayMessage
+      if (!accept(msg)) return
       clearTimeout(timer)
-      resolve(JSON.parse(event.data as string))
+      ws.removeEventListener("message", onMessage)
+      resolve(msg)
     }
+    ws.addEventListener("message", onMessage)
   })
 }
 

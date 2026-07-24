@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-72 Moderated Communities
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, getPublicKey, verifyEvent } from "./pure.js"
 import {
   CommunityDefinitionKind,

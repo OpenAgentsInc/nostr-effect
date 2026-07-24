@@ -1,7 +1,7 @@
 /**
  * NIP-47: Nostr Wallet Connect Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   parseConnectionString,
   makeNwcRequestEvent,

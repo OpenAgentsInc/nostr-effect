@@ -3,7 +3,7 @@
  *
  * Test cases ported from nostr-tools nip19.test.ts for cross-implementation parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import {
   encodeNpub,

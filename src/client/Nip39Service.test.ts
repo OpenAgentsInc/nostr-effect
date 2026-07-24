@@ -2,7 +2,7 @@
  * NIP-39: External Identities Tests
  * Tests ported from nostr-tools for 100% parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { makeNip39Service } from "./Nip39Service.js"
 

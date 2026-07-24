@@ -1,8 +1,8 @@
 /**
  * Depth batch G: LiveKit JWT, Blossom BUD-03, OpenAgents builders
  */
-import { describe, test, expect } from "bun:test"
-import { mintLivekitJwt } from "./relay/backends/bun/BunServer.js"
+import { describe, test, expect } from "vite-plus/test"
+import { mintLivekitJwt } from "./relay/backends/node/index.js"
 import {
   BLOSSOM_USER_SERVER_LIST_KIND,
   buildUserServerListTags,

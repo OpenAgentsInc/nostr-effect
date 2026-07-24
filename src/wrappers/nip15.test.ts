@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-15 Nostr Marketplace
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import {
   StallKind,

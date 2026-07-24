@@ -1,7 +1,7 @@
 /**
  * NIP-10: Thread/Reply Parsing Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { parse, isReply, isRoot, getReplyToId, getRootId } from "./Nip10Service.js"
 
 describe("NIP-10: Thread/Reply Parsing", () => {

@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-08 Handling Mentions helpers
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { buildMentionedContent } from "./nip08.js"
 
 describe("NIP-08 Handling Mentions", () => {

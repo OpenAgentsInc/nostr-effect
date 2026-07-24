@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-17: Private Direct Messages
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Nip17Service, Nip17ServiceLive, CHAT_MESSAGE_KIND, FILE_MESSAGE_KIND, DM_INBOX_RELAYS_KIND } from "./Nip17Service.js"
 import type { FileMetadata } from "./Nip17Service.js"

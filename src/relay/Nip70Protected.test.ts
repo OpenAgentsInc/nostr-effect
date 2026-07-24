@@ -1,9 +1,9 @@
 /**
  * NIP-70 Protected Events: ensure default behavior rejects events with ["-"] when no AUTH is configured.
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
-import { startTestRelay, type RelayHandle } from "./backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "./backends/node/index.js"
 import { RelayService, makeRelayService } from "../client/RelayService.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../services/EventService.js"

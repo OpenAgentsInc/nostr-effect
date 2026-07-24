@@ -1,7 +1,7 @@
 /**
  * NIP-54: Wiki Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { normalizeIdentifier } from "./Nip54.js"
 
 describe("NIP-54: Wiki", () => {

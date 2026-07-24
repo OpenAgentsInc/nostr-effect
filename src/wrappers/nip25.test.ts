@@ -1,7 +1,7 @@
 /**
  * NIP-25 Wrapper Tests (Pure helpers)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { finishReactionEvent, getReactedEventPointer, REACTION_KIND } from "./nip25.js"
 import type { Event } from "./nip25.js"
 

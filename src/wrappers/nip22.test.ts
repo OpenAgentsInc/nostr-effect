@@ -1,8 +1,8 @@
 /**
  * Tests for NIP-22 Comment (kind 1111)
  */
-import { describe, test, expect } from "bun:test"
-import { generateSecretKey, verifyEvent } from "./pure.js"
+import { describe, test, expect } from "vite-plus/test"
+import { finalizeEvent, generateSecretKey, verifyEvent } from "./pure.js"
 import { signCommentEvent, CommentKind, buildCommentEvent } from "./nip22.js"
 
 describe("NIP-22 Comment (kind 1111)", () => {
@@ -89,7 +89,6 @@ describe("NIP-22 Comment (kind 1111)", () => {
 })
 
 function finalizeAndVerify(t: ReturnType<typeof buildCommentEvent>, sk: Uint8Array) {
-  const { finalizeEvent, verifyEvent } = require("./pure.js")
   const evt = finalizeEvent(t, sk)
   expect(verifyEvent(evt)).toBe(true)
   return evt

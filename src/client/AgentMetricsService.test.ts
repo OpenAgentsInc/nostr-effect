@@ -13,7 +13,7 @@
  * - created_at defaults from payload timestamp
  * - the recommended subscription filter shape
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import {
   AgentMetricsService,

@@ -3,7 +3,7 @@
  *
  * These tests verify multi-relay subscription and event delivery.
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { SimplePool } from "./pool.js"
 
 // Use real relays for integration test
@@ -34,7 +34,7 @@ describe("SimplePool", () => {
 
       // At least one relay should connect
       expect(connected).toBeGreaterThan(0)
-    }, { timeout: 20000 })
+    }, 20000)
 
     test("receives events from multiple relays via subscribe", async () => {
       const pool = new SimplePool()
@@ -96,7 +96,7 @@ describe("SimplePool", () => {
       // Verify relay info is provided
       const eventsWithRelay = receivedEvents.filter(e => e.relay)
       expect(eventsWithRelay.length).toBe(receivedEvents.length)
-    }, { timeout: 20000 })
+    }, 20000)
 
     test("querySync returns events from multiple relays", async () => {
       const pool = new SimplePool()
@@ -112,7 +112,7 @@ describe("SimplePool", () => {
       pool.destroy()
 
       expect(events.length).toBeGreaterThan(0)
-    }, { timeout: 20000 })
+    }, 20000)
   })
 
   describe("event deduplication", () => {
@@ -152,7 +152,7 @@ describe("SimplePool", () => {
 
       // Should have no duplicates
       expect(receivedIds.length).toBe(uniqueIds.size)
-    }, { timeout: 20000 })
+    }, 20000)
   })
 
   describe("connection handling", () => {
@@ -170,7 +170,7 @@ describe("SimplePool", () => {
 
       // Should still get events from good relays
       expect(events.length).toBeGreaterThan(0)
-    }, { timeout: 20000 })
+    }, 20000)
 
     test("listConnectionStatus shows correct states", async () => {
       const pool = new SimplePool()
@@ -185,6 +185,6 @@ describe("SimplePool", () => {
       expect(status.get(TEST_RELAYS[0]!.replace(/\/$/, ""))).toBe(true)
 
       pool.destroy()
-    }, { timeout: 10000 })
+    }, 10000)
   })
 })

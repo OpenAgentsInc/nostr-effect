@@ -1,7 +1,7 @@
 /**
  * Tests for AgentAuthService (NIP-AA client helpers).
  */
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import {
   AgentAuthService,

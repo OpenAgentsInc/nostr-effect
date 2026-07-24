@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 # Pre-push hook: Ensures typecheck and tests pass before pushing.
-# Install with: bun run setup:hooks
+# Install with: pnpm run setup:hooks
 #
 
 echo "Running pre-push checks..."
 
 # Run typecheck and tests
-bun run verify
+pnpm run verify
 status=$?
 
 if [ $status -ne 0 ]; then

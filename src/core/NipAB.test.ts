@@ -4,7 +4,7 @@
  * Includes normative crypto test vectors from the NIP-AB specification
  * and a full source↔target protocol happy path.
  */
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vite-plus/test"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"
 import {

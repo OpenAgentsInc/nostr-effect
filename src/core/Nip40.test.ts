@@ -1,7 +1,7 @@
 /**
  * NIP-40: Expiration Timestamp Tests
  */
-import { describe, test, expect, mock } from "bun:test"
+import { describe, test, expect, vi } from "vite-plus/test"
 import {
   getExpiration,
   isEventExpired,
@@ -70,7 +70,7 @@ describe("NIP-40: Expiration Timestamp", () => {
   describe("onExpire", () => {
     test("calls the callback when the event expires", async () => {
       const event = buildEvent({ tags: [["expiration", "123"]] })
-      const callback = mock(() => {})
+      const callback = vi.fn(() => {})
       onExpire(event, callback)
       await new Promise((resolve) => setTimeout(resolve, 200))
       expect(callback).toHaveBeenCalled()
@@ -78,7 +78,7 @@ describe("NIP-40: Expiration Timestamp", () => {
 
     test("does not throw for events without expiration", async () => {
       const event = buildEvent({ tags: [] })
-      const callback = mock(() => {})
+      const callback = vi.fn(() => {})
       // Should not throw
       onExpire(event, callback)
       await new Promise((resolve) => setTimeout(resolve, 100))

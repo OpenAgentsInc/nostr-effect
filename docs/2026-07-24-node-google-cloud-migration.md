@@ -2,7 +2,7 @@
 
 - Class: migration plan
 - Date: 2026-07-24
-- Status: Stages 1–3 done (host + Node/Cloud SQL stores), Stages 4–5 planned
+- Status: Stages 1–4 done (host, Node/Cloud SQL stores, pnpm/Vite Plus), Stage 5 planned
 - Direction: owner, 2026-07-24
 - Consumer plan: `openagents` `docs/omega/2026-07-24-sarah-workroom-mvp-spec.md`
   Part 2
@@ -98,32 +98,26 @@ surviving process restart, duplicate insert idempotency, and replaceable
 events replacing only older events. PostgresStore tests run when
 DATABASE_URL is set.
 
-## Stage 4: replace the Bun toolchain
+## Stage 4: replace the Bun toolchain — DONE 2026-07-24 (SARAH-NR-01c / #167)
 
-This is the largest stage. The current state is 146 test files on `bun:test`
-out of 373 source files, plus `bun` in every package script and `"types":
-["bun"]` in the typecheck configuration.
+Completed:
 
-Work:
+1. pnpm + Node 24 adopted. `bun.lock` deleted. `pnpm-lock.yaml` is the lockfile.
+2. Vite Plus `0.2.4` with monorepo-matching `vite.config.ts`. Scripts use
+   `vp test`, `vp pack`, `vp fmt`, and `vp lint`. Typecheck stays on `tsc`.
+3. All test files import from `vite-plus/test` (was `bun:test`). Exceptions
+   (`mock` → `vi.fn`, `spyOn` → `vi.spyOn`) converted.
+4. `@types/bun` removed. `@types/node@24.13.1` added. `"types": ["node"]` with
+   `"lib": ["ESNext", "DOM"]` so web platform globals stay available without a
+   vendor types package.
+5. `src/relay/backends/bun/` deleted. `src/relay/main.ts` uses the Node host.
+   Package export `./relay/bun` removed. All `startTestRelay` tests use
+   `relay/backends/node`.
+6. Build scripts use `vp pack` on Node.
+7. `AGENTS.md` / `CLAUDE.md` instruct Node 24, pnpm, and Vite Plus only.
 
-1. Adopt pnpm and Node 24 to match the `openagents` monorepo. Delete
-   `bun.lock`.
-2. Adopt Vite Plus. Add a `vite.config.ts` in the shape the monorepo uses and
-   move `test`, `typecheck`, `lint`, and `fmt` onto `vp`.
-3. Convert the 146 test files from `bun:test` to the Vite Plus test runner.
-   The import site is the only difference for most files, so convert
-   mechanically and review the exceptions.
-4. Replace `@types/bun` with `@types/node` and set `"types": ["node"]`.
-5. Delete `src/relay/backends/bun/` and `src/relay/main.ts` Bun entry
-   behavior. Replace the entry with a Node entry.
-6. Replace the `bun build` scripts with the Vite Plus build.
-7. Rewrite `AGENTS.md` and `CLAUDE.md`. Both currently instruct agents to
-   prefer Bun over Node, `bun:sqlite` over other drivers, `Bun.serve` over a
-   server library, and `bun test` over a test runner. Those instructions must
-   invert.
-
-Exit: no `bun` binary, no `bun:` import, no `Bun.` API call, and no
-`@types/bun` reference in the tracked tree. `pnpm run verify` is green.
+Exit met: no `bun` binary required, no `bun:` import, no `Bun.` API call, and
+no `@types/bun` in the tracked tree. `pnpm run verify` is green.
 
 ## Stage 5: deploy to Google Cloud
 

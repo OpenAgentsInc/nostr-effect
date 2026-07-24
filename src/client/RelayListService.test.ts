@@ -1,11 +1,11 @@
 /**
  * Tests for RelayListService (NIP-65)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { RelayListService, RelayListServiceLive, type RelayEntry } from "./RelayListService.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 

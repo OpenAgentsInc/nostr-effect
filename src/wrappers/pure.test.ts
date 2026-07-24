@@ -4,7 +4,7 @@
  * These tests verify nostr-tools compatibility for key generation,
  * event signing, and signature verification.
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   generateSecretKey,
   getPublicKey,

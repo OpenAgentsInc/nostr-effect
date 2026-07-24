@@ -1,7 +1,7 @@
 /**
  * NIP-04: Encrypted Direct Message Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { encrypt, decrypt } from "./Nip04.js"
 import { schnorr } from "@noble/curves/secp256k1"
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils"

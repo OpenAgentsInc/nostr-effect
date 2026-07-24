@@ -2,7 +2,7 @@
  * NIP-58: Badges Tests
  * Tests ported from nostr-tools for 100% parity + kind 10008 / 30008 updates
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   makeNip58Service,
   BADGE_DEFINITION_KIND,

@@ -56,7 +56,7 @@ export {
 }
 
 // Durable stores are separate entry points so this host barrel stays free of
-// `node:sqlite` / `postgres` and can load under bun:test:
+// `node:sqlite` / `postgres` and can load under the Node test runner:
 //   nostr-effect/relay/node/sqlite
 //   nostr-effect/relay/node/postgres
 
@@ -152,7 +152,7 @@ export const startRelay = async (
 }
 
 /**
- * Layer helper without AuthService (matches Bun MessageHandlerWithRegistry shape).
+ * Layer helper without AuthService (MessageHandlerWithRegistry only).
  * Useful when a caller wants NIP modules but host-local AUTH is unwanted.
  */
 export const makeMemoryRelayLayerWithNipsNoAuth = (

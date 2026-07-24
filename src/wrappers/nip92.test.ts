@@ -1,7 +1,7 @@
 /**
  * NIP-92: Media Attachments (imeta) tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { buildImetaTag, parseImetaTag, extractContentImetas } from "./nip92.js"
 
 describe("NIP-92 imeta helpers", () => {

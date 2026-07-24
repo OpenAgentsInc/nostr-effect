@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test"
+import { test, expect, describe } from "vite-plus/test"
 import { addProxyTag, getProxyTags } from "./nip48.js"
 
 describe("NIP-48 proxy tags", () => {

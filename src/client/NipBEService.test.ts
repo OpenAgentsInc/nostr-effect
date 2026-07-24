@@ -1,7 +1,7 @@
 /**
  * NipBEService tests (NIP-BE BLE framing)
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { Effect } from "effect"
 import { NipBEService, NipBEServiceLive, DEFAULT_CHUNK_SIZE, MAX_MESSAGE_BYTES } from "./NipBEService.js"
 

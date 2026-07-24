@@ -1,7 +1,7 @@
 /**
  * Minimal runtime test exercising NIP-07 type shape via a mock provider
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { type WindowNostr } from "./nip07.js"
 import { finalizeEvent, generateSecretKey, getPublicKey, verifyEvent } from "./pure.js"
 

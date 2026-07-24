@@ -8,6 +8,10 @@
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.d.ts",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=24"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenAgentsInc/nostr-effect.git"
@@ -24,7 +28,6 @@
     "./pure": "./src/wrappers/pure.ts",
     "./pool": "./src/wrappers/pool.ts",
     "./relay": "./src/relay/index.ts",
-    "./relay/bun": "./src/relay/backends/bun/index.ts",
     "./relay/node": "./src/relay/backends/node/index.ts",
     "./relay/node/sqlite": "./src/relay/backends/node/sqlite.ts",
     "./relay/node/postgres": "./src/relay/backends/node/postgres.ts",
@@ -105,13 +108,16 @@
   },
   "scripts": {
     "prepare": "node scripts/prepare.mjs",
-    "setup:hooks": "mkdir -p .git/hooks && cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push",
-    "test": "bun test",
+    "setup:hooks": "bash scripts/setup-hooks.sh",
+    "test": "vp test --run",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
-    "verify": "bun run typecheck && bun test",
-    "build:check": "rm -rf /tmp/nostr-effect-build-check && bun build src/index.ts --outdir /tmp/nostr-effect-build-check --target node",
-    "build": "bun build src/index.ts --outdir dist --target node",
-    "release": "bun run verify && git tag v$(bun -e \"console.log(require('./package.json').version)\") && git push && git push --tags",
+    "verify": "pnpm run typecheck && pnpm run test",
+    "build:check": "vp pack src/index.ts --out-dir /tmp/nostr-effect-build-check --platform node --target esnext --no-dts",
+    "build": "vp pack src/index.ts --out-dir dist --platform node --target esnext --no-dts",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "lint": "vp lint",
+    "release": "pnpm run verify && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
     "publish:npm": "npm publish --provenance --access public"
   },
   "keywords": [
@@ -136,10 +142,12 @@
   },
   "devDependencies": {
     "@effect/language-service": "0.86.2",
-    "@types/bun": "1.1.14",
+    "@types/node": "24.13.1",
     "@types/ws": "8.18.1",
     "tsx": "4.23.1",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4",
+    "vite-plus": "0.2.4"
   },
   "dependencies": {
     "@noble/ciphers": "1.2.1",

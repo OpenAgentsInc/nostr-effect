@@ -1,7 +1,7 @@
 /**
  * Final parity-100 coverage for remaining polish items
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   buildPutUserTemplate,
   buildRemoveUserTemplate,

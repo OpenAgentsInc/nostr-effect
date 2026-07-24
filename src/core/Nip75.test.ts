@@ -1,7 +1,7 @@
 /**
  * NIP-75: Zap Goals Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   generateGoalEventTemplate,
   validateZapGoalEvent,

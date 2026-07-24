@@ -2,7 +2,7 @@
  * NIP-30: Custom Emoji Tests
  * Tests ported from nostr-tools for 100% parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { matchAll, replaceAll } from "./Nip30.js"
 
 describe("NIP-30: Custom Emoji", () => {

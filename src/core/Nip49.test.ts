@@ -1,7 +1,7 @@
 /**
  * NIP-49: Private Key Encryption Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { decrypt, encrypt, type KeySecurityByte } from "./Nip49.js"
 import { hexToBytes } from "@noble/hashes/utils"
 

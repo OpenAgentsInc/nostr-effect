@@ -2,7 +2,7 @@
  * IdentityKeys tests — OpenAgents #9092 Phase B
  * Uses only fixture mnemonics (never live secrets).
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { IdentityKeys } from "./IdentityKeys.js"
 import {
   OPENAGENTS_LEGACY_IDENTITY_PROFILE,

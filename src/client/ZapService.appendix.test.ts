@@ -1,7 +1,7 @@
 /**
  * NIP-57 Appendix F/G tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   validateZapReceipt,
   parseZapSplitTags,

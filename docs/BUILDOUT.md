@@ -31,7 +31,7 @@ src/
 - **Core**: Schema.ts (NIP-01 types), Errors.ts, Nip19.ts (bech32 encoding)
 - **Services**: CryptoService, EventService, Nip44Service (NIP-44 versioned encryption)
 - **Relay**: EventStore, SubscriptionManager, MessageHandler, RelayServer, PolicyPipeline, NIP-16/33 Replaceable Events, NIP-11 Relay Info, NIP Module System, Timestamp Limits, ConnectionManager, NIP-42 Authentication (AuthService)
-- **Relay Backends**: Bun SQLite (retiring). The Node and Cloud SQL backends are planned in `2026-07-24-node-google-cloud-migration.md`. The Cloudflare backend was deleted on 2026-07-24.
+- **Relay Backends**: Node host (`node:http` + `ws`), Node SQLite (`node:sqlite`), and Cloud SQL Postgres. Bun and Cloudflare backends are deleted. See `2026-07-24-node-google-cloud-migration.md`.
 - **Client**: RelayService (WebSocket connection management), RelayPool (multi-relay orchestration), FollowListService (NIP-02), RelayListService (NIP-65), HandlerService (NIP-89), DVMService (NIP-90), ChatService (NIP-28), ZapService (NIP-57), Nip05Service (NIP-05 verification), MintDiscoverabilityService (NIP-87), AppDataService (NIP-78)
 
 ### Open Issues

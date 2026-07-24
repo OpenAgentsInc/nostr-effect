@@ -3,7 +3,7 @@
  *
  * Test cases ported from nostr-tools filter.test.ts for cross-implementation parity
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { matchesFilter, matchesFilters } from "./core/FilterMatcher.js"
 import {
   type NostrEvent,

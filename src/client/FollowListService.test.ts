@@ -1,12 +1,12 @@
 /**
  * Tests for FollowListService (NIP-02)
  */
-import { test, expect, describe, beforeAll, afterAll } from "bun:test"
+import { test, expect, describe, beforeAll, afterAll } from "vite-plus/test"
 import { Effect, Layer } from "effect"
 import { Schema } from "effect"
 import { FollowListService, FollowListServiceLive, type Follow } from "./FollowListService.js"
 import { RelayService, makeRelayService } from "./RelayService.js"
-import { startTestRelay, type RelayHandle } from "../relay/backends/bun/index.js"
+import { startTestRelay, type RelayHandle } from "../relay/backends/node/index.js"
 import { CryptoService, CryptoServiceLive } from "../services/CryptoService.js"
 import { EventServiceLive } from "../services/EventService.js"
 import { PublicKey } from "../core/Schema.js"

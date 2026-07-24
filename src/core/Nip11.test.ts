@@ -1,7 +1,7 @@
 /**
  * NIP-11: Relay Information Document Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   fetchRelayInformation,
   useFetchImplementation,

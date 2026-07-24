@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-64 Chess (PGN) notes
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { generateSecretKey, verifyEvent } from "./pure.js"
 import { ChessKind, signChessEvent, buildChessEvent } from "./nip64.js"
 

@@ -1,7 +1,7 @@
 /**
  * Tests for NIP-96 HTTP File Storage wrapper
  */
-import { describe, test, expect, afterEach } from "bun:test"
+import { describe, test, expect, afterEach } from "vite-plus/test"
 import { generateSecretKey } from "./pure.js"
 import { fetchNip96Info, uploadFile, pollProcessing, deleteFile, signerFromSecretKey } from "./nip96.js"
 

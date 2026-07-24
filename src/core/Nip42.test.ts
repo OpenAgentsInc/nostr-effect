@@ -1,7 +1,7 @@
 /**
  * NIP-42: Client Authentication Tests
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import { makeAuthEvent, CLIENT_AUTH_KIND } from "./Nip42.js"
 
 describe("NIP-42: Client Authentication", () => {

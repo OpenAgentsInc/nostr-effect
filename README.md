@@ -9,7 +9,7 @@ We want the entire Nostr protocol—client library and relay—implemented in fu
 ## Installation
 
 ```bash
-bun add nostr-effect
+pnpm add nostr-effect
 # or
 npm install nostr-effect
 ```

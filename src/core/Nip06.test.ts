@@ -2,7 +2,7 @@
  * NIP-06: Key Derivation from Mnemonic Seed Phrase Tests
  * Official NIP-06 vectors + nostr-tools parity + OpenAgents #9092 empty-passphrase path
  */
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect } from "vite-plus/test"
 import {
   privateKeyFromSeedWords,
   accountFromSeedWords,
