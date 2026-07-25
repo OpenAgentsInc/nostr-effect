@@ -112,13 +112,15 @@
     "test": "vp test --run",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "infra-gates": "tsx scripts/check-infra-gates.ts",
-    "verify": "pnpm run typecheck && pnpm run infra-gates && pnpm run test",
+    "check:no-github-actions": "tsx scripts/check-no-github-actions.ts",
+    "verify": "pnpm run typecheck && pnpm run check:no-github-actions && pnpm run infra-gates && pnpm run test",
+    "verify:postgres": "bash scripts/verify-with-postgres.sh",
     "build:check": "vp pack src/index.ts --out-dir /tmp/nostr-effect-build-check --platform node --target esnext --no-dts",
     "build": "vp pack src/index.ts --out-dir dist --platform node --target esnext --no-dts",
     "fmt": "vp fmt",
     "fmt:check": "vp fmt --check",
     "lint": "vp lint",
-    "release": "pnpm run verify && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
+    "release": "pnpm run verify:postgres && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
     "publish:npm": "npm publish --provenance --access public"
   },
   "keywords": [

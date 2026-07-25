@@ -7,9 +7,12 @@
  *
  * That requirement used to be satisfied by skipping. It is now satisfied by
  * failing: `describeRequiringEnv` runs the suite when `DATABASE_URL` is set,
- * and in CI turns an unset `DATABASE_URL` into a red run instead of an absent
- * one. CI provisions a `postgres:17` service container (matching the Cloud SQL
- * major version behind the relay), so the suite always runs there.
+ * and on an automated runner turns an unset `DATABASE_URL` into a red run
+ * instead of an absent one.
+ *
+ * To actually run it: `pnpm run verify:postgres`, which provisions a throwaway
+ * Postgres 17 (matching the Cloud SQL major version behind the relay), runs
+ * verify against it, and tears it down.
  */
 import { expect, test } from "vite-plus/test"
 import { Effect, Layer, Schema } from "effect"

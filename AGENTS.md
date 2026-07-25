@@ -33,11 +33,32 @@ Rules for all work:
 - Production secrets come from Google Secret Manager at runtime. Never commit
   a secret and never place one in an event, a tag, or a log.
 
-Verification gate for every change:
+Read [`INVARIANTS.md`](INVARIANTS.md) before changing build, test, automation,
+or storage-verification behavior.
+
+Verification gates:
 
 ```bash
-pnpm run verify   # typecheck + infra gates + vp test --run
+pnpm run verify            # typecheck + no-github-actions + infra gates + vp test --run
+pnpm run verify:postgres   # the above, against a real Postgres 17 it provisions
 ```
+
+`verify` is the gate for every change. `verify:postgres` is the gate for
+storage changes and for cutting a release — it is the only one of the two that
+actually covers the relay's production store.
+
+### No GitHub-hosted CI
+
+Never add a GitHub Actions workflow to this repository. CI, scheduled jobs, and
+any recurring automation run on OpenAgents-owned infrastructure (our GCE /
+cloud runners and cron), not on GitHub-hosted compute. Enforced by
+`pnpm run check:no-github-actions`, inside `verify`. See
+[`INVARIANTS.md`](INVARIANTS.md), including the one documented exception
+(`release.yml`, the current npm publish path, pending an owner decision).
+
+If you need the full suite run against a real database, that is
+`pnpm run verify:postgres`, invoked by a person, an agent, or an owned runner —
+not a workflow file.
 
 ### Infrastructure-gated suites must never skip silently
 
@@ -48,7 +69,7 @@ A suite that quietly skips when its dependency is missing is worse than no
 suite: the run goes green and the layer it protects is untested.
 relay.openagents.com shipped a tag-encoding defect that corrupted 3823 rows
 while a test that catches it sat in the tree, skipped, because `DATABASE_URL`
-was unset in CI and nothing said so.
+was unset and nothing said so.
 
 So:
 
@@ -56,14 +77,17 @@ So:
   and gate the suite with `describeRequiringEnv("VAR")`. Do not reach for
   `describe.skip` plus an ad hoc `process.env` check — that is the exact shape
   that failed.
-- CI provisions a `postgres:17` service container (matching Cloud SQL
-  `khala-sync-pg` behind the relay) and sets `DATABASE_URL`, so the suite runs
-  on every push and PR.
-- With a gate unmet, CI **fails**; locally it skips after printing a banner
-  naming the uncovered layer. `ALLOW_SKIPPED_INFRA_TESTS=1` is the only way to
-  skip under CI, and it has to be typed on purpose.
-- To run the Postgres suite locally, point `DATABASE_URL` at any throwaway
-  Postgres 17 database.
+- Run `pnpm run verify:postgres` to cover the Postgres suite. It stands up a
+  throwaway Postgres 17 (matching Cloud SQL `khala-sync-pg` behind the relay),
+  sets `DATABASE_URL`, runs preflight → `verify` → postflight, and tears the
+  database down afterwards. It needs `brew install postgresql@17`,
+  `apt-get install postgresql-17`, or a running Docker daemon; set
+  `DATABASE_URL` yourself to point it at an existing throwaway database
+  instead.
+- With a gate unmet, a run with `CI` set **fails**; without it the run skips
+  after printing a banner naming the uncovered layer.
+  `ALLOW_SKIPPED_INFRA_TESTS=1` is the only way to skip under `CI`, and it has
+  to be typed on purpose.
 
 ## Code Style
 
@@ -343,7 +367,10 @@ pnpm run setup:hooks # Install pre-push hook
 pnpm test            # Run all tests (vp test --run)
 pnpm run typecheck   # Type check only (tsc --noEmit)
 pnpm run infra-gates # Report/enforce env-gated suites (see Testing)
-pnpm run verify      # Typecheck + infra gates + tests (used by pre-push)
+pnpm run check:no-github-actions  # Enforce the no-GitHub-CI invariant
+pnpm run verify      # Typecheck + invariant checks + tests (used by pre-push)
+pnpm run verify:postgres  # verify against a real Postgres 17 it provisions
+                          # and tears down; required for storage changes
 pnpm run build       # Bundle entry with Vite Plus pack
 pnpm run fmt         # Format with vp fmt
 pnpm run lint        # Lint with vp lint

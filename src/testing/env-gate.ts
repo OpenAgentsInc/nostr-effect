@@ -5,6 +5,11 @@
  * no suite at all: the run reports green and the layer it was written to
  * protect is untested, so the green is a lie.
  *
+ * "CI" here means any automated run on OpenAgents-owned infrastructure — our
+ * runners, our cron, `pnpm run verify:postgres` in a session — signalled by the
+ * conventional `CI` variable. It does not mean GitHub Actions: per
+ * INVARIANTS.md this repo has no GitHub-hosted CI.
+ *
  * This is not hypothetical. relay.openagents.com shipped a tag-encoding defect
  * that stored `tags` as a jsonb scalar string, broke every `#p` / `#e` / `#t`
  * filter with `StorageError`, and needed a migration over 3823 corrupted rows.
@@ -52,9 +57,10 @@ export const INFRA_GATES = {
       "single-letter tag filters (#e/#p/#t/#d), and the startup repair for rows " +
       "whose tags were written as a jsonb scalar string",
     howToRun:
-      "CI runs a postgres:17 service container (matching Cloud SQL " +
-      "khala-sync-pg behind relay.openagents.com); locally, point DATABASE_URL " +
-      "at any throwaway Postgres 17 database.",
+      "Run `pnpm run verify:postgres`: it stands up a throwaway Postgres 17 " +
+      "(matching Cloud SQL khala-sync-pg behind relay.openagents.com), sets " +
+      "DATABASE_URL, runs verify, and tears it down. Or set DATABASE_URL " +
+      "yourself to point at any throwaway Postgres 17 database.",
   },
 } as const satisfies Record<string, EnvGateOptions>
 
@@ -64,8 +70,8 @@ export type InfraGate = keyof typeof INFRA_GATES
 export type SuiteRunner = (name: string, body: () => void) => void
 
 /**
- * True on GitHub Actions and on every other runner that follows the
- * convention of exporting `CI`.
+ * True on any automated runner that follows the convention of exporting `CI` —
+ * our own runners, cron jobs, and scripted verification lanes.
  */
 export const isCi = (): boolean => {
   const ci = process.env["CI"]

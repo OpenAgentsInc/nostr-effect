@@ -13,29 +13,19 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
-    # A release must not publish on a verify that skipped the relay's
-    # production storage backend, so the release job gets the same real
-    # Postgres as CI. See .github/workflows/ci.yml for why.
-    services:
-      postgres:
-        # Matches Cloud SQL openagentsgemini:us-central1:khala-sync-pg
-        # (POSTGRES_17), the instance behind relay.openagents.com.
-        image: postgres:17
-        env:
-          # Throwaway, job-scoped, not a credential to anything persistent.
-          POSTGRES_USER: nostr_effect_ci
-          POSTGRES_PASSWORD: nostr_effect_ci
-          POSTGRES_DB: nostr_effect_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U nostr_effect_ci -d nostr_effect_ci"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-
+    # This workflow predates INVARIANTS.md "No GitHub-Hosted CI" and survives
+    # only because it is currently the sole npm publish path (npm OIDC identity
+    # + GitHub Release). Retiring it onto owned infrastructure is an owner
+    # decision; see scripts/check-no-github-actions.ts. Do NOT add jobs,
+    # triggers, or service containers here — new automation goes on our runners.
+    #
+    # The verify below therefore cannot provision a database: the full run
+    # against a real Postgres 17 happens on owned infrastructure via
+    # `pnpm run verify:postgres`, which `pnpm run release` runs before it will
+    # cut the tag that triggers this workflow. That skip is stated out loud
+    # rather than left to an unset variable.
     env:
-      DATABASE_URL: postgres://nostr_effect_ci:nostr_effect_ci@127.0.0.1:5432/nostr_effect_ci
+      ALLOW_SKIPPED_INFRA_TESTS: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -53,14 +43,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Confirm Postgres is reachable and is version 17
-        run: node scripts/ci-postgres-preflight.mjs
-
       - name: Run tests
         run: pnpm run verify
-
-      - name: Prove the Postgres suite actually exercised the database
-        run: node scripts/ci-postgres-postflight.mjs
 
       - name: Extract version from tag
         id: version

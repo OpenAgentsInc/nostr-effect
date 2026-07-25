@@ -1,8 +1,8 @@
 /**
- * CI postflight: prove the Postgres suite really talked to the database.
+ * Postflight: prove the Postgres suite really talked to the database.
  *
  * `pnpm run verify` exiting 0 does not by itself mean the storage layer was
- * covered — that was exactly the failure mode this workflow exists to close.
+ * covered — that was exactly the failure mode this gate exists to close.
  * The PostgresStore suite calls `openPostgresStore`, whose `initSchema`
  * creates the `events` table and its indexes. If the suite ran, that table is
  * here. If it was skipped, deleted, or repointed at another database, it is
@@ -24,7 +24,7 @@ try {
   `
   if (!table.present) {
     console.error(
-      "The `events` table does not exist in the CI database.\n" +
+      "The `events` table does not exist in the verification database.\n" +
         "`pnpm run verify` passed without the PostgresStore suite ever opening " +
         "a store, so the relay's production storage backend went untested and " +
         "this run's green means nothing. Check that the suite still runs and " +

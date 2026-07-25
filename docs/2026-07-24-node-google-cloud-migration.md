@@ -100,10 +100,13 @@ DATABASE_URL is set.
 
 Amended 2026-07-25: "run when DATABASE_URL is set" was the whole problem —
 DATABASE_URL was never set anywhere automated, so the suite never ran and the
-tag-encoding defect (#170) reached production. CI now provisions a
-`postgres:17` service container so the suite always runs, and an unmet gate
-fails CI instead of skipping. See `.github/workflows/ci.yml` and
-`src/testing/env-gate.ts`.
+tag-encoding defect (#170) reached production. `pnpm run verify:postgres` now
+provisions a throwaway Postgres 17 (matching Cloud SQL `khala-sync-pg`), sets
+DATABASE_URL, and runs preflight → verify → postflight, so the suite is
+runnable and actually run; an unmet gate fails an automated run instead of
+skipping. It runs on machines we own, invoked by a person, an agent, or an
+owned runner — this repo has no GitHub-hosted CI (see `INVARIANTS.md`). See
+`scripts/verify-with-postgres.sh` and `src/testing/env-gate.ts`.
 
 ## Stage 4: replace the Bun toolchain — DONE 2026-07-24 (SARAH-NR-01c / #167)
 
