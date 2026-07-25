@@ -27,6 +27,8 @@ export interface AuthResult {
 
 export interface AuthService {
   readonly _tag: "AuthService"
+  /** Whether this deployment requires authentication for group writes. */
+  readonly authRequired: boolean
 
   /**
    * Get or create a challenge for a connection
@@ -156,6 +158,7 @@ const make = (config: Nip42Config) =>
 
     return {
       _tag: "AuthService" as const,
+      authRequired: config.authRequired === true,
       getChallenge,
       createChallenge,
       handleAuth,

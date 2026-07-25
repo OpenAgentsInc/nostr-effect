@@ -114,6 +114,8 @@ export const RelayInfo = Schema.Struct({
   contact: Schema.optional(Schema.String),
   /** List of supported NIP numbers */
   supported_nips: Schema.optional(Schema.Array(Schema.Number)),
+  /** Event kinds accepted by this relay deployment */
+  supported_kinds: Schema.optional(Schema.Array(Schema.Number)),
   /** Relay software URL */
   software: Schema.optional(Schema.String),
   /** Software version string */

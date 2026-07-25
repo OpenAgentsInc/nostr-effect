@@ -164,6 +164,8 @@ export interface GroupRecord {
   readonly invites: ReadonlySet<string>
   /** Supported content kinds; empty means all kinds when unset */
   readonly supportedKinds?: readonly number[]
+  /** Ordered event and address references mirrored by kind 39005. */
+  readonly pinnedReferences: readonly (readonly ["e" | "a", string])[]
 }
 
 export interface GroupPolicyConfig {
@@ -464,6 +466,8 @@ export class GroupPolicyEngine {
     readonly isHidden?: boolean
     readonly creatorRoles?: readonly string[]
     readonly creatorCapabilityGrants?: readonly string[]
+    readonly supportedKinds?: readonly number[]
+    readonly pinnedReferences?: readonly (readonly ["e" | "a", string])[]
   }): AdmitDecision {
     if (this.groups.has(params.id) && !this.groups.get(params.id)!.deleted) {
       return { admit: false, reason: "duplicate: group already exists" }
@@ -494,6 +498,10 @@ export class GroupPolicyEngine {
       deleted: false,
       members,
       invites: new Set(),
+      ...(params.supportedKinds !== undefined
+        ? { supportedKinds: [...params.supportedKinds] }
+        : {}),
+      pinnedReferences: [...(params.pinnedReferences ?? [])],
     }
     this.groups.set(params.id, record)
     return { admit: true }
@@ -610,13 +618,20 @@ export class GroupPolicyEngine {
     readonly isClosed?: boolean
     readonly isRestricted?: boolean
     readonly isHidden?: boolean
+    readonly supportedKinds?: readonly number[]
+    /** Remove supportedKinds when the full metadata event omits the tag. */
+    readonly replaceSupportedKinds?: boolean
   }): AdmitDecision {
     const g = this.groups.get(params.groupId)
     if (!g || g.deleted) {
       return { admit: false, reason: "restricted: group not found" }
     }
+    const {
+      supportedKinds: _supportedKinds,
+      ...groupWithoutSupportedKinds
+    } = g
     this.groups.set(params.groupId, {
-      ...g,
+      ...groupWithoutSupportedKinds,
       ...(params.name !== undefined ? { name: params.name } : {}),
       ...(params.about !== undefined ? { about: params.about } : {}),
       ...(params.picture !== undefined ? { picture: params.picture } : {}),
@@ -627,6 +642,13 @@ export class GroupPolicyEngine {
         ? { isRestricted: params.isRestricted }
         : {}),
       ...(params.isHidden !== undefined ? { isHidden: params.isHidden } : {}),
+      ...(params.supportedKinds !== undefined
+        ? { supportedKinds: [...params.supportedKinds] }
+        : params.replaceSupportedKinds === true
+          ? {}
+          : _supportedKinds !== undefined
+            ? { supportedKinds: _supportedKinds }
+            : {}),
     })
     return { admit: true }
   }
@@ -935,6 +957,7 @@ export class GroupPolicyEngine {
       let isClosed: boolean | undefined
       let isRestricted: boolean | undefined
       let isHidden: boolean | undefined
+      let supportedKinds: readonly number[] | undefined
       for (const t of event.tags) {
         if (t[0] === "name" && t[1] !== undefined) name = t[1]
         if (t[0] === "about" && t[1] !== undefined) about = t[1]
@@ -944,6 +967,22 @@ export class GroupPolicyEngine {
         if (t[0] === "closed") isClosed = true
         if (t[0] === "restricted") isRestricted = true
         if (t[0] === "hidden") isHidden = true
+        if (t[0] === "supported_kinds") {
+          const parsed = t
+            .slice(1)
+            .map(Number)
+            .filter(
+              (kind) =>
+                Number.isSafeInteger(kind) && kind >= 0 && kind <= 65_535
+            )
+          if (parsed.length !== t.length - 1) {
+            return {
+              applied: false,
+              reason: "invalid: supported_kinds contains an invalid event kind",
+            }
+          }
+          supportedKinds = parsed
+        }
       }
       const decision = this.editMetadata({
         groupId,
@@ -951,10 +990,14 @@ export class GroupPolicyEngine {
         ...(about !== undefined ? { about } : {}),
         ...(picture !== undefined ? { picture } : {}),
         ...(banner !== undefined ? { banner } : {}),
-        ...(isPrivate !== undefined ? { isPrivate } : {}),
-        ...(isClosed !== undefined ? { isClosed } : {}),
-        ...(isRestricted !== undefined ? { isRestricted } : {}),
-        ...(isHidden !== undefined ? { isHidden } : {}),
+        // Kind 9002 carries the full metadata state. Missing flag tags clear
+        // their flags instead of preserving stale state.
+        isPrivate: isPrivate ?? false,
+        isClosed: isClosed ?? false,
+        isRestricted: isRestricted ?? false,
+        isHidden: isHidden ?? false,
+        ...(supportedKinds !== undefined ? { supportedKinds } : {}),
+        replaceSupportedKinds: true,
       })
       return decision.admit
         ? { applied: true }
@@ -1007,11 +1050,28 @@ export class GroupPolicyEngine {
       return { applied: true, revocation }
     }
 
-    // delete-event / update-pin-list do not change membership state here.
+    // delete-event does not change the state represented by this engine.
     if (
       event.kind === GROUP_DELETE_EVENT_KIND ||
       event.kind === GROUP_UPDATE_PIN_LIST_KIND
     ) {
+      if (event.kind === GROUP_UPDATE_PIN_LIST_KIND) {
+        const groupId = getHTag(event)
+        if (!groupId) return { applied: false, reason: "missing h" }
+        const group = this.groups.get(groupId)
+        if (!group || group.deleted) {
+          return { applied: false, reason: "restricted: group not found" }
+        }
+        const pinnedReferences = event.tags
+          .filter(
+            (tag) =>
+              (tag[0] === "e" || tag[0] === "a") &&
+              typeof tag[1] === "string" &&
+              tag[1].length > 0
+          )
+          .map((tag) => [tag[0] as "e" | "a", tag[1]!] as const)
+        this.groups.set(groupId, { ...group, pinnedReferences })
+      }
       return { applied: true }
     }
 
@@ -1036,6 +1096,7 @@ export class GroupPolicyEngine {
         readonly admins: EventTemplate
         readonly members: EventTemplate
         readonly roles: EventTemplate
+        readonly pinned: EventTemplate
       }
     | { readonly ok: false; readonly reason: string } {
     const g = this.groups.get(groupId)
@@ -1052,6 +1113,12 @@ export class GroupPolicyEngine {
     if (g.isClosed) metadataTags.push(["closed"])
     if (g.isRestricted) metadataTags.push(["restricted"])
     if (g.isHidden) metadataTags.push(["hidden"])
+    if (g.supportedKinds !== undefined) {
+      metadataTags.push([
+        "supported_kinds",
+        ...g.supportedKinds.map((kind) => String(kind)),
+      ])
+    }
     // Room class as a non-conflicting extension tag for operators.
     metadataTags.push(["room-class", g.roomClass])
 
@@ -1103,6 +1170,15 @@ export class GroupPolicyEngine {
         content: `roles for ${groupId}`,
         created_at: createdAt,
       },
+      pinned: {
+        kind: GROUP_PINNED_EVENTS_KIND,
+        tags: [
+          ["d", groupId],
+          ...g.pinnedReferences.map(([type, value]) => [type, value]),
+        ],
+        content: "",
+        created_at: createdAt,
+      },
     }
   }
 
@@ -1116,6 +1192,7 @@ export class GroupPolicyEngine {
       ...g,
       members,
       invites: new Set(g.invites),
+      pinnedReferences: [...g.pinnedReferences],
     }
   }
 }

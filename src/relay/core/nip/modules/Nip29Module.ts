@@ -67,6 +67,8 @@ export interface Nip29GroupPolicyModuleConfig extends GroupPolicyConfig {
     readonly isHidden?: boolean
     readonly creatorRoles?: readonly string[]
     readonly creatorCapabilityGrants?: readonly string[]
+    readonly supportedKinds?: readonly number[]
+    readonly pinnedReferences?: readonly (readonly ["e" | "a", string])[]
   }[]
 }
 
@@ -98,7 +100,7 @@ export interface Nip29GroupPolicyController {
   hasCapabilityGrant: (grantId: string) => boolean
 
   /**
-   * Build unsigned 39000/39001/39002/39003 templates for the host to sign
+   * Build unsigned 39000/39001/39002/39003/39005 templates for the host to sign
    * with the relay key. Clients verify against NIP-11 `self`.
    */
   buildRelaySignedProjections: (
@@ -111,6 +113,7 @@ export interface Nip29GroupPolicyController {
         readonly admins: EventTemplate
         readonly members: EventTemplate
         readonly roles: EventTemplate
+        readonly pinned: EventTemplate
       }
     | { readonly ok: false; readonly reason: string }
 

@@ -6,7 +6,11 @@
  */
 import { Context, Effect, Layer } from "effect"
 import type { NostrEvent } from "../../../core/Schema.js"
-import type { CryptoError, InvalidPublicKey } from "../../../core/Errors.js"
+import type {
+  CryptoError,
+  InvalidPublicKey,
+  StorageError,
+} from "../../../core/Errors.js"
 import { EventService } from "../../../services/EventService.js"
 import { type Policy, all, Accept } from "../policy/Policy.js"
 import {
@@ -55,13 +59,13 @@ export interface NipRegistry {
     | { readonly action: "replace"; readonly event: NostrEvent; readonly deleteFilter?: { kinds?: readonly number[]; authors?: readonly string[]; dTag?: string } }
     | { readonly action: "broadcast"; readonly event: NostrEvent }
     | { readonly action: "reject"; readonly reason: string },
-    never
+    StorageError
   >
 
   /**
    * Run post-store hooks for an event
    */
-  runPostStoreHooks(event: NostrEvent): Effect.Effect<void, never>
+  runPostStoreHooks(event: NostrEvent): Effect.Effect<void, StorageError>
 
   /**
    * Check if a module is registered by ID
