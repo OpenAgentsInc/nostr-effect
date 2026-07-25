@@ -534,22 +534,45 @@ const make = Effect.gen(function* () {
         }
         connections.set(connectionId, tracked)
 
-        // Register connection + proactive NIP-42 AUTH challenge when services exist
+        // Per-connection serialized work queue.
+        //
+        // `handleRaw` is asynchronous whenever it reaches the event store, so it
+        // cannot run under `Effect.runSync`: that raises `AsyncFiberError`,
+        // which escapes the `ws` emitter and terminates the process. A relay
+        // must also never reorder frames from one client, so every unit of work
+        // chains onto the previous one rather than racing it.
+        let queue: Promise<void> = Promise.resolve()
+        const enqueue = (work: () => Promise<void>): void => {
+          queue = queue.then(work).catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error)
+            try {
+              send(JSON.stringify(["NOTICE", `error: ${message}`]))
+            } catch {
+              // The socket is already gone; nothing further to report.
+            }
+          })
+        }
+
+        // Register connection + proactive NIP-42 AUTH challenge when services exist.
         if (Option.isSome(connectionManagerOption)) {
           const remoteAddress = remoteAddressOf(req)
-          Effect.runSync(
-            connectionManagerOption.value.connect({
-              id: connectionId,
-              ...(remoteAddress !== undefined ? { remoteAddress } : {}),
-            })
-          )
+          enqueue(async () => {
+            await Effect.runPromise(
+              connectionManagerOption.value.connect({
+                id: connectionId,
+                ...(remoteAddress !== undefined ? { remoteAddress } : {}),
+              })
+            )
+          })
         }
         if (Option.isSome(authOption)) {
-          const challenge = Effect.runSync(
-            authOption.value.createChallenge(connectionId)
-          )
-          const authMessage = authOption.value.buildAuthMessage(challenge)
-          send(JSON.stringify(authMessage))
+          enqueue(async () => {
+            const challenge = await Effect.runPromise(
+              authOption.value.createChallenge(connectionId)
+            )
+            const authMessage = authOption.value.buildAuthMessage(challenge)
+            send(JSON.stringify(authMessage))
+          })
         }
 
         attachHeartbeat(tracked)
@@ -565,34 +588,42 @@ const make = Effect.gen(function* () {
               ? message
               : Buffer.from(message as Buffer).toString("utf8")
 
-          const result = Effect.runSync(
-            messageHandler.handleRaw(connectionId, raw).pipe(
-              Effect.catch((error) =>
-                Effect.succeed({
-                  responses: [
-                    ["NOTICE", `error: ${error.message}`] as RelayMessage,
-                  ],
-                  broadcasts: [],
-                })
+          enqueue(async () => {
+            const result = await Effect.runPromise(
+              messageHandler.handleRaw(connectionId, raw).pipe(
+                Effect.catch((error) =>
+                  Effect.succeed({
+                    responses: [
+                      ["NOTICE", `error: ${error.message}`] as RelayMessage,
+                    ],
+                    broadcasts: [],
+                  })
+                )
               )
             )
-          )
 
-          for (const response of result.responses) {
-            send(JSON.stringify(response))
-          }
-          broadcastEvent(result.broadcasts)
+            for (const response of result.responses) {
+              send(JSON.stringify(response))
+            }
+            broadcastEvent(result.broadcasts)
+          })
         })
 
         const cleanup = () => {
           clearHeartbeat(tracked)
-          Effect.runSync(subscriptionManager.removeConnection(connectionId))
-          if (Option.isSome(connectionManagerOption)) {
-            Effect.runSync(
-              connectionManagerOption.value.disconnect(connectionId)
-            )
-          }
           connections.delete(connectionId)
+          // Teardown is asynchronous for the same reason as inbound work, and it
+          // must run after any in-flight frame for this connection.
+          enqueue(async () => {
+            await Effect.runPromise(
+              subscriptionManager.removeConnection(connectionId)
+            )
+            if (Option.isSome(connectionManagerOption)) {
+              await Effect.runPromise(
+                connectionManagerOption.value.disconnect(connectionId)
+              )
+            }
+          })
         }
 
         ws.on("close", cleanup)
