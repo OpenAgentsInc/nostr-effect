@@ -98,6 +98,13 @@ surviving process restart, duplicate insert idempotency, and replaceable
 events replacing only older events. PostgresStore tests run when
 DATABASE_URL is set.
 
+Amended 2026-07-25: "run when DATABASE_URL is set" was the whole problem —
+DATABASE_URL was never set anywhere automated, so the suite never ran and the
+tag-encoding defect (#170) reached production. CI now provisions a
+`postgres:17` service container so the suite always runs, and an unmet gate
+fails CI instead of skipping. See `.github/workflows/ci.yml` and
+`src/testing/env-gate.ts`.
+
 ## Stage 4: replace the Bun toolchain — DONE 2026-07-24 (SARAH-NR-01c / #167)
 
 Completed:

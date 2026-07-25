@@ -36,8 +36,34 @@ Rules for all work:
 Verification gate for every change:
 
 ```bash
-pnpm run verify   # typecheck + vp test --run
+pnpm run verify   # typecheck + infra gates + vp test --run
 ```
+
+### Infrastructure-gated suites must never skip silently
+
+Some suites need real infrastructure. `PostgresStore.test.ts` needs a live
+Postgres via `DATABASE_URL`, because Postgres is the relay's production store.
+
+A suite that quietly skips when its dependency is missing is worse than no
+suite: the run goes green and the layer it protects is untested.
+relay.openagents.com shipped a tag-encoding defect that corrupted 3823 rows
+while a test that catches it sat in the tree, skipped, because `DATABASE_URL`
+was unset in CI and nothing said so.
+
+So:
+
+- Register every environment gate in `INFRA_GATES` in `src/testing/env-gate.ts`
+  and gate the suite with `describeRequiringEnv("VAR")`. Do not reach for
+  `describe.skip` plus an ad hoc `process.env` check — that is the exact shape
+  that failed.
+- CI provisions a `postgres:17` service container (matching Cloud SQL
+  `khala-sync-pg` behind the relay) and sets `DATABASE_URL`, so the suite runs
+  on every push and PR.
+- With a gate unmet, CI **fails**; locally it skips after printing a banner
+  naming the uncovered layer. `ALLOW_SKIPPED_INFRA_TESTS=1` is the only way to
+  skip under CI, and it has to be typed on purpose.
+- To run the Postgres suite locally, point `DATABASE_URL` at any throwaway
+  Postgres 17 database.
 
 ## Code Style
 
@@ -316,7 +342,8 @@ pnpm run prepare     # Setup language service and git hooks
 pnpm run setup:hooks # Install pre-push hook
 pnpm test            # Run all tests (vp test --run)
 pnpm run typecheck   # Type check only (tsc --noEmit)
-pnpm run verify      # Typecheck + tests (used by pre-push)
+pnpm run infra-gates # Report/enforce env-gated suites (see Testing)
+pnpm run verify      # Typecheck + infra gates + tests (used by pre-push)
 pnpm run build       # Bundle entry with Vite Plus pack
 pnpm run fmt         # Format with vp fmt
 pnpm run lint        # Lint with vp lint

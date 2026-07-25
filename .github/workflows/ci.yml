@@ -1,0 +1,85 @@
+name: CI
+
+# The relay's production storage backend is Postgres, so CI runs a real
+# Postgres. Before this workflow existed the only automation in the repo was
+# `release.yml` (tag pushes), and `pnpm run verify` ran with DATABASE_URL
+# unset, which silently skipped the entire PostgresStore suite. A tag-encoding
+# defect shipped to relay.openagents.com through that gap and corrupted 3823
+# rows, with a test in the tree that would have caught it.
+#
+# Two things keep that from recurring:
+#   1. this job provisions Postgres and sets DATABASE_URL, so the suite runs;
+#   2. `src/testing/env-gate.ts` fails the suite instead of skipping it when
+#      DATABASE_URL is unset under CI, so a future runner that loses its
+#      database goes red rather than quietly green.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify (node 24, postgres 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        # Postgres 17 matches the Cloud SQL major version behind the relay:
+        # `openagentsgemini:us-central1:khala-sync-pg` is POSTGRES_17, attached
+        # to Cloud Run service `openagents-nostr-relay`. Verified against the
+        # live instance, not assumed. Keep these in step.
+        image: postgres:17
+        env:
+          # Throwaway credentials for a container that exists only for the
+          # length of this job and is reachable only from it. Not a secret and
+          # not a credential to anything that outlives the run; the production
+          # DATABASE_URL is a Secret Manager reference and never appears here.
+          POSTGRES_USER: nostr_effect_ci
+          POSTGRES_PASSWORD: nostr_effect_ci
+          POSTGRES_DB: nostr_effect_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nostr_effect_ci -d nostr_effect_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://nostr_effect_ci:nostr_effect_ci@127.0.0.1:5432/nostr_effect_ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Confirm Postgres is reachable and is version 17
+        run: node scripts/ci-postgres-preflight.mjs
+
+      - name: Verify (typecheck + full test suite, Postgres included)
+        run: pnpm run verify
+
+      - name: Prove the Postgres suite actually exercised the database
+        # Cheap falsification guard. If the suite were skipped, deleted, or
+        # silently pointed elsewhere, nothing would have created `events` in
+        # this database and this step goes red.
+        run: node scripts/ci-postgres-postflight.mjs

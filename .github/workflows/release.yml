@@ -12,6 +12,31 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    # A release must not publish on a verify that skipped the relay's
+    # production storage backend, so the release job gets the same real
+    # Postgres as CI. See .github/workflows/ci.yml for why.
+    services:
+      postgres:
+        # Matches Cloud SQL openagentsgemini:us-central1:khala-sync-pg
+        # (POSTGRES_17), the instance behind relay.openagents.com.
+        image: postgres:17
+        env:
+          # Throwaway, job-scoped, not a credential to anything persistent.
+          POSTGRES_USER: nostr_effect_ci
+          POSTGRES_PASSWORD: nostr_effect_ci
+          POSTGRES_DB: nostr_effect_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nostr_effect_ci -d nostr_effect_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://nostr_effect_ci:nostr_effect_ci@127.0.0.1:5432/nostr_effect_ci
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,8 +53,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Confirm Postgres is reachable and is version 17
+        run: node scripts/ci-postgres-preflight.mjs
+
       - name: Run tests
         run: pnpm run verify
+
+      - name: Prove the Postgres suite actually exercised the database
+        run: node scripts/ci-postgres-postflight.mjs
 
       - name: Extract version from tag
         id: version

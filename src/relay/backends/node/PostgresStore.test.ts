@@ -1,10 +1,17 @@
 /**
  * PostgresStore tests.
  *
- * Skips when DATABASE_URL is unset. Against a live Postgres URL, exercises the
- * same EventStore exit criteria as NodeSqliteStore.
+ * Postgres is the relay's production store, so this suite is the only thing
+ * standing between a storage defect and relay.openagents.com. It needs a live
+ * Postgres, which means it needs `DATABASE_URL`.
+ *
+ * That requirement used to be satisfied by skipping. It is now satisfied by
+ * failing: `describeRequiringEnv` runs the suite when `DATABASE_URL` is set,
+ * and in CI turns an unset `DATABASE_URL` into a red run instead of an absent
+ * one. CI provisions a `postgres:17` service container (matching the Cloud SQL
+ * major version behind the relay), so the suite always runs there.
  */
-import { describe, expect, test } from "vite-plus/test"
+import { expect, test } from "vite-plus/test"
 import { Effect, Layer, Schema } from "effect"
 import { DuplicateEvent } from "../../../core/Errors.js"
 import {
@@ -16,10 +23,12 @@ import {
 } from "../../../core/Schema.js"
 import { CryptoService, CryptoServiceLive } from "../../../services/CryptoService.js"
 import { EventService, EventServiceLive } from "../../../services/EventService.js"
+import { describeRequiringEnv } from "../../../testing/env-gate.js"
 import { openPostgresStore } from "./PostgresStore.js"
 
 const databaseUrl = process.env["DATABASE_URL"]
-const describeIfDb = databaseUrl ? describe : describe.skip
+
+const describeIfDb = describeRequiringEnv("DATABASE_URL")
 
 const decodeKind = Schema.decodeSync(EventKind)
 const decodeTag = Schema.decodeSync(Tag)
@@ -266,16 +275,6 @@ describeIfDb("PostgresStore", () => {
       expect(found[0]!.tags).toEqual([["p", recipient]])
     } finally {
       await second.close()
-    }
-  })
-})
-
-describe("PostgresStore (skip gate)", () => {
-  test("skips live cases when DATABASE_URL is unset", () => {
-    if (!databaseUrl) {
-      expect(true).toBe(true)
-    } else {
-      expect(databaseUrl.length).toBeGreaterThan(0)
     }
   })
 })
