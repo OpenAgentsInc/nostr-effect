@@ -223,14 +223,21 @@ log "tarball contains $(printf '%s\n' "$TAR_LIST" | wc -l | tr -d ' ') entries; 
 
 # ------------------------------------------------------------------ 4. publish
 
-if [ "$DRY_RUN" -eq 1 ]; then
+# The already-published test comes FIRST, before the dry-run branch. npm
+# refuses to publish over an existing version even under --dry-run ("You cannot
+# publish over the previously published versions"), so asking it to rehearse a
+# republish would fail the run for a condition that is not an error.
+if [ "$ALREADY_PUBLISHED" -eq 1 ]; then
+  step "publish: SKIPPED — $PKG_NAME@$VERSION is already on the registry"
+  log "npm versions are immutable. To ship new code, bump the version in
+   package.json, commit, push to main, and re-run."
+elif [ "$DRY_RUN" -eq 1 ]; then
   step "publish: DRY RUN — asking npm what it would do, without doing it"
-  # A real npm dry-run against the real tarball: it resolves the manifest,
-  # contacts the registry, and reports the exact payload, but publishes nothing.
+  # A real npm dry-run against the real tarball: it authenticates, resolves the
+  # manifest against the registry, and reports the exact payload it would send,
+  # but uploads nothing.
   npm publish "$TARBALL" --access public --dry-run
   log "DRY RUN: npm publish stopped here. Nothing was published."
-elif [ "$ALREADY_PUBLISHED" -eq 1 ]; then
-  step "publish: SKIPPED — $PKG_NAME@$VERSION is already on the registry"
 else
   step "publish: npm publish (granular token; NO provenance — see header)"
   npm publish "$TARBALL" --access public
