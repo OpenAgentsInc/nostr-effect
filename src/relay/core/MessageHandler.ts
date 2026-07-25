@@ -89,6 +89,9 @@ const eoseMessage = (
     ? (["EOSE", subscriptionId, hints] as RelayMessage)
     : (["EOSE", subscriptionId] as RelayMessage))
 
+const noticeMessage = (message: string): RelayMessage =>
+  ["NOTICE", message] as RelayMessage
+
 // =============================================================================
 // Service Implementation
 // =============================================================================
@@ -351,6 +354,35 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
         }
       })
 
+  /**
+   * Query each filter on its own, keeping whatever succeeds and discarding
+   * only the filters that error. Reports how many filters were actually
+   * answered so the caller can flag an incomplete result set.
+   */
+  const queryPerFilterIsolated = (
+    filters: readonly (typeof import("../../core/Schema.js").Filter.Type)[]
+  ): Effect.Effect<{ readonly events: readonly NostrEvent[]; readonly attempted: number }> =>
+    Effect.gen(function* () {
+      const seen = new Set<string>()
+      const events: NostrEvent[] = []
+      let attempted = 0
+
+      for (const filter of filters) {
+        const result = yield* eventStore
+          .queryEvents([filter])
+          .pipe(Effect.catch(() => Effect.succeed(undefined)))
+        if (result === undefined) continue
+        attempted += 1
+        for (const event of result) {
+          if (seen.has(event.id)) continue
+          seen.add(event.id)
+          events.push(event)
+        }
+      }
+
+      return { events, attempted }
+    })
+
   const handleReq = (
     connectionId: string,
     subscriptionId: SubscriptionId,
@@ -371,24 +403,56 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
             )
           : filters
 
-      const queried = yield* eventStore.queryEvents(queryFilters)
+      // Fault isolation (NIP-01).
+      //
+      // A REQ carries independent filters that are OR'd together, so one
+      // filter that the store cannot answer must not erase its siblings. The
+      // happy path is still a single batched query; only on failure do we
+      // degrade to per-filter queries and drop just the filters that failed.
+      // This keeps a storage bug in one filter from blinding a whole
+      // subscription, which is how a tag-index defect became total read
+      // blindness in production.
+      const queried = yield* eventStore.queryEvents(queryFilters).pipe(
+        Effect.map((events) => ({
+          events: events as readonly NostrEvent[],
+          attempted: queryFilters.length,
+        })),
+        Effect.catch(() => queryPerFilterIsolated(queryFilters))
+      )
 
+      const failedFilters = queryFilters.length - queried.attempted
       // NIP-67 completeness hints: finish = all stored matches sent; more = more exist
-      let events = queried
+      let events = queried.events
       let hints: readonly string[] = ["finish"]
-      if (clientLimit !== undefined && queried.length > clientLimit) {
-        events = queried.slice(0, clientLimit)
+      if (clientLimit !== undefined && events.length > clientLimit) {
+        events = events.slice(0, clientLimit)
+        hints = ["more"]
+      }
+      // A dropped filter means the result set is not provably complete.
+      if (failedFilters > 0 && hints[0] === "finish") {
         hints = ["more"]
       }
 
-      // Build response: EVENT messages + EOSE (with optional NIP-67 hints)
+      // Build response: EVENT messages + EOSE (with optional NIP-67 hints).
+      // EOSE is unconditional: a client blocks on it, so a subscription whose
+      // stored phase is never terminated hangs that client forever.
       const responses: RelayMessage[] = [
         ...events.map((event) => eventMessage(subscriptionId, event)),
         eoseMessage(subscriptionId, hints),
       ]
 
+      if (failedFilters > 0) {
+        responses.unshift(
+          noticeMessage(
+            `partial results for subscription ${subscriptionId}: ${failedFilters} of ` +
+              `${queryFilters.length} filter(s) could not be served`
+          )
+        )
+      }
+
       return { responses, broadcasts: [] }
     })
+
 
   const handleClose = (
     connectionId: string,

@@ -68,7 +68,21 @@ const isUniqueViolation = (error: unknown): boolean => {
 const isTagFilterKey = (key: string): boolean =>
   key.length === 2 && key.startsWith("#") && /^[a-zA-Z]$/.test(key[1]!)
 
-const tagsJson = (tags: NostrEvent["tags"]): string => JSON.stringify(tags)
+/**
+ * Bind an event's tags as a jsonb ARRAY.
+ *
+ * Must NOT pre-stringify. postgres.js infers the parameter type from the
+ * trailing `::jsonb` cast and serializes the value with `JSON.stringify`
+ * itself, so passing an already-stringified value encodes it twice and stores
+ * the jsonb *scalar string* `"[[\"p\",\"abc\"]]"` instead of the array
+ * `[["p","abc"]]`. Rows written that way still round-trip through `parseRow`
+ * (which tolerates a string), which is why single-event reads looked healthy,
+ * but every SQL tag predicate over them fails with SQLSTATE 22023
+ * "cannot extract elements from a scalar" — breaking all `#p` / `#e` / `#t`
+ * filters. See `repairScalarTagRows` for the backfill of rows already written.
+ */
+const tagsJson = (sql: Sql, tags: NostrEvent["tags"]) =>
+  sql.json(tags as unknown as postgres.JSONValue)
 
 /**
  * Load candidate rows. Applies kinds / since / until / `#d` and open `#` tag
@@ -98,22 +112,30 @@ const loadCandidates = async (
     tagFilters.push({ name: key[1]!, values: rawValues as string[] })
   }
 
-  // Encode open tag filters as a JSON string so parameter typing stays simple.
-  const tagFilterJson =
-    tagFilters.length > 0 ? JSON.stringify(tagFilters) : null
-
-  const rows = await sql<Array<EventRow>>`
-    SELECT * FROM events e
-    WHERE
-      (${kinds}::int[] IS NULL OR e.kind = ANY(${kinds}))
-      AND (${since}::bigint IS NULL OR e.created_at >= ${since})
-      AND (${until}::bigint IS NULL OR e.created_at <= ${until})
-      AND (${dValues}::text[] IS NULL OR e.d_tag = ANY(${dValues}))
-      AND (
-        ${tagFilterJson}::jsonb IS NULL
-        OR NOT EXISTS (
+  // Tag predicate is built as a conditional fragment rather than a nullable
+  // jsonb parameter.
+  //
+  // Two traps this avoids, both of which produced `StorageError` on every
+  // `#p` / `#e` / `#t` REQ in production:
+  //
+  //  1. Double encoding. postgres.js infers a parameter's type from a
+  //     trailing `::jsonb` cast and then serializes that parameter with
+  //     `JSON.stringify`. Handing it an ALREADY-stringified value therefore
+  //     encoded the JSON text a second time, yielding the jsonb *scalar
+  //     string* `"[{\"name\":\"p\"...}]"` instead of an array. The subsequent
+  //     `jsonb_array_elements()` then failed with SQLSTATE 22023
+  //     "cannot extract elements from a scalar". Pass the array itself and
+  //     let postgres.js do the single encoding it intends to do.
+  //
+  //  2. `IS NULL` on jsonb. A JSON `null` is not an SQL NULL, so a
+  //     `${maybeNull}::jsonb IS NULL` guard can never be relied on to
+  //     disable the clause. Omitting the clause entirely is unambiguous.
+  const tagPredicate =
+    tagFilters.length === 0
+      ? sql`TRUE`
+      : sql`NOT EXISTS (
           SELECT 1
-          FROM jsonb_array_elements(${tagFilterJson}::jsonb) AS req
+          FROM jsonb_array_elements(${sql.json(tagFilters)}::jsonb) AS req
           WHERE NOT EXISTS (
             SELECT 1
             FROM jsonb_array_elements(e.tags) AS tag
@@ -122,12 +144,45 @@ const loadCandidates = async (
                 SELECT jsonb_array_elements_text(req->'values')
               )
           )
-        )
-      )
+        )`
+
+  const rows = await sql<Array<EventRow>>`
+    SELECT * FROM events e
+    WHERE
+      (${kinds}::int[] IS NULL OR e.kind = ANY(${kinds}))
+      AND (${since}::bigint IS NULL OR e.created_at >= ${since})
+      AND (${until}::bigint IS NULL OR e.created_at <= ${until})
+      AND (${dValues}::text[] IS NULL OR e.d_tag = ANY(${dValues}))
+      AND ${tagPredicate}
     ORDER BY e.created_at DESC
     LIMIT ${limit}
   `
   return [...rows]
+}
+
+/**
+ * Backfill rows whose `tags` were written as a jsonb scalar string.
+ *
+ * Every event stored before the `tagsJson` fix landed holds its tags as an
+ * encoded string rather than an array, so `jsonb_array_elements(e.tags)`
+ * aborts the whole query with SQLSTATE 22023. Fixing only the write path would
+ * leave the existing corpus permanently unsearchable by tag, so the repair has
+ * to run over what is already there.
+ *
+ * `tags #>> '{}'` unwraps the jsonb scalar back to its text, which is the
+ * original JSON document, and re-parsing that yields the intended array. The
+ * predicate makes this idempotent and a no-op once the corpus is clean, so it
+ * is safe to run on every start.
+ */
+const repairScalarTagRows = async (sql: Sql): Promise<number> => {
+  const rows = await sql<Array<{ id: string }>>`
+    UPDATE events
+    SET tags = (tags #>> '{}')::jsonb
+    WHERE jsonb_typeof(tags) = 'string'
+      AND jsonb_typeof((tags #>> '{}')::jsonb) = 'array'
+    RETURNING id
+  `
+  return rows.length
 }
 
 const initSchema = async (sql: Sql): Promise<void> => {
@@ -149,6 +204,13 @@ const initSchema = async (sql: Sql): Promise<void> => {
   await sql`CREATE INDEX IF NOT EXISTS idx_events_pubkey_kind ON events(pubkey, kind)`
   await sql`CREATE INDEX IF NOT EXISTS idx_events_pubkey_kind_dtag ON events(pubkey, kind, d_tag)`
   await sql`CREATE INDEX IF NOT EXISTS idx_events_tags ON events USING GIN (tags)`
+
+  const repaired = await repairScalarTagRows(sql)
+  if (repaired > 0) {
+    console.log(
+      `[PostgresStore] repaired ${repaired} event row(s) whose tags were stored as a jsonb scalar string`
+    )
+  }
 }
 
 const makePostgresStore = (sql: Sql): EventStore => ({
@@ -164,7 +226,7 @@ const makePostgresStore = (sql: Sql): EventStore => ({
             ${event.pubkey},
             ${event.created_at},
             ${event.kind},
-            ${tagsJson(event.tags)}::jsonb,
+            ${tagsJson(sql, event.tags)}::jsonb,
             ${event.content},
             ${event.sig},
             ${null}
@@ -214,7 +276,7 @@ const makePostgresStore = (sql: Sql): EventStore => ({
                 ${event.pubkey},
                 ${event.created_at},
                 ${event.kind},
-                ${tagsJson(event.tags)}::jsonb,
+                ${tagsJson(sql, event.tags)}::jsonb,
                 ${event.content},
                 ${event.sig},
                 ${null}
@@ -230,7 +292,7 @@ const makePostgresStore = (sql: Sql): EventStore => ({
               ${event.pubkey},
               ${event.created_at},
               ${event.kind},
-              ${tagsJson(event.tags)}::jsonb,
+              ${tagsJson(sql, event.tags)}::jsonb,
               ${event.content},
               ${event.sig},
               ${null}
@@ -276,7 +338,7 @@ const makePostgresStore = (sql: Sql): EventStore => ({
                 ${event.pubkey},
                 ${event.created_at},
                 ${event.kind},
-                ${tagsJson(event.tags)}::jsonb,
+                ${tagsJson(sql, event.tags)}::jsonb,
                 ${event.content},
                 ${event.sig},
                 ${dTagValue}
@@ -292,7 +354,7 @@ const makePostgresStore = (sql: Sql): EventStore => ({
               ${event.pubkey},
               ${event.created_at},
               ${event.kind},
-              ${tagsJson(event.tags)}::jsonb,
+              ${tagsJson(sql, event.tags)}::jsonb,
               ${event.content},
               ${event.sig},
               ${dTagValue}
@@ -402,6 +464,8 @@ const makePostgresStore = (sql: Sql): EventStore => ({
 
 export type PostgresStoreHandle = {
   readonly store: EventStore
+  /** Underlying connection, for schema assertions and migration proofs. */
+  readonly sql: Sql
   readonly close: () => Promise<void>
 }
 
@@ -415,6 +479,7 @@ export const openPostgresStore = async (
   await initSchema(sql)
   return {
     store: makePostgresStore(sql),
+    sql,
     close: async () => {
       await sql.end({ timeout: 5 })
     },
