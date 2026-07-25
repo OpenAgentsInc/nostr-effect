@@ -19,6 +19,7 @@ import {
 } from "../../core/RelayServer.js"
 import { SubscriptionManager } from "../../core/SubscriptionManager.js"
 import { AuthService } from "../../core/AuthService.js"
+import { NipRegistry } from "../../core/nip/NipRegistry.js"
 import { ConnectionManager } from "../../core/ConnectionManager.js"
 import type { RelayMessage } from "../../../core/Schema.js"
 import { type RelayInfo, defaultRelayInfo, mergeRelayInfo } from "../../core/RelayInfo.js"
@@ -61,6 +62,7 @@ const make = Effect.gen(function* () {
   const admin = yield* Nip86AdminService
   const subscriptionManager = yield* SubscriptionManager
   const authOption = yield* Effect.serviceOption(AuthService)
+  const registryOption = yield* Effect.serviceOption(NipRegistry)
   const connectionManagerOption = yield* Effect.serviceOption(ConnectionManager)
 
   let connectionCounter = 0
@@ -91,9 +93,28 @@ const make = Effect.gen(function* () {
 
   const start: RelayServer["start"] = (config) =>
     Effect.gen(function* () {
-      const relayInfo = config.relayInfo
+      const baseRelayInfo = config.relayInfo
         ? mergeRelayInfo(config.relayInfo)
         : defaultRelayInfo
+
+      // `supported_nips` must describe what this relay actually does, not a
+      // hardcoded list. NIP-11 is how a client discovers behaviour it has to
+      // comply with, so a relay that enforces NIP-42 and does not advertise it
+      // leaves a conforming client no way to know it must authenticate: the
+      // client issues a REQ and simply gets dropped.
+      //
+      // Derive the list from the registered NIP modules, and add 42 when an
+      // AuthService is actually present, because auth is configured
+      // independently of the module registry and the two must not disagree.
+      const advertisedNips = new Set<number>(baseRelayInfo.supported_nips ?? [])
+      if (Option.isSome(registryOption)) {
+        for (const nip of registryOption.value.supportedNips) advertisedNips.add(nip)
+      }
+      if (Option.isSome(authOption)) advertisedNips.add(42)
+      const relayInfo: RelayInfo = {
+        ...baseRelayInfo,
+        supported_nips: [...advertisedNips].sort((a, b) => a - b),
+      }
       let currentRelayInfo: Partial<RelayInfo> = { ...relayInfo }
 
       const maxConnections = config.maxConnections ?? DEFAULT_MAX_CONNECTIONS
