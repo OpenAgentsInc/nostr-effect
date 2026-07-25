@@ -13,7 +13,7 @@ import {
 
 const port = Number(process.env.PORT) || 8080
 const databaseUrl = process.env.DATABASE_URL?.trim()
-const relayPrivateKey = process.env.RELAY_PRIVATE_KEY?.trim()
+let relayPrivateKey = process.env.RELAY_PRIVATE_KEY?.trim()
 const seedGroupsJson = process.env.RELAY_NIP29_SEED_GROUPS?.trim()
 // A relay may legitimately answer on more than one hostname: a custom domain
 // plus its platform hostname during certificate provisioning, or two names
@@ -59,7 +59,6 @@ try {
   )
 }
 
-delete process.env.RELAY_PRIVATE_KEY
 let nip29
 try {
   nip29 = await createRelayNip29Host(
@@ -72,6 +71,9 @@ try {
 } catch (error) {
   await store.close()
   throw error
+} finally {
+  relayPrivateKey = ""
+  delete process.env.RELAY_PRIVATE_KEY
 }
 
 let relay

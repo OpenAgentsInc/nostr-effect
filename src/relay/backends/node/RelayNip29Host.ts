@@ -189,6 +189,8 @@ export const createRelayNip29Host = async (
   }
   for (const group of config.seedGroups) validateSeedGroup(group);
 
+  const validatePreviousReferences =
+    config.validatePreviousReferences !== false;
   const secretKey = hexToBytes(config.relayPrivateKey);
   const relayPubkey = getPublicKey(secretKey);
   const seedGroups = config.seedGroups.map((group) => {
@@ -289,7 +291,7 @@ export const createRelayNip29Host = async (
         .flatMap((tag) => tag.slice(1));
 
       if (
-        config.validatePreviousReferences !== false &&
+        validatePreviousReferences &&
         groupId !== undefined &&
         previous.length > 0
       ) {
