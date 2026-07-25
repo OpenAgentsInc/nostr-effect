@@ -123,6 +123,13 @@ userconfig and deletes it on exit. Never echo it, never pass it in argv, never
 put it in a commit or a release note. `pnpm pack` (not `npm pack`) is required:
 pnpm rewrites `workspace:*` and `catalog:` protocols to concrete versions.
 
+A prerelease version (anything with a `-`) publishes to a derived dist-tag
+rather than `latest`, so a plain `npm install nostr-effect` never lands on it:
+`0.1.0-rc.1` → `rc`, `1.0.0-beta.2` → `beta`, anything unparseable → `next`.
+Override with `NOSTR_EFFECT_DIST_TAG`. The matching GitHub Release is marked
+`--prerelease`. npm 11 refuses a prerelease publish without `--tag` outright,
+so getting this wrong fails loudly rather than quietly moving `latest`.
+
 ### Published releases have no provenance. This is permanent.
 
 The old `release.yml` published with `npm publish --provenance` under GitHub's

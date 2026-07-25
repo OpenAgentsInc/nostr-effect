@@ -88,6 +88,28 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 log "package $PKG_NAME@$VERSION (tag $TAG)"
 
+# A prerelease must never take the `latest` dist-tag, or every plain
+# `npm install nostr-effect` lands on it. npm 11 refuses outright — "You must
+# specify a tag using --tag when publishing a prerelease version" — so this is
+# a hard failure at publish time, not a silent mistake, but the script has to
+# supply the tag either way. Derive it from the prerelease identifier
+# (0.1.0-rc.1 -> rc, 1.0.0-beta.2 -> beta) and fall back to `next` for anything
+# that is not a bare alphanumeric word.
+NPM_DIST_TAG=""
+IS_PRERELEASE=0
+case "$VERSION" in
+  *-*)
+    IS_PRERELEASE=1
+    candidate="${VERSION#*-}"     # rc.1
+    candidate="${candidate%%.*}"  # rc
+    case "$candidate" in
+      *[!a-zA-Z0-9]* | "") candidate="next" ;;
+    esac
+    NPM_DIST_TAG="${NOSTR_EFFECT_DIST_TAG:-$candidate}"
+    log "prerelease — publishing to the '$NPM_DIST_TAG' dist-tag; 'latest' stays put"
+    ;;
+esac
+
 # ---------------------------------------------------------------- 1. preflight
 #
 # Everything that can be known before doing work is checked before doing work,
@@ -236,11 +258,13 @@ elif [ "$DRY_RUN" -eq 1 ]; then
   # A real npm dry-run against the real tarball: it authenticates, resolves the
   # manifest against the registry, and reports the exact payload it would send,
   # but uploads nothing.
-  npm publish "$TARBALL" --access public --dry-run
+  # shellcheck disable=SC2086
+  npm publish "$TARBALL" --access public ${NPM_DIST_TAG:+--tag "$NPM_DIST_TAG"} --dry-run
   log "DRY RUN: npm publish stopped here. Nothing was published."
 else
   step "publish: npm publish (granular token; NO provenance — see header)"
-  npm publish "$TARBALL" --access public
+  # shellcheck disable=SC2086
+  npm publish "$TARBALL" --access public ${NPM_DIST_TAG:+--tag "$NPM_DIST_TAG"}
   log "published $PKG_NAME@$VERSION"
 
   # Registry-CDN propagation: the full document goes 200 before the abbreviated
@@ -289,7 +313,7 @@ fi
 # GitHub-hosted runner executing our build. That distinction is the invariant.
 
 PRERELEASE_FLAG=""
-case "$VERSION" in *-*) PRERELEASE_FLAG="--prerelease" ;; esac
+[ "$IS_PRERELEASE" -eq 1 ] && PRERELEASE_FLAG="--prerelease"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   step "github release: DRY RUN — would run: gh release create $TAG --generate-notes $PRERELEASE_FLAG"
