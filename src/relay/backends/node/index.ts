@@ -36,6 +36,10 @@ import { ConnectionManagerLive } from "../../core/ConnectionManager.js"
 import { makeAuthServiceLayer } from "../../core/AuthService.js"
 import { MemoryEventStoreLive } from "../../storage/MemoryEventStore.js"
 import {
+  EventStore,
+  type EventStore as EventStoreService,
+} from "../../storage/EventStore.js"
+import {
   mintLivekitJwt,
   NodeHostDefaults,
   RelayServerLive,
@@ -148,6 +152,36 @@ export const startRelay = async (
     return yield* server.start(config)
   })
 
+  return Effect.runPromise(Effect.provide(program, layer))
+}
+
+/** Start the Node relay against a caller-owned durable EventStore. */
+export const startRelayWithEventStore = async (
+  config: RelayConfig & { modules?: readonly NipModule[]; nip42?: Nip42Config },
+  eventStore: EventStoreService
+): Promise<RelayHandle> => {
+  const modules = config.modules ?? DefaultModules
+  const nip42 = config.nip42 ?? defaultNip42Config(config.port)
+  const authLive = makeAuthServiceLayer(nip42).pipe(
+    Layer.provide(ConnectionManagerLive),
+    Layer.provide(EventServiceLive),
+    Layer.provide(CryptoServiceLive)
+  )
+  const layer = RelayServerLive.pipe(
+    Layer.provide(MessageHandlerWithAuth),
+    Layer.provide(PolicyPipelineFromRegistry),
+    Layer.provide(SubscriptionManagerLive),
+    Layer.provide(NipRegistryLive(modules)),
+    Layer.provide(Layer.succeed(EventStore, eventStore)),
+    Layer.provide(Nip86AdminServiceLive()),
+    Layer.provide(Layer.merge(authLive, ConnectionManagerLive)),
+    Layer.provide(EventServiceLive),
+    Layer.provide(CryptoServiceLive)
+  )
+  const program = Effect.gen(function* () {
+    const server = yield* RelayServer
+    return yield* server.start(config)
+  })
   return Effect.runPromise(Effect.provide(program, layer))
 }
 

@@ -119,7 +119,7 @@ Completed:
 Exit met: no `bun` binary required, no `bun:` import, no `Bun.` API call, and
 no `@types/bun` in the tracked tree. `pnpm run verify` is green.
 
-## Stage 5: deploy to Google Cloud
+## Stage 5: deploy to Google Cloud — IN PROGRESS
 
 Deploy the relay to Cloud Run in project `openagentsgemini`, following the
 same shape as the `openagents` monolith deploy. Attach Cloud SQL. Mount
@@ -132,6 +132,13 @@ the failure mode under overload. Write the backup, restore, key rotation, and
 multi-replica operator notes.
 
 Exit: the relay is live, measured, monitored, and has a public-safe receipt.
+
+The production entry now fails closed unless `DATABASE_URL` and the origin-only
+`RELAY_PUBLIC_URL` are present. It composes the Node host with the Cloud SQL
+Postgres store, requires NIP-42 on connections, drains WebSockets on SIGTERM,
+and closes the database pool. The root Dockerfile builds the Node 24 Cloud Run
+image; deployment, DNS, remote load proof, backup/restore, and multi-replica
+evidence remain the operator half of this stage.
 
 ## Known follow-up
 
