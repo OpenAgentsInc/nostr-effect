@@ -10,40 +10,41 @@
  * violated it. A written rule with no check is a rule that gets broken by the
  * next person who does not happen to read it.
  *
- * Mirrors `check:no-github-actions` in the openagents monorepo, with one
- * documented exception (below) that does not exist there.
+ * Mirrors `check:no-github-actions` in the openagents monorepo.
+ *
+ * THERE IS NO ALLOWLIST, AND ONE MUST NOT BE REINTRODUCED.
+ *
+ * There used to be. It held exactly one entry: `release.yml`, the tag-triggered
+ * workflow that was the only path publishing this package to npm. It was
+ * removed on 2026-07-25 on owner direction — *"if that can run without me
+ * upgrading billing its fine. otherwise move it to our infra like our updates
+ * thing is"* — after it was confirmed that it cannot run. The `OpenAgentsInc`
+ * account is locked for billing, so every workflow in the org is killed within
+ * seconds, and the last Release run that completed was v0.0.12 on 2025-11-30.
+ *
+ * Its replacement is `scripts/publish-release.sh`: verify against a real
+ * Postgres, pack, publish with a granular npm token, cut the GitHub Release
+ * with `gh`. It runs on a machine we control and is triggered by us — the same
+ * move as `apps/oa-updates` in the openagents repo, which replaced Expo's
+ * hosted update service with our own.
+ *
+ * If you are reading this because the check is failing and you want somewhere
+ * to name your workflow so it passes: that place deliberately no longer exists.
+ * The answer is a script in `scripts/` that we invoke.
  */
 import { existsSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 
 const WORKFLOW_DIR = ".github/workflows"
 
-/**
- * Workflows that predate the invariant being recorded here, kept only until
- * their owned-infrastructure replacement exists.
- *
- * `release.yml` fires on `v*` tag pushes and is currently the ONLY path that
- * publishes this package to npm — it holds the npm OIDC/provenance identity and
- * cuts the GitHub Release. Deleting it to satisfy this check would break
- * publishing, which is worse than the violation it would fix, so it is named
- * here in the open rather than removed unilaterally or quietly ignored.
- * Retiring it is an owner decision: it needs an owned-infra release job holding
- * the npm credential first.
- *
- * Nothing may be added to this list. New automation goes on our infrastructure.
- */
-const PENDING_OWNER_DECISION = new Set(["release.yml"])
-
 if (!existsSync(WORKFLOW_DIR)) {
   console.log("no-github-actions: no .github/workflows directory — clean.")
   process.exit(0)
 }
 
-const workflows = readdirSync(WORKFLOW_DIR).filter(
+const violations = readdirSync(WORKFLOW_DIR).filter(
   (name) => name.endsWith(".yml") || name.endsWith(".yaml")
 )
-
-const violations = workflows.filter((name) => !PENDING_OWNER_DECISION.has(name))
 
 if (violations.length > 0) {
   process.stderr.write(
@@ -58,26 +59,19 @@ if (violations.length > 0) {
       `runners. Do not hand repo automation, secrets, or scheduling to third-party`,
       `compute. See INVARIANTS.md.`,
       ``,
-      `If you need the full suite run against a real Postgres, that is:`,
+      `There is no allowlist to add this to — see the comment at the top of this`,
+      `file. The two owned paths that replaced the workflows this repo used to`,
+      `have are:`,
       ``,
-      `  pnpm run verify:postgres`,
+      `  pnpm run verify:postgres   full suite against a throwaway Postgres 17,`,
+      `                             on whatever machine you invoke it from`,
+      `  pnpm run release           verify -> pack -> npm publish -> GitHub Release`,
       ``,
-      `which stands up a throwaway Postgres 17 and runs verify against it, on`,
-      `whatever machine you invoke it from. Wire that into an owned runner or`,
-      `cron job — not into a workflow file.`,
+      `Wire recurring runs into an owned runner or cron job — not a workflow file.`,
       ``,
     ].join("\n")
   )
   process.exit(1)
 }
 
-const pending = workflows.filter((name) => PENDING_OWNER_DECISION.has(name))
-if (pending.length > 0) {
-  console.log(
-    `no-github-actions: no disallowed workflows. ` +
-      `${pending.join(", ")} remain(s) pending an owner decision on an ` +
-      `owned-infrastructure replacement (see scripts/check-no-github-actions.ts).`
-  )
-} else {
-  console.log("no-github-actions: .github/workflows holds no workflow files — clean.")
-}
+console.log("no-github-actions: .github/workflows holds no workflow files — clean.")

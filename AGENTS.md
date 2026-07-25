@@ -55,8 +55,11 @@ Never add a GitHub Actions workflow to this repository. CI, scheduled jobs, and
 any recurring automation run on OpenAgents-owned infrastructure (our GCE /
 cloud runners and cron), not on GitHub-hosted compute. Enforced by
 `pnpm run check:no-github-actions`, inside `verify`. See
-[`INVARIANTS.md`](INVARIANTS.md), including the one documented exception
-(`release.yml`, the current npm publish path, pending an owner decision).
+[`INVARIANTS.md`](INVARIANTS.md).
+
+There are **no exceptions and no allowlist**. `.github/workflows/` does not
+exist. The last workflow, `release.yml`, was deleted on 2026-07-25 and replaced
+by `pnpm run release` (see [Releasing](#releasing) below).
 
 If you need the full suite run against a real database, that is
 `pnpm run verify:postgres`, invoked by a person, an agent, or an owned runner —
@@ -90,6 +93,63 @@ So:
   after printing a banner naming the uncovered layer.
   `ALLOW_SKIPPED_INFRA_TESTS=1` is the only way to skip under `CI`, and it has
   to be typed on purpose.
+
+## Releasing
+
+Releases run on our infrastructure, triggered by us. There is no workflow.
+
+```bash
+pnpm run release:dry-run   # every gate; publishes, tags, and releases nothing
+pnpm run release           # the real thing
+```
+
+`scripts/publish-release.sh` does, in this order: preflight → `verify:postgres`
+→ `pnpm pack` → `npm publish` → `git tag` → `gh release create`. It refuses to
+run on a dirty tree or when `HEAD` differs from `origin/main`, so commit and
+push the version bump in `package.json` first, then cut the release. Re-running
+it is safe: an already-published version skips the publish, an existing tag at
+`HEAD` is left alone, and an existing GitHub Release is not recreated.
+
+Two orderings are load-bearing. **Verification runs before publish**, and the
+Postgres gate has no skip flag — `verify:postgres` exiting 2 (no database on
+this machine) fails the release rather than falling back the way the pre-push
+hook does, because that gap is what shipped the tag-encoding defect in #170.
+**The tag is created after a successful publish**, because a tag naming a
+release that failed to publish is a lie that outlives the failure.
+
+Auth is a granular npm automation token in workspace
+`.secrets/npm-publish.env`. The script loads it into a mode-0600 temporary npm
+userconfig and deletes it on exit. Never echo it, never pass it in argv, never
+put it in a commit or a release note. `pnpm pack` (not `npm pack`) is required:
+pnpm rewrites `workspace:*` and `catalog:` protocols to concrete versions.
+
+### Published releases have no provenance. This is permanent.
+
+The old `release.yml` published with `npm publish --provenance` under GitHub's
+OIDC. Publishing from our own machines cannot do that, and there is no
+workaround. npm trusted publishing accepts a hard-coded provider allowlist —
+GitHub Actions and GitLab CI for provenance, CircleCI for auth only — and
+*"Self-hosted runners are not currently supported."* There is no custom-issuer
+setting; the request for one (`npm/cli#9104`) was closed without commitment.
+The npm CLI throws `EUSAGE` outside those providers, and the registry
+separately rejects imported attestation bundles by inspecting the signing
+certificate's issuer and its `Runner Environment` / `Source Repository URI`
+extensions, which no Google-issued identity carries. So `--provenance-file`
+does not help either.
+
+A consumer **keeps** the tarball integrity hash and npm's registry signature —
+`npm audit signatures` still verifies both and still exits 0, since a missing
+attestation lowers a count rather than erroring. A consumer **loses** the
+cryptographic link from tarball to source commit and build run, the Provenance
+panel on npmjs.com, npm's publish attestation, and the Rekor transparency-log
+entry. Concretely: a stolen publish token still yields a validly-signed
+package, and nothing external contradicts it.
+
+Compare `nostr-effect@0.0.12` (`dist.attestations` present, SLSA v1) with
+`@0.0.13` (absent) — the change already happened in practice. Do not
+reintroduce a workflow to win the green check back; restoring provenance means
+paying GitHub and re-violating the no-GitHub-CI invariant, which is an owner
+decision.
 
 ## Code Style
 

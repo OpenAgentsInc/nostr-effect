@@ -120,8 +120,8 @@
     "fmt": "vp fmt",
     "fmt:check": "vp fmt --check",
     "lint": "vp lint",
-    "release": "pnpm run verify:postgres && git tag v$(node -p \"require('./package.json').version\") && git push && git push --tags",
-    "publish:npm": "npm publish --provenance --access public"
+    "release": "bash scripts/publish-release.sh",
+    "release:dry-run": "bash scripts/publish-release.sh --dry-run"
   },
   "keywords": [
     "nostr",

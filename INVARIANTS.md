@@ -23,24 +23,76 @@ The workspace-level guidance is `INVARIANTS.md` at
   consistent with the no-Expo/EAS-cloud mobile policy — and avoid handing repo
   automation, secrets, or scheduling to third-party GitHub-hosted runners.
 - **Enforced** by `check:no-github-actions` (in `verify`): it fails if any
-  `.github/workflows/*.yml` exists.
+  `.github/workflows/*.yml` exists. **There is no allowlist.** The mechanism
+  was deleted, not merely emptied, so there is nowhere to name a new workflow.
 - Owner restatement, 2026-07-25: *"i thought we had an invariant abuot no
   github actions. all CI must be triggered in scripts or by us etc, no fucking
   github ci."*
 
-### One documented exception, pending an owner decision
+### The last exception is gone (2026-07-25)
 
-`.github/workflows/release.yml` predates this file. It fires on `v*` tag pushes
-and is currently the **only** path that publishes this package to npm: it holds
-the npm OIDC/provenance identity and cuts the GitHub Release. Removing it would
-break publishing, so it is named in the allowlist inside
-`scripts/check-no-github-actions.ts` rather than deleted unilaterally or
-quietly tolerated.
+`.github/workflows/release.yml` used to be allowlisted: it fired on `v*` tag
+pushes and was the only path that published this package to npm. It is deleted,
+and `.github/workflows/` no longer exists.
 
-Retiring it requires an owned-infrastructure release job that holds the npm
-credential. Until the owner decides, nothing may be added to that allowlist and
-nothing may be added to `release.yml` — no extra jobs, triggers, or service
-containers.
+The owner directed the move: *"if that can run without me upgrading billing its
+fine. otherwise move it to our infra like our updates thing is."* It cannot run.
+The `OpenAgentsInc` account is locked for billing, so every workflow in the org
+is killed within seconds — the last `Release` run that completed was v0.0.12 on
+2025-11-30, and the only 2026 run died in 5s with *"The job was not started
+because your account is locked due to a billing issue."*
+
+Its replacement is `pnpm run release` (`scripts/publish-release.sh`), which runs
+on a machine we control. See "Releasing runs on our infrastructure" below.
+
+## Releasing runs on our infrastructure, and gives up provenance to do it
+
+- `pnpm run release` (`scripts/publish-release.sh`) is the **only** publish path:
+  preflight → `verify:postgres` → `pnpm pack` → `npm publish` → `git tag` →
+  `gh release create`. `pnpm run release:dry-run` runs every gate and publishes
+  nothing.
+- Verification runs **before** publish, never after, and the Postgres gate has
+  no skip flag. `verify:postgres` exiting 2 (no database on this machine) is a
+  hard failure for a release, unlike the pre-push hook which may fall back.
+- The tag is created **after** a successful publish. A tag naming a release that
+  failed to publish is a lie that outlives the failure.
+- Authentication is a **granular npm automation token** from workspace
+  `.secrets/npm-publish.env`, loaded into a mode-0600 temporary npm userconfig
+  that is deleted on exit. It is never echoed, never passed in argv, never
+  committed, never written to a release note.
+- **Published packages carry no SLSA provenance attestation, and this is
+  permanent, not a gap to close later.** npm trusted publishing (OIDC) issues
+  credentials only to a hard-coded provider allowlist — GitHub Actions and
+  GitLab CI for provenance, plus CircleCI for auth only — and *"Self-hosted
+  runners are not currently supported"*
+  (`docs.npmjs.com/trusted-publishers`, `docs.npmjs.com/generating-provenance-statements`).
+  There is no custom-issuer option; the request for one (`npm/cli#9104`) was
+  closed 2026-04-21 without commitment. The gate is enforced twice: the CLI
+  throws `EUSAGE` — *"Automatic provenance generation not supported for
+  provider: …"* — outside those two, and the registry independently rejects
+  foreign attestation bundles by checking the signing certificate's issuer,
+  `Runner Environment`, and `Source Repository URI` extensions, which a
+  Google-issued identity does not carry. `--provenance-file` therefore does not
+  smuggle one in; it exists to split build from publish *within* a supported CI.
+- What this costs a consumer, precisely. **Kept:** `dist.integrity` (the sha512
+  enforced on install and pinned in lockfiles) and `dist.signatures` (the npm
+  registry's ECDSA signature over name/version/integrity). `npm audit
+  signatures` still verifies both and still **exits 0** — a missing attestation
+  lowers a count, it does not error. **Lost:** the cryptographic link from
+  tarball back to source commit, repository, and build run; the Provenance panel
+  and green check on npmjs.com; npm's publish attestation; and the Rekor
+  transparency-log entry. Registry signatures answer *"did npm serve the bytes
+  npm intended?"*; provenance answers *"were these bytes built from that source,
+  in public?"* A stolen publish token still produces a validly-signed package.
+  That is the exposure we accept in exchange for not running our releases on
+  third-party compute.
+- Observable in the wild: `nostr-effect@0.0.12` (workflow-published) has
+  `dist.attestations` with a `https://slsa.dev/provenance/v1` predicate;
+  `@0.0.13` (published by hand) has none. The transition already happened.
+- The only way to restore provenance is to publish from GitHub Actions or
+  GitLab CI, which requires paying GitHub and re-violating the invariant above.
+  That is an owner decision, not an agent's. Do not reintroduce a workflow to
+  chase the green check.
 
 ## Infrastructure-gated suites must never skip silently
 
