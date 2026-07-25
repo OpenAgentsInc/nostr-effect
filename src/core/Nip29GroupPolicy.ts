@@ -1119,9 +1119,6 @@ export class GroupPolicyEngine {
         ...g.supportedKinds.map((kind) => String(kind)),
       ])
     }
-    // Room class as a non-conflicting extension tag for operators.
-    metadataTags.push(["room-class", g.roomClass])
-
     const adminTags: string[][] = [["d", groupId]]
     const memberTags: string[][] = [["d", groupId]]
     for (const m of g.members.values()) {
