@@ -150,6 +150,7 @@ describe("RelayNip29Host", () => {
     expect(initialState.every((event) => event.pubkey === firstHost.relayPubkey)).toBe(true);
     const metadata = initialState.find((event) => event.kind === 39000);
     expect(metadata?.tags).toContainEqual(["supported_kinds", "5", "7", "9", "1337", "1984"]);
+    expect(metadata?.tags.some((tag) => tag[0] === "room-class")).toBe(false);
 
     const port = 33_000 + Math.floor(Math.random() * 5_000);
     const relay: RelayHandle = await startRelayWithEventStore(
