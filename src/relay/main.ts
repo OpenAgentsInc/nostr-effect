@@ -9,13 +9,27 @@ import { openPostgresStore } from "./backends/node/PostgresStore.js"
 
 const port = Number(process.env.PORT) || 8080
 const databaseUrl = process.env.DATABASE_URL?.trim()
-const publicUrl = process.env.RELAY_PUBLIC_URL?.trim()
+// A relay may legitimately answer on more than one hostname: a custom domain
+// plus its platform hostname during certificate provisioning, or two names
+// during a migration. NIP-42 binds the auth event to the URL the client
+// dialled, and clients validate that binding locally too, so a relay that
+// accepts only one name cannot be reached through any other. Accept a
+// comma-separated set. The first entry stays the canonical public URL.
+const publicUrls = (process.env.RELAY_PUBLIC_URL ?? "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter((value) => value.length > 0)
 
 if (databaseUrl === undefined || databaseUrl === "") {
   throw new Error("relay: DATABASE_URL is required")
 }
-if (publicUrl === undefined || !/^wss:\/\/[^/?#]+\/?$/.test(publicUrl)) {
-  throw new Error("relay: RELAY_PUBLIC_URL must be an origin-only wss URL")
+if (
+  publicUrls.length === 0 ||
+  !publicUrls.every((value) => /^wss:\/\/[^/?#]+\/?$/.test(value))
+) {
+  throw new Error(
+    "relay: RELAY_PUBLIC_URL must be one or more comma-separated origin-only wss URLs"
+  )
 }
 
 const store = await openPostgresStore(databaseUrl)
@@ -28,7 +42,7 @@ const relay = await startRelayWithEventStore(
       contact: "mailto:support@openagents.com",
     },
     nip42: {
-      relayUrls: [publicUrl],
+      relayUrls: publicUrls,
       authRequired: true,
     },
   },
