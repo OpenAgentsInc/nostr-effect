@@ -45,7 +45,9 @@ pnpm run verify:postgres   # the above, against a real Postgres 17 it provisions
 
 `verify` is the gate for every change. `verify:postgres` is the gate for
 storage changes and for cutting a release — it is the only one of the two that
-actually covers the relay's production store.
+actually covers the relay's production store. The pre-push hook runs
+`verify:postgres` when this machine can provide a Postgres 17 and falls back to
+`verify` with a warning when it cannot.
 
 ### No GitHub-hosted CI
 

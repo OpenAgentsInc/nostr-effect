@@ -1,14 +1,33 @@
 #!/bin/bash
 #
-# Pre-push hook: Ensures typecheck and tests pass before pushing.
+# Pre-push hook: verify before pushing, against a real Postgres when this
+# machine can provide one.
+#
+# This repo has no GitHub-hosted CI (see INVARIANTS.md), so pushes are verified
+# here and on owned runners. `verify` alone does not cover the relay's
+# production storage backend, so prefer `verify:postgres`, which provisions a
+# throwaway Postgres 17 and tears it down again. Exit 2 from that script means
+# no Postgres is available on this machine — fall back rather than block the
+# push, and say plainly what went uncovered.
+#
 # Install with: pnpm run setup:hooks
 #
 
 echo "Running pre-push checks..."
 
-# Run typecheck and tests
-pnpm run verify
+pnpm run verify:postgres
 status=$?
+
+if [ $status -eq 2 ]; then
+    echo ""
+    echo "⚠️  No Postgres 17 on this machine, so the PostgresStore suite did not run."
+    echo "   Falling back to plain verify. The relay's production storage backend"
+    echo "   is NOT covered by this push. Install postgresql@17 or start Docker,"
+    echo "   then run: pnpm run verify:postgres"
+    echo ""
+    pnpm run verify
+    status=$?
+fi
 
 if [ $status -ne 0 ]; then
     echo ""

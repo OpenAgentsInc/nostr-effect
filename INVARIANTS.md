@@ -73,7 +73,10 @@ containers.
   gate. It stands up a throwaway Postgres of the production **major** version,
   exports `DATABASE_URL`, runs preflight → `verify` → postflight, and tears the
   database down. Run it before landing storage changes and before cutting a
-  release; `pnpm run release` runs it for you.
+  release; `pnpm run release` runs it for you, and the pre-push hook prefers it
+  over plain `verify` whenever this machine can provide a Postgres 17 (exit
+  code 2 means it could not, and the hook falls back with a warning rather than
+  blocking the push).
 - The major version is not a guess: the relay's Cloud Run service
   `openagents-nostr-relay` attaches Cloud SQL
   `openagentsgemini:us-central1:khala-sync-pg`, which is `POSTGRES_17`.

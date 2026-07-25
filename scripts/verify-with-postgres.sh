@@ -31,6 +31,11 @@
 #                            when it is somewhere this script does not look.
 #   NOSTR_EFFECT_PG_MODE     `local` or `docker` to force a provisioning mode
 #                            instead of preferring a local install.
+#
+# Exit codes:
+#   0  verify passed with the Postgres suite covered
+#   1  verify failed
+#   2  no Postgres available to provision — nothing was run
 
 set -euo pipefail
 
@@ -178,7 +183,9 @@ else
       "${EXPECTED_MAJOR} initdb and pg_ctl, or DATABASE_URL to a throwaway" \
       "database." \
       "" >&2
-    die "no Postgres ${EXPECTED_MAJOR} available"
+    # Exit 2, distinct from a test failure (1), so callers such as the pre-push
+    # hook can tell "no database here" from "the suite went red".
+    exit 2
   fi
 fi
 
