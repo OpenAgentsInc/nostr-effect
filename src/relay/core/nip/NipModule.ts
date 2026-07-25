@@ -8,7 +8,11 @@ import type { Effect } from "effect"
 import type { NostrEvent } from "../../../core/Schema.js"
 import type { Policy } from "../policy/Policy.js"
 import type { RelayInfo, RelayLimitation } from "../RelayInfo.js"
-import type { CryptoError, InvalidPublicKey } from "../../../core/Errors.js"
+import type {
+  CryptoError,
+  InvalidPublicKey,
+  StorageError,
+} from "../../../core/Errors.js"
 import type { EventService } from "../../../services/EventService.js"
 
 // =============================================================================
@@ -27,7 +31,7 @@ export type PreStoreHook = (
   /** NIP-16 ephemeral: OK + live broadcast, do not persist */
   | { readonly action: "broadcast"; readonly event: NostrEvent }
   | { readonly action: "reject"; readonly reason: string },
-  never
+  StorageError
 >
 
 /**
@@ -43,7 +47,9 @@ export interface EventDeleteFilter {
  * Hook called after an event is stored
  * For side effects like notifications, indexing, etc.
  */
-export type PostStoreHook = (event: NostrEvent) => Effect.Effect<void, never>
+export type PostStoreHook = (
+  event: NostrEvent
+) => Effect.Effect<void, StorageError>
 
 /**
  * NIP Module interface

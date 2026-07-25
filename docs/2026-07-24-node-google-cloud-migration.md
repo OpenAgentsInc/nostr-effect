@@ -143,8 +143,9 @@ multi-replica operator notes.
 
 Exit: the relay is live, measured, monitored, and has a public-safe receipt.
 
-The production entry now fails closed unless `DATABASE_URL` and the origin-only
-`RELAY_PUBLIC_URL` are present. It composes the Node host with the Cloud SQL
+The production entry now fails closed unless `DATABASE_URL`, the origin-only
+`RELAY_PUBLIC_URL`, `RELAY_PRIVATE_KEY`, and `RELAY_NIP29_SEED_GROUPS` are
+present. It composes the Node host with the Cloud SQL
 Postgres store, requires NIP-42 on connections, drains WebSockets on SIGTERM,
 and closes the database pool. The root Dockerfile builds the Node 24 Cloud Run
 image; deployment, DNS, remote load proof, backup/restore, and multi-replica

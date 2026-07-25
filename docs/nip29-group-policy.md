@@ -1,8 +1,52 @@
-# NIP-29 group policy for the owned relay (SARAH-CW-01)
+# NIP-29 group policy and durable Node host
 
 This document describes how the owned OpenAgents relay admits a closed NIP-29
 group, enforces membership on write, and publishes relay-signed membership
 state that a client can verify.
+
+The Node host is generic. An operator can also configure a public group. The
+host does not depend on an application account or session. NIP-42 authenticates
+the Nostr key on the relay connection.
+
+## Durable production configuration
+
+The standalone Node entry requires these values in addition to `DATABASE_URL`
+and `RELAY_PUBLIC_URL`:
+
+```sh
+RELAY_PRIVATE_KEY="<64 lowercase hex characters>"
+RELAY_NIP29_SEED_GROUPS='[
+  {
+    "id": "public-chat",
+    "name": "Public Chat",
+    "about": "A public NIP-29 chat group.",
+    "isClosed": false,
+    "isRestricted": false,
+    "isPrivate": false,
+    "isHidden": false,
+    "supportedKinds": [5, 7, 9, 1337, 1984]
+  }
+]'
+```
+
+Load `RELAY_PRIVATE_KEY` from the deployment secret store. Do not put it in
+source control, an event, a log, or the group JSON. The relay derives the
+lowercase public key and publishes it as NIP-11 `self`.
+
+Before the listener starts, the host validates the inputs, replays stored
+moderation history, and stores signed kinds `39000`, `39001`, `39003`, and
+`39005`. Startup stops when a required read, signature, or write fails. An
+unchanged restart keeps the same event IDs.
+
+Accepted metadata and pin moderation events regenerate the affected
+relay-signed state. Use one relay process for moderation writes. Restart replay
+preserves state, but this release does not coordinate the in-memory policy
+engine across concurrent relay processes.
+
+When a group event contains `previous` references, each reference must be the
+first eight lowercase hexadecimal characters of an event in the last 50 events
+from that relay group. The referenced event must have a different author. The
+tag remains optional, as NIP-29 specifies.
 
 ## Why
 
@@ -91,8 +135,9 @@ function publishMembership(groupId: string) {
   const admins = finalizeEvent(proj.admins, relaySecret)
   const members = finalizeEvent(proj.members, relaySecret)
   const roles = finalizeEvent(proj.roles, relaySecret)
+  const pinned = finalizeEvent(proj.pinned, relaySecret)
   // Store/broadcast metadata, admins, members, roles through the relay host.
-  return { metadata, admins, members, roles }
+  return { metadata, admins, members, roles, pinned }
 }
 
 publishMembership("openagents-community")
@@ -181,6 +226,7 @@ engine.admitEvent({ pubkey, kind: 1, tags: [["h", "g"]], content: "" })
 | --- | --- |
 | Pure engine | `src/core/Nip29GroupPolicy.ts` |
 | Relay module factory | `src/relay/core/nip/modules/Nip29Module.ts` (`createNip29GroupPolicyModule`) |
+| Durable Node host | `src/relay/backends/node/RelayNip29Host.ts` |
 | Advertisement-only module | `Nip29Module` (default module set) |
 | Client loaders/parsers | `src/client/Nip29Service.ts`, `src/wrappers/nip29.ts` |
 | Tests | `src/core/Nip29GroupPolicy.test.ts`, `src/relay/core/nip/modules/Nip29Module.test.ts` |

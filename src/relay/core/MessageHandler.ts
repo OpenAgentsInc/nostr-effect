@@ -168,6 +168,30 @@ const make = (nipRegistry?: NipRegistry, authService?: AuthService) =>
             return { responses: [okMessage(event.id, false, "auth-required: protected event")], broadcasts: [] }
           }
         }
+        // Public NIP-29 groups do not require an application account, but a
+        // deployment that sets NIP-42 auth_required still binds every group
+        // write to the authenticated Nostr key. Reads remain public.
+        if (
+          event.tags.some((t) => t[0] === "h" && t[1]) &&
+          authService?.authRequired === true
+        ) {
+          const authed = yield* authService.isAuthenticated(connectionId)
+          const authedPk = authed
+            ? yield* authService.getAuthPubkey(connectionId)
+            : undefined
+          if (!authed || !authedPk || authedPk !== event.pubkey) {
+            return {
+              responses: [
+                okMessage(
+                  event.id,
+                  false,
+                  "auth-required: NIP-29 group write"
+                ),
+              ],
+              broadcasts: [],
+            }
+          }
+        }
         // NIP-09: Deletion request (kind 5) – e tags and a tags (same pubkey only)
         if (event.kind === 5) {
           // e-tag: delete specific event ids authored by the deleter

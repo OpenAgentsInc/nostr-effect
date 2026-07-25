@@ -46,6 +46,12 @@ import {
   type ConnectionData,
   type LivekitConfig,
 } from "./NodeServer.js"
+export {
+  createRelayNip29Host,
+  type RelayNip29Host,
+  type RelayNip29HostConfig,
+  type RelayNip29SeedGroup,
+} from "./RelayNip29Host.js"
 
 export {
   MemoryEventStoreLive,
