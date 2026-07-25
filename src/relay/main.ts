@@ -92,6 +92,9 @@ try {
             seedGroups.flatMap((group) => group.supportedKinds ?? [])
           ),
         ].sort((a, b) => a - b),
+        limitation: {
+          restricted_writes: true,
+        },
       },
       nip42: {
         relayUrls: publicUrls,
