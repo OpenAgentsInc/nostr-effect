@@ -55,6 +55,14 @@ export interface GiftWrappedEvent {
   readonly sig: Signature;
 }
 
+export interface UnwrappedEventDetails {
+  readonly rumor: Rumor;
+  readonly seal: SealedEvent;
+  readonly wrapId: EventId;
+  readonly sealId: EventId;
+  readonly rumorId: EventId;
+}
+
 /** Optional inputs for deterministic conformance fixtures. */
 export interface WrapMaterial {
   readonly sealCreatedAt?: number;
@@ -300,7 +308,10 @@ export function wrapManyEvents(
   );
 }
 
-export function unwrapEvent(wrap: GiftWrappedEvent, recipientPrivateKey: Uint8Array): Rumor {
+export function unwrapEventWithDetails(
+  wrap: GiftWrappedEvent,
+  recipientPrivateKey: Uint8Array,
+): UnwrappedEventDetails {
   const recipientPublicKey = getPublicKey(recipientPrivateKey);
   if (wrap.kind !== GIFT_WRAP_KIND) throw new Error("gift wrap must use kind 1059");
   requireRecipient(wrap.tags, recipientPublicKey, "gift wrap");
@@ -316,7 +327,17 @@ export function unwrapEvent(wrap: GiftWrappedEvent, recipientPrivateKey: Uint8Ar
   if (rumor.id !== rumorHash(rumor)) throw new Error("gift wrap rumor ID is invalid");
   if (rumor.pubkey !== seal.pubkey)
     throw new Error("gift wrap rumor author does not match the seal signer");
-  return rumor;
+  return {
+    rumor,
+    seal,
+    wrapId: wrap.id,
+    sealId: seal.id,
+    rumorId: rumor.id,
+  };
+}
+
+export function unwrapEvent(wrap: GiftWrappedEvent, recipientPrivateKey: Uint8Array): Rumor {
+  return unwrapEventWithDetails(wrap, recipientPrivateKey).rumor;
 }
 
 export function unwrapManyEvents(

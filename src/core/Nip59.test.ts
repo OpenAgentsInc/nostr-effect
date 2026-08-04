@@ -9,12 +9,16 @@ import {
   createWrap,
   wrapEvent,
   unwrapEvent,
+  unwrapEventWithDetails,
   wrapManyEvents,
   SEAL_KIND,
   GIFT_WRAP_KIND,
+  type GiftWrappedEvent,
 } from "./Nip59.js"
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils"
 import { schnorr } from "@noble/curves/secp256k1"
+import { encrypt, getConversationKey } from "../wrappers/nip44.js"
+import { finalizeEvent } from "../wrappers/pure.js"
 import type { EventKind } from "./Schema.js"
 
 // Test keys from nostr-tools
@@ -95,6 +99,22 @@ describe("NIP-59: Gift Wrap", () => {
       expect(unwrapped.pubkey as string).toBe(bytesToHex(schnorr.getPublicKey(senderPrivateKey)))
     })
 
+    test("should return verified seal and event ID provenance", () => {
+      const wrapped = wrapEvent(
+        { kind: 1 as EventKind, content: "private", tags: [] },
+        senderPrivateKey,
+        recipientPublicKey
+      )
+
+      const details = unwrapEventWithDetails(wrapped, recipientPrivateKey)
+
+      expect(details.wrapId).toBe(wrapped.id)
+      expect(details.sealId).toBe(details.seal.id)
+      expect(details.rumorId).toBe(details.rumor.id)
+      expect(details.seal.pubkey).toBe(details.rumor.pubkey)
+      expect(unwrapEvent(wrapped, recipientPrivateKey)).toEqual(details.rumor)
+    })
+
     test("should reject a wrap whose signature does not match its ID", () => {
       const wrapped = wrapEvent(
         { kind: 1 as EventKind, content: "private", tags: [["p", recipientPublicKey]] },
@@ -132,6 +152,36 @@ describe("NIP-59: Gift Wrap", () => {
           wrapPrivateKey,
         })
       ).toThrow("signature or ID is invalid")
+    })
+
+    test("should not return provenance from a tampered seal", () => {
+      const rumor = createRumor(
+        { kind: 1 as EventKind, content: "private", tags: [] },
+        senderPrivateKey
+      )
+      const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey)
+      const tamperedSeal = {
+        ...seal,
+        sig: `${seal.sig[0] === "0" ? "1" : "0"}${seal.sig.slice(1)}`,
+      }
+      const content = encrypt(
+        JSON.stringify(tamperedSeal),
+        getConversationKey(wrapPrivateKey, recipientPublicKey),
+        new Uint8Array(32).fill(4)
+      )
+      const wrapped = finalizeEvent(
+        {
+          kind: GIFT_WRAP_KIND,
+          created_at: 1_700_000_001,
+          tags: [["p", recipientPublicKey]],
+          content,
+        },
+        wrapPrivateKey
+      ) as unknown as GiftWrappedEvent
+
+      expect(() => unwrapEventWithDetails(wrapped, recipientPrivateKey)).toThrow(
+        "gift wrap seal signature or ID is invalid"
+      )
     })
 
     test("should produce deterministic wraps from explicit material", () => {

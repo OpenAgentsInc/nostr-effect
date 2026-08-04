@@ -25,10 +25,12 @@ export {
   wrapEvent,
   wrapManyEvents,
   unwrapEvent,
+  unwrapEventWithDetails,
   unwrapManyEvents,
   type UnsignedEvent,
   type Rumor,
   type SealedEvent,
   type GiftWrappedEvent,
+  type UnwrappedEventDetails,
   type WrapMaterial,
 } from "../core/Nip59.js"
