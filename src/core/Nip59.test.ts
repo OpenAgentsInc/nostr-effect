@@ -5,6 +5,8 @@
 import { describe, test, expect } from "vite-plus/test"
 import {
   createRumor,
+  createSeal,
+  createWrap,
   wrapEvent,
   unwrapEvent,
   wrapManyEvents,
@@ -19,6 +21,7 @@ import type { EventKind } from "./Schema.js"
 const senderPrivateKey = hexToBytes("0beebd062ec8735f4243466f14a397a5ed45e7830c1ea4b029e55d4d420d0989")
 const recipientPrivateKey = hexToBytes("e108399bd8424357a710b606a0e6b8b2c1c28f0ea245c587a7037ef143e9ca18")
 const recipientPublicKey = bytesToHex(schnorr.getPublicKey(recipientPrivateKey))
+const wrapPrivateKey = hexToBytes("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
 describe("NIP-59: Gift Wrap", () => {
   describe("SEAL_KIND", () => {
@@ -90,6 +93,69 @@ describe("NIP-59: Gift Wrap", () => {
       expect(unwrapped.content).toBe(originalContent)
       expect(unwrapped.kind as number).toBe(1)
       expect(unwrapped.pubkey as string).toBe(bytesToHex(schnorr.getPublicKey(senderPrivateKey)))
+    })
+
+    test("should reject a wrap whose signature does not match its ID", () => {
+      const wrapped = wrapEvent(
+        { kind: 1 as EventKind, content: "private", tags: [["p", recipientPublicKey]] },
+        senderPrivateKey,
+        recipientPublicKey
+      )
+      const tampered = {
+        ...wrapped,
+        sig: `${wrapped.sig[0] === "0" ? "1" : "0"}${wrapped.sig.slice(1)}` as never,
+      }
+
+      expect(() => unwrapEvent(tampered, recipientPrivateKey)).toThrow(
+        "signature or ID is invalid"
+      )
+    })
+
+    test("should reject a seal whose signature does not match its ID", () => {
+      const rumor = createRumor(
+        { kind: 1 as EventKind, content: "private", tags: [["p", recipientPublicKey]] },
+        senderPrivateKey
+      )
+      const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey, {
+        sealCreatedAt: 1_700_000_000,
+        sealNonce: new Uint8Array(32).fill(3),
+      })
+      const tamperedSeal = {
+        ...seal,
+        sig: `${seal.sig[0] === "0" ? "1" : "0"}${seal.sig.slice(1)}` as never,
+      }
+
+      expect(() =>
+        createWrap(tamperedSeal, recipientPublicKey, {
+          wrapCreatedAt: 1_700_000_001,
+          wrapNonce: new Uint8Array(32).fill(4),
+          wrapPrivateKey,
+        })
+      ).toThrow("signature or ID is invalid")
+    })
+
+    test("should produce deterministic wraps from explicit material", () => {
+      const event = {
+        kind: 1 as EventKind,
+        created_at: 1_700_000_002 as never,
+        content: "private",
+        tags: [["p", recipientPublicKey]],
+      }
+      const material = {
+        sealCreatedAt: 1_700_000_000,
+        wrapCreatedAt: 1_700_000_001,
+        sealNonce: new Uint8Array(32).fill(3),
+        wrapNonce: new Uint8Array(32).fill(4),
+        wrapPrivateKey,
+        sealAuxiliaryRandomData: new Uint8Array(32),
+        wrapAuxiliaryRandomData: new Uint8Array(32),
+      }
+
+      const first = wrapEvent(event, senderPrivateKey, recipientPublicKey, material)
+      const second = wrapEvent(event, senderPrivateKey, recipientPublicKey, material)
+
+      expect(second).toEqual(first)
+      expect(unwrapEvent(first, recipientPrivateKey).content).toBe("private")
     })
   })
 

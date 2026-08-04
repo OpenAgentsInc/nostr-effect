@@ -30,4 +30,5 @@ export {
   type Rumor,
   type SealedEvent,
   type GiftWrappedEvent,
+  type WrapMaterial,
 } from "../core/Nip59.js"

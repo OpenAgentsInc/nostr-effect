@@ -1,296 +1,329 @@
 /**
  * NIP-59: Gift Wrap
  * https://github.com/nostr-protocol/nips/blob/master/59.md
- *
- * Private event wrapping using NIP-44 encryption
  */
-import { sha256 } from "@noble/hashes/sha256"
-import { bytesToHex, randomBytes } from "@noble/hashes/utils"
-import { schnorr, secp256k1 } from "@noble/curves/secp256k1"
-import { extract, expand } from "@noble/hashes/hkdf"
-import { hmac } from "@noble/hashes/hmac"
-import { chacha20 } from "@noble/ciphers/chacha"
-import type { EventKind, PublicKey, UnixTimestamp, EventId, Signature } from "./Schema.js"
+import { randomBytes } from "@noble/hashes/utils";
+import { decrypt, encrypt, getConversationKey } from "../wrappers/nip44.js";
+import {
+  finalizeEvent,
+  generateSecretKey,
+  getEventHash,
+  getPublicKey,
+  validateEvent,
+  verifyEvent,
+  type Event,
+} from "../wrappers/pure.js";
+import type { EventId, EventKind, PublicKey, Signature, UnixTimestamp } from "./Schema.js";
 
-/** Kind 13: Seal - encrypted rumor */
-export const SEAL_KIND = 13 as EventKind
+export const SEAL_KIND = 13 as EventKind;
+export const GIFT_WRAP_KIND = 1059 as EventKind;
 
-/** Kind 1059: Gift Wrap - encrypted seal */
-export const GIFT_WRAP_KIND = 1059 as EventKind
+const TWO_DAYS = 2 * 24 * 60 * 60;
+const HEX_64 = /^[a-f0-9]{64}$/;
 
-const TWO_DAYS = 2 * 24 * 60 * 60
-const SALT = new TextEncoder().encode("nip44-v2")
-
-const now = () => Math.floor(Date.now() / 1000)
-const randomNow = () => Math.floor(now() - Math.random() * TWO_DAYS)
-
-const utf8Encoder = new TextEncoder()
-const utf8Decoder = new TextDecoder()
-
-/**
- * Unsigned event (rumor) - the actual content being wrapped
- */
 export interface UnsignedEvent {
-  readonly kind: EventKind
-  readonly content: string
-  readonly tags: readonly (readonly string[])[]
-  readonly created_at?: UnixTimestamp
-  readonly pubkey?: PublicKey
+  readonly kind: EventKind;
+  readonly content: string;
+  readonly tags: readonly (readonly string[])[];
+  readonly created_at?: UnixTimestamp;
+  readonly pubkey?: PublicKey;
 }
 
-/**
- * Rumor - unsigned event with id
- */
 export interface Rumor extends UnsignedEvent {
-  readonly id: EventId
-  readonly pubkey: PublicKey
-  readonly created_at: UnixTimestamp
+  readonly id: EventId;
+  readonly pubkey: PublicKey;
+  readonly created_at: UnixTimestamp;
 }
 
-/**
- * Sealed event structure
- */
 export interface SealedEvent {
-  readonly id: EventId
-  readonly pubkey: PublicKey
-  readonly created_at: UnixTimestamp
-  readonly kind: typeof SEAL_KIND
-  readonly tags: readonly []
-  readonly content: string
-  readonly sig: Signature
+  readonly id: EventId;
+  readonly pubkey: PublicKey;
+  readonly created_at: UnixTimestamp;
+  readonly kind: typeof SEAL_KIND;
+  readonly tags: readonly [];
+  readonly content: string;
+  readonly sig: Signature;
 }
 
-/**
- * Gift wrapped event structure
- */
 export interface GiftWrappedEvent {
-  readonly id: EventId
-  readonly pubkey: PublicKey
-  readonly created_at: UnixTimestamp
-  readonly kind: typeof GIFT_WRAP_KIND
-  readonly tags: readonly (readonly string[])[]
-  readonly content: string
-  readonly sig: Signature
+  readonly id: EventId;
+  readonly pubkey: PublicKey;
+  readonly created_at: UnixTimestamp;
+  readonly kind: typeof GIFT_WRAP_KIND;
+  readonly tags: readonly (readonly string[])[];
+  readonly content: string;
+  readonly sig: Signature;
 }
 
-// NIP-44 encryption helpers
-function getConversationKey(privateKey: Uint8Array, publicKey: string): Uint8Array {
-  const shared = secp256k1.getSharedSecret(privateKey, "02" + publicKey)
-  return extract(sha256, shared.subarray(1, 33), SALT)
+/** Optional inputs for deterministic conformance fixtures. */
+export interface WrapMaterial {
+  readonly sealCreatedAt?: number;
+  readonly wrapCreatedAt?: number;
+  readonly sealNonce?: Uint8Array;
+  readonly wrapNonce?: Uint8Array;
+  readonly wrapPrivateKey?: Uint8Array;
+  readonly sealAuxiliaryRandomData?: Uint8Array;
+  readonly wrapAuxiliaryRandomData?: Uint8Array;
 }
 
-function calcPaddedLen(unpaddedLen: number): number {
-  if (unpaddedLen <= 32) return 32
-  const nextPower = 1 << (Math.floor(Math.log2(unpaddedLen - 1)) + 1)
-  const chunk = nextPower <= 256 ? 32 : nextPower / 8
-  return chunk * (Math.floor((unpaddedLen - 1) / chunk) + 1)
+function now(): number {
+  return Math.floor(Date.now() / 1000);
 }
 
-function pad(plaintext: string): Uint8Array {
-  const unpadded = utf8Encoder.encode(plaintext)
-  const unpaddedLen = unpadded.length
-  if (unpaddedLen < 1 || unpaddedLen > 65535) throw new Error("Invalid plaintext length")
-  const paddedLen = calcPaddedLen(unpaddedLen)
-  const padded = new Uint8Array(2 + paddedLen)
-  new DataView(padded.buffer).setUint16(0, unpaddedLen, false)
-  padded.set(unpadded, 2)
-  return padded
+function randomizedTimestamp(): number {
+  const random = randomBytes(4);
+  const offset =
+    new DataView(random.buffer, random.byteOffset, random.byteLength).getUint32(0) % TWO_DAYS;
+  return now() - offset;
 }
 
-function unpad(padded: Uint8Array): string {
-  const unpaddedLen = new DataView(padded.buffer, padded.byteOffset).getUint16(0, false)
-  const unpadded = padded.subarray(2, 2 + unpaddedLen)
-  if (unpaddedLen < 1 || unpaddedLen > 65535 || unpadded.length !== unpaddedLen) {
-    throw new Error("Invalid padding")
+function requirePublicKey(publicKey: string, label: string): void {
+  if (!HEX_64.test(publicKey))
+    throw new Error(`${label} must be 64 lowercase hexadecimal characters`);
+}
+
+function mutableTags(tags: readonly (readonly string[])[]): string[][] {
+  return tags.map((tag) => [...tag]);
+}
+
+function eventForVerification(event: SealedEvent | GiftWrappedEvent): Event {
+  return {
+    id: event.id,
+    pubkey: event.pubkey,
+    created_at: event.created_at,
+    kind: event.kind,
+    tags: mutableTags(event.tags),
+    content: event.content,
+    sig: event.sig,
+  };
+}
+
+function requireValidSignedEvent(event: SealedEvent | GiftWrappedEvent, label: string): void {
+  const candidate = eventForVerification(event);
+  if (!validateEvent(candidate) || !verifyEvent(candidate))
+    throw new Error(`${label} signature or ID is invalid`);
+}
+
+function requireRecipient(
+  tags: readonly (readonly string[])[],
+  recipient: string,
+  label: string,
+): void {
+  if (
+    tags.length !== 1 ||
+    tags[0]?.length !== 2 ||
+    tags[0]?.[0] !== "p" ||
+    tags[0]?.[1] !== recipient
+  ) {
+    throw new Error(`${label} must contain exactly one recipient tag`);
   }
-  return utf8Decoder.decode(unpadded)
 }
 
-function nip44Encrypt(plaintext: string, conversationKey: Uint8Array): string {
-  const nonce = randomBytes(32)
-  const keys = expand(sha256, conversationKey, nonce, 76)
-  const chachaKey = keys.subarray(0, 32)
-  const chachaNonce = keys.subarray(32, 44)
-  const hmacKey = keys.subarray(44, 76)
-  const padded = pad(plaintext)
-  const ciphertext = chacha20(chachaKey, chachaNonce, padded)
-  const mac = hmac(sha256, hmacKey, ciphertext)
-  const payload = new Uint8Array(1 + 32 + ciphertext.length + 32)
-  payload[0] = 2
-  payload.set(nonce, 1)
-  payload.set(ciphertext, 33)
-  payload.set(mac, 33 + ciphertext.length)
-  return btoa(String.fromCharCode(...payload))
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function nip44Decrypt(payload: string, conversationKey: Uint8Array): string {
-  const data = Uint8Array.from(atob(payload), (c) => c.charCodeAt(0))
-  if (data[0] !== 2) throw new Error("Invalid version")
-  const nonce = data.subarray(1, 33)
-  const ciphertext = data.subarray(33, data.length - 32)
-  const mac = data.subarray(data.length - 32)
-  const keys = expand(sha256, conversationKey, nonce, 76)
-  const chachaKey = keys.subarray(0, 32)
-  const chachaNonce = keys.subarray(32, 44)
-  const hmacKey = keys.subarray(44, 76)
-  const calculatedMac = hmac(sha256, hmacKey, ciphertext)
-  if (!calculatedMac.every((b, i) => b === mac[i])) throw new Error("Invalid MAC")
-  const padded = chacha20(chachaKey, chachaNonce, ciphertext)
-  return unpad(padded)
+function requireExactKeys(
+  value: Record<string, unknown>,
+  expected: readonly string[],
+  label: string,
+): void {
+  const actual = Object.keys(value).sort();
+  const wanted = [...expected].sort();
+  if (actual.length !== wanted.length || actual.some((key, index) => key !== wanted[index])) {
+    throw new Error(`${label} has unexpected or missing fields`);
+  }
 }
 
-function getEventHash(event: {
-  pubkey: string
-  created_at: number
-  kind: number
-  tags: readonly (readonly string[])[]
-  content: string
-}): string {
-  return bytesToHex(
-    sha256(
-      utf8Encoder.encode(
-        JSON.stringify([0, event.pubkey, event.created_at, event.kind, event.tags, event.content])
-      )
-    )
-  )
+function isTags(value: unknown): value is string[][] {
+  return (
+    Array.isArray(value) &&
+    value.every((tag) => Array.isArray(tag) && tag.every((part) => typeof part === "string"))
+  );
 }
 
-function signEvent(
-  event: { id: string; pubkey: string; created_at: number; kind: number; tags: readonly (readonly string[])[]; content: string },
-  privateKey: Uint8Array
-): string {
-  return bytesToHex(schnorr.sign(event.id, privateKey))
+function parseJsonObject(json: string, label: string): Record<string, unknown> {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch {
+    throw new Error(`${label} is not valid JSON`);
+  }
+  if (!isRecord(value)) throw new Error(`${label} must be a JSON object`);
+  return value;
 }
 
-function getPublicKey(privateKey: Uint8Array): string {
-  return bytesToHex(schnorr.getPublicKey(privateKey))
+function parseSeal(json: string): SealedEvent {
+  const value = parseJsonObject(json, "gift wrap seal");
+  requireExactKeys(
+    value,
+    ["id", "pubkey", "created_at", "kind", "tags", "content", "sig"],
+    "gift wrap seal",
+  );
+  if (
+    typeof value.id !== "string" ||
+    typeof value.pubkey !== "string" ||
+    !Number.isSafeInteger(value.created_at) ||
+    value.kind !== SEAL_KIND ||
+    !isTags(value.tags) ||
+    value.tags.length !== 0 ||
+    typeof value.content !== "string" ||
+    typeof value.sig !== "string"
+  ) {
+    throw new Error("gift wrap seal has an invalid structure");
+  }
+  return value as unknown as SealedEvent;
 }
 
-function generateSecretKey(): Uint8Array {
-  return schnorr.utils.randomPrivateKey()
+function parseRumor(json: string): Rumor {
+  const value = parseJsonObject(json, "gift wrap rumor");
+  requireExactKeys(
+    value,
+    ["id", "pubkey", "created_at", "kind", "tags", "content"],
+    "gift wrap rumor",
+  );
+  if (
+    typeof value.id !== "string" ||
+    typeof value.pubkey !== "string" ||
+    !Number.isSafeInteger(value.created_at) ||
+    !Number.isSafeInteger(value.kind) ||
+    (value.kind as number) < 0 ||
+    (value.kind as number) > 65535 ||
+    !isTags(value.tags) ||
+    typeof value.content !== "string"
+  ) {
+    throw new Error("gift wrap rumor has an invalid structure");
+  }
+  requirePublicKey(value.pubkey, "gift wrap rumor public key");
+  if (!HEX_64.test(value.id)) throw new Error("gift wrap rumor ID is invalid");
+  return value as unknown as Rumor;
 }
 
-/**
- * Create a rumor (unsigned event with id)
- */
+function rumorHash(rumor: Rumor): string {
+  return getEventHash({
+    pubkey: rumor.pubkey,
+    created_at: rumor.created_at,
+    kind: rumor.kind,
+    tags: mutableTags(rumor.tags),
+    content: rumor.content,
+  });
+}
+
 export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array): Rumor {
-  const pubkey = getPublicKey(privateKey) as PublicKey
-  const created_at = (event.created_at ?? now()) as UnixTimestamp
-
+  const pubkey = getPublicKey(privateKey) as PublicKey;
+  const created_at = (event.created_at ?? now()) as UnixTimestamp;
   const rumor = {
     kind: event.kind ?? (1 as EventKind),
     content: event.content ?? "",
     tags: event.tags ?? [],
     pubkey,
     created_at,
+  };
+  const id = getEventHash({ ...rumor, tags: mutableTags(rumor.tags) }) as EventId;
+  return { ...rumor, id };
+}
+
+export function createSeal(
+  rumor: Rumor,
+  senderPrivateKey: Uint8Array,
+  recipientPublicKey: string,
+  material: Pick<WrapMaterial, "sealCreatedAt" | "sealNonce" | "sealAuxiliaryRandomData"> = {},
+): SealedEvent {
+  requirePublicKey(recipientPublicKey, "recipient public key");
+  const senderPublicKey = getPublicKey(senderPrivateKey);
+  if (rumor.pubkey !== senderPublicKey || rumor.id !== rumorHash(rumor)) {
+    throw new Error("rumor author or ID does not match the sender");
   }
-
-  const id = getEventHash(rumor) as EventId
-
-  return { ...rumor, id }
+  const conversationKey = getConversationKey(senderPrivateKey, recipientPublicKey);
+  const encryptedContent = encrypt(JSON.stringify(rumor), conversationKey, material.sealNonce);
+  return finalizeEvent(
+    {
+      kind: SEAL_KIND,
+      created_at: material.sealCreatedAt ?? randomizedTimestamp(),
+      tags: [],
+      content: encryptedContent,
+    },
+    senderPrivateKey,
+    material.sealAuxiliaryRandomData,
+  ) as unknown as SealedEvent;
 }
 
-/**
- * Create a seal (encrypted rumor)
- */
-export function createSeal(rumor: Rumor, senderPrivateKey: Uint8Array, recipientPublicKey: string): SealedEvent {
-  const conversationKey = getConversationKey(senderPrivateKey, recipientPublicKey)
-  const encryptedContent = nip44Encrypt(JSON.stringify(rumor), conversationKey)
-
-  const senderPubkey = getPublicKey(senderPrivateKey) as PublicKey
-  const created_at = randomNow() as UnixTimestamp
-
-  const unsigned = {
-    kind: SEAL_KIND,
-    pubkey: senderPubkey,
-    created_at,
-    tags: [] as readonly [],
-    content: encryptedContent,
-  }
-
-  const id = getEventHash(unsigned) as EventId
-  const sig = signEvent({ ...unsigned, id }, senderPrivateKey) as Signature
-
-  return { ...unsigned, id, sig }
+export function createWrap(
+  seal: SealedEvent,
+  recipientPublicKey: string,
+  material: Pick<
+    WrapMaterial,
+    "wrapCreatedAt" | "wrapNonce" | "wrapPrivateKey" | "wrapAuxiliaryRandomData"
+  > = {},
+): GiftWrappedEvent {
+  requirePublicKey(recipientPublicKey, "recipient public key");
+  requireValidSignedEvent(seal, "gift wrap seal");
+  if (seal.kind !== SEAL_KIND || seal.tags.length !== 0)
+    throw new Error("gift wrap seal must be kind 13 with no tags");
+  const wrapPrivateKey = material.wrapPrivateKey ?? generateSecretKey();
+  if (getPublicKey(wrapPrivateKey) === seal.pubkey)
+    throw new Error("gift wrap key must differ from the seal key");
+  const conversationKey = getConversationKey(wrapPrivateKey, recipientPublicKey);
+  const encryptedContent = encrypt(JSON.stringify(seal), conversationKey, material.wrapNonce);
+  return finalizeEvent(
+    {
+      kind: GIFT_WRAP_KIND,
+      created_at: material.wrapCreatedAt ?? randomizedTimestamp(),
+      tags: [["p", recipientPublicKey]],
+      content: encryptedContent,
+    },
+    wrapPrivateKey,
+    material.wrapAuxiliaryRandomData,
+  ) as unknown as GiftWrappedEvent;
 }
 
-/**
- * Create a gift wrap (encrypted seal with random sender)
- */
-export function createWrap(seal: SealedEvent, recipientPublicKey: string): GiftWrappedEvent {
-  const randomKey = generateSecretKey()
-  const randomPubkey = getPublicKey(randomKey) as PublicKey
-
-  const conversationKey = getConversationKey(randomKey, recipientPublicKey)
-  const encryptedContent = nip44Encrypt(JSON.stringify(seal), conversationKey)
-
-  const created_at = randomNow() as UnixTimestamp
-
-  const unsigned = {
-    kind: GIFT_WRAP_KIND,
-    pubkey: randomPubkey,
-    created_at,
-    tags: [["p", recipientPublicKey]] as readonly (readonly string[])[],
-    content: encryptedContent,
-  }
-
-  const id = getEventHash(unsigned) as EventId
-  const sig = signEvent({ ...unsigned, id }, randomKey) as Signature
-
-  return { ...unsigned, id, sig }
+export function wrapEvent(
+  event: Partial<UnsignedEvent>,
+  senderPrivateKey: Uint8Array,
+  recipientPublicKey: string,
+  material: WrapMaterial = {},
+): GiftWrappedEvent {
+  const rumor = createRumor(event, senderPrivateKey);
+  const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey, material);
+  return createWrap(seal, recipientPublicKey, material);
 }
 
-/**
- * Wrap an event for a recipient
- */
-export function wrapEvent(event: Partial<UnsignedEvent>, senderPrivateKey: Uint8Array, recipientPublicKey: string): GiftWrappedEvent {
-  const rumor = createRumor(event, senderPrivateKey)
-  const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey)
-  return createWrap(seal, recipientPublicKey)
-}
-
-/**
- * Wrap an event for multiple recipients (including sender)
- */
 export function wrapManyEvents(
   event: Partial<UnsignedEvent>,
   senderPrivateKey: Uint8Array,
-  recipientsPublicKeys: readonly string[]
+  recipientsPublicKeys: readonly string[],
 ): readonly GiftWrappedEvent[] {
-  if (!recipientsPublicKeys || recipientsPublicKeys.length === 0) {
-    throw new Error("At least one recipient is required.")
-  }
-
-  const senderPublicKey = getPublicKey(senderPrivateKey)
-
-  const wrappedForSender = wrapEvent(event, senderPrivateKey, senderPublicKey)
-
-  const wrappedForRecipients = recipientsPublicKeys.map((recipientPublicKey) =>
-    wrapEvent(event, senderPrivateKey, recipientPublicKey)
-  )
-
-  return [wrappedForSender, ...wrappedForRecipients]
+  if (recipientsPublicKeys.length === 0) throw new Error("At least one recipient is required.");
+  const senderPublicKey = getPublicKey(senderPrivateKey);
+  return [senderPublicKey, ...recipientsPublicKeys].map((recipientPublicKey) =>
+    wrapEvent(event, senderPrivateKey, recipientPublicKey),
+  );
 }
 
-/**
- * Unwrap a gift-wrapped event
- */
 export function unwrapEvent(wrap: GiftWrappedEvent, recipientPrivateKey: Uint8Array): Rumor {
-  const wrapConversationKey = getConversationKey(recipientPrivateKey, wrap.pubkey)
-  const sealJson = nip44Decrypt(wrap.content, wrapConversationKey)
-  const seal = JSON.parse(sealJson) as SealedEvent
+  const recipientPublicKey = getPublicKey(recipientPrivateKey);
+  if (wrap.kind !== GIFT_WRAP_KIND) throw new Error("gift wrap must use kind 1059");
+  requireRecipient(wrap.tags, recipientPublicKey, "gift wrap");
+  requireValidSignedEvent(wrap, "gift wrap");
 
-  const sealConversationKey = getConversationKey(recipientPrivateKey, seal.pubkey)
-  const rumorJson = nip44Decrypt(seal.content, sealConversationKey)
-  const rumor = JSON.parse(rumorJson) as Rumor
+  const wrapConversationKey = getConversationKey(recipientPrivateKey, wrap.pubkey);
+  const seal = parseSeal(decrypt(wrap.content, wrapConversationKey));
+  requireValidSignedEvent(seal, "gift wrap seal");
+  if (wrap.pubkey === seal.pubkey) throw new Error("gift wrap key must differ from the seal key");
 
-  return rumor
+  const sealConversationKey = getConversationKey(recipientPrivateKey, seal.pubkey);
+  const rumor = parseRumor(decrypt(seal.content, sealConversationKey));
+  if (rumor.id !== rumorHash(rumor)) throw new Error("gift wrap rumor ID is invalid");
+  if (rumor.pubkey !== seal.pubkey)
+    throw new Error("gift wrap rumor author does not match the seal signer");
+  return rumor;
 }
 
-/**
- * Unwrap multiple gift-wrapped events
- */
-export function unwrapManyEvents(wrappedEvents: readonly GiftWrappedEvent[], recipientPrivateKey: Uint8Array): readonly Rumor[] {
-  const unwrapped = wrappedEvents.map((wrap) => unwrapEvent(wrap, recipientPrivateKey))
-  return [...unwrapped].sort((a, b) => a.created_at - b.created_at)
+export function unwrapManyEvents(
+  wrappedEvents: readonly GiftWrappedEvent[],
+  recipientPrivateKey: Uint8Array,
+): readonly Rumor[] {
+  return wrappedEvents
+    .map((wrap) => unwrapEvent(wrap, recipientPrivateKey))
+    .sort((left, right) => left.created_at - right.created_at);
 }

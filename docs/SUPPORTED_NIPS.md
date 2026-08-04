@@ -66,7 +66,7 @@ Keep this file up to date whenever adding or removing support.
 | 56 | Reporting | `~/code/nips/56.md` | `src/wrappers/nip56.ts` | `src/wrappers/nip56.test.ts` |
 | 57 | Lightning zaps | `~/code/nips/57.md` | `src/client/ZapService.ts` (Appendix F/G), `src/relay/core/nip/modules/Nip57Module.ts` | `src/client/ZapService.test.ts`, `src/client/ZapService.appendix.test.ts` |
 | 58 | Badges | `~/code/nips/58.md` | `src/client/Nip58Service.ts` (10008 profile badges, 30008 sets) | `src/client/Nip58Service.test.ts` |
-| 59 | Gift wrap | `~/code/nips/59.md` | `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
+| 59 | Gift wrap (verified wrap, seal, rumor ID, author, and recipient binding) | `~/code/nips/59.md` | `src/core/Nip59.ts`, `src/wrappers/nip59.ts` | `src/core/Nip59.test.ts` |
 | 60 | Cashu Wallets | `~/code/nips/60.md` | `src/client/CashuWalletService.ts` | `src/client/CashuWalletService.test.ts` |
 | 61 | Nutzaps | `~/code/nips/61.md` | `src/client/NutzapService.ts` (`#u` filters, NIP-44 redeem fallback) | `src/client/NutzapService.test.ts` |
 | 62 | Request to Vanish | `~/code/nips/62.md` | `src/relay/core/MessageHandler.ts` | `src/relay/Nip62Vanish.test.ts` |

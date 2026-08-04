@@ -134,11 +134,15 @@ export function getPublicKey(secretKey: Uint8Array): string {
  * @param secretKey - 32-byte secret key
  * @returns Complete signed event with id, pubkey, sig
  */
-export function finalizeEvent(t: EventTemplate, secretKey: Uint8Array): VerifiedEvent {
+export function finalizeEvent(
+  t: EventTemplate,
+  secretKey: Uint8Array,
+  auxiliaryRandomData?: Uint8Array
+): VerifiedEvent {
   const event = t as VerifiedEvent
   event.pubkey = bytesToHex(schnorr.getPublicKey(secretKey))
   event.id = getEventHash(event)
-  event.sig = bytesToHex(schnorr.sign(event.id, secretKey))
+  event.sig = bytesToHex(schnorr.sign(event.id, secretKey, auxiliaryRandomData))
   event[verifiedSymbol] = true
   return event
 }
